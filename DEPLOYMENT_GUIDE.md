@@ -154,6 +154,27 @@ git push
 2. 檢查網絡選項卡中的 API 請求狀態
 3. 確認所有環境變數正確設定
 
+#### 5. Canvas 依賴安裝失敗
+
+**原因：** `canvas` 套件在 Vercel 建置環境中缺少必要的系統函式庫（如 pixman-1）
+
+**解決方案：**
+移除未使用的 `canvas` 依賴，因為專案實際上使用 `sharp` 來處理圖標生成：
+
+```bash
+# 編輯 package.json，移除以下行：
+"canvas": "^2.11.2"
+
+# 提交變更
+git add package.json
+git commit -m "Remove unused canvas dependency causing Vercel build failures"
+git push
+```
+
+⚠️ **注意：** 如果您的專案確實需要 `canvas` 功能，請考慮：
+- 使用替代方案如 `sharp` 或 `jimp`
+- 在 Vercel 中設定自訂建置指令來安裝系統依賴
+
 ### 日誌檢查
 
 在 Vercel 控制台中：
