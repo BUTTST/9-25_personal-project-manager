@@ -27,7 +27,8 @@ export const sampleProjects: Project[] = [
     },
     featured: true,
     createdAt: new Date('2024-07-30').getTime(),
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
+    sortOrder: 0
   },
   {
     id: generateId(),
@@ -53,7 +54,8 @@ export const sampleProjects: Project[] = [
     },
     featured: false,
     createdAt: new Date('2024-07-24').getTime(),
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
+    sortOrder: 1
   },
   {
     id: generateId(),
@@ -79,7 +81,8 @@ export const sampleProjects: Project[] = [
     },
     featured: false,
     createdAt: new Date('2024-09-12').getTime(),
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
+    sortOrder: 2
   },
   {
     id: generateId(),
@@ -105,7 +108,8 @@ export const sampleProjects: Project[] = [
     },
     featured: false,
     createdAt: new Date('2024-09-10').getTime(),
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
+    sortOrder: 3
   },
   {
     id: generateId(),
@@ -131,7 +135,8 @@ export const sampleProjects: Project[] = [
     },
     featured: false,
     createdAt: new Date('2024-08-23').getTime(),
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
+    sortOrder: 4
   },
   {
     id: generateId(),
@@ -157,7 +162,8 @@ export const sampleProjects: Project[] = [
     },
     featured: false,
     createdAt: new Date('2024-07-18').getTime(),
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
+    sortOrder: 5
   },
   {
     id: generateId(),
@@ -183,7 +189,8 @@ export const sampleProjects: Project[] = [
     },
     featured: false,
     createdAt: new Date('2024-07-30').getTime(),
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
+    sortOrder: 6
   }
 ];
 

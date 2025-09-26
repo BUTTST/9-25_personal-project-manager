@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { Project, PasswordEntry } from '@/types';
 import { generateId } from '@/lib/auth';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -45,7 +45,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
     let currentRow: string | null = null;
 
     for (const rawLine of lines) {
-      const trimmedLine = rawLine.trimEnd();
+      const trimmedLine = rawLine.trimRight ? rawLine.trimRight() : rawLine.trimEnd();
       if (!trimmedLine.trim()) continue;
 
       if (trimmedLine.trimStart().startsWith('|')) {
@@ -192,7 +192,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
     setLoading(true);
     try {
       // 轉換專案數據
-      const projects: Project[] = previewProjects.map(proj => ({
+      const projects: Project[] = previewProjects.map((proj: ParsedProject) => ({
         id: generateId(),
         dateAndFileName: proj.dateAndFileName,
         description: proj.description,
@@ -216,11 +216,12 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
         },
         featured: false,
         createdAt: Date.now(),
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        sortOrder: Date.now() // 使用當前時間戳作為預設排序值
       }));
 
       // 轉換密碼數據
-      const passwords: PasswordEntry[] = previewPasswords.map(pwd => ({
+      const passwords: PasswordEntry[] = previewPasswords.map((pwd: ParsedPassword) => ({
         id: generateId(),
         platform: pwd.platform,
         account: pwd.account,
@@ -260,7 +261,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
           </label>
           <textarea
             value={tableText}
-            onChange={(e) => setTableText(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setTableText(e.target.value)}
             className="w-full h-40 p-3 border border-border rounded-lg bg-card font-mono text-sm text-foreground placeholder:text-muted-foreground"
             placeholder="請貼上專案表格數據...
 例如：
@@ -278,7 +279,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
           </label>
           <textarea
             value={passwordText}
-            onChange={(e) => setPasswordText(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setPasswordText(e.target.value)}
             className="w-full h-32 p-3 border border-border rounded-lg bg-card font-mono text-sm text-foreground placeholder:text-muted-foreground"
             placeholder="請貼上密碼表格數據...
 例如：
@@ -329,7 +330,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
                 <span className="font-medium text-green-800 dark:text-green-200">專案數據 ({previewProjects.length} 項)</span>
               </div>
               <div className="max-h-40 overflow-y-auto">
-                {previewProjects.map((project, index) => (
+                {previewProjects.map((project: ParsedProject, index: number) => (
                   <div key={index} className="text-sm text-green-700 dark:text-green-200/90 py-1">
                     {project.dateAndFileName} - {project.description}
                   </div>
@@ -345,7 +346,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
                 <span className="font-medium text-blue-800 dark:text-blue-200">密碼數據 ({previewPasswords.length} 項)</span>
               </div>
               <div className="max-h-40 overflow-y-auto">
-                {previewPasswords.map((password, index) => (
+                {previewPasswords.map((password: ParsedPassword, index: number) => (
                   <div key={index} className="text-sm text-blue-700 dark:text-blue-200/90 py-1">
                     {password.platform} - {password.account}
                   </div>
