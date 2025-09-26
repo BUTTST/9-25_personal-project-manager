@@ -75,6 +75,14 @@ export default function HomePage() {
   const loadProjects = async () => {
     try {
       setLoading(true);
+      
+      // 首先嘗試自動初始化（僅在首次部署時）
+      try {
+        await fetch('/api/initialize');
+      } catch (initError) {
+        console.warn('自動初始化跳過或失敗:', initError);
+      }
+      
       const response = await fetch('/api/projects');
       if (!response.ok) {
         throw new Error('無法載入專案資料');

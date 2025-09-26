@@ -22,6 +22,8 @@ interface SettingsSectionProps {
 
 export function SettingsSection({ settings, projectData, onUpdate }: SettingsSectionProps) {
   const [localSettings, setLocalSettings] = useState(settings);
+  const [diagnosticInfo, setDiagnosticInfo] = useState<any>(null);
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
   const { showToast } = useToast();
 
   const handleSettingChange = <K extends keyof ProjectData['settings']>(
@@ -139,6 +141,58 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
     }
   };
 
+  const handleForceInitialize = async () => {
+    if (!confirm('⚠️ 警告：這將強制覆蓋所有現有數據！您確定要繼續嗎？')) {
+      return;
+    }
+
+    try {
+      const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
+      const response = await fetch('/api/admin/force-init', {
+        method: 'POST',
+        headers: {
+          'x-admin-password': adminPassword
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('強制初始化失敗');
+      }
+
+      const result = await response.json();
+      showToast('success', '強制重置完成', result.message);
+      
+      // 重新載入頁面以顯示新數據
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } catch (error) {
+      showToast('error', '強制重置失敗', error instanceof Error ? error.message : '未知錯誤');
+    }
+  };
+
+  const handleDiagnose = async () => {
+    try {
+      const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
+      const response = await fetch('/api/admin/diagnose', {
+        headers: {
+          'x-admin-password': adminPassword
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('診斷失敗');
+      }
+
+      const result = await response.json();
+      setDiagnosticInfo(result);
+      setShowDiagnostic(true);
+      showToast('success', '系統診斷完成');
+    } catch (error) {
+      showToast('error', '診斷失敗', error instanceof Error ? error.message : '未知錯誤');
+    }
+  };
+
   return (
     <div className="p-6 space-y-8 text-foreground">
       <div className="flex items-center space-x-2 mb-6">
@@ -197,19 +251,94 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
        <div className="border-t border-border pt-6">
          <h3 className="text-base font-medium text-foreground mb-4">資料管理</h3>
          
-         {/* 緊急恢復區域 */}
-         <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 rounded-lg p-4 mb-4">
-           <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">⚠️ 數據恢復工具</h4>
-           <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-3">
-             如果您的專案數據丟失，可以使用此功能恢復範例數據
+         {/* 數據恢復與診斷區域 */}
+         <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg p-4 mb-4">
+           <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">🛡️ 數據保護與恢復</h4>
+           <p className="text-xs text-red-700 dark:text-red-300 mb-3">
+             如果遇到數據丟失問題，請按順序嘗試以下解決方案：
            </p>
-           <button
-             onClick={handleInitializeSampleData}
-             className="btn-secondary text-xs bg-yellow-100 dark:bg-yellow-500/20 hover:bg-yellow-200 dark:hover:bg-yellow-500/30 text-yellow-800 dark:text-yellow-200"
-           >
-             恢復範例數據
-           </button>
+           <div className="space-y-2">
+             <button
+               onClick={handleInitializeSampleData}
+               className="w-full text-left text-xs bg-yellow-100 dark:bg-yellow-500/20 hover:bg-yellow-200 dark:hover:bg-yellow-500/30 text-yellow-800 dark:text-yellow-200 px-3 py-2 rounded border border-yellow-300"
+             >
+               📋 步驟1：安全恢復範例數據
+             </button>
+             <button
+               onClick={handleForceInitialize}
+               className="w-full text-left text-xs bg-red-100 dark:bg-red-500/20 hover:bg-red-200 dark:hover:bg-red-500/30 text-red-800 dark:text-red-200 px-3 py-2 rounded border border-red-300"
+             >
+               ⚠️ 步驟2：強制重置所有數據（危險操作）
+             </button>
+             <button
+               onClick={handleDiagnose}
+               className="w-full text-left text-xs bg-blue-100 dark:bg-blue-500/20 hover:bg-blue-200 dark:hover:bg-blue-500/30 text-blue-800 dark:text-blue-200 px-3 py-2 rounded border border-blue-300"
+             >
+               🔍 步驟3：系統診斷（查看詳細狀態）
+             </button>
+           </div>
+           <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+             💡 建議：定期使用「匯出資料」功能備份您的數據
+           </p>
          </div>
+
+         {/* 診斷結果顯示 */}
+         {showDiagnostic && diagnosticInfo && (
+           <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+             <div className="flex items-center justify-between mb-3">
+               <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">🔍 系統診斷報告</h4>
+               <button
+                 onClick={() => setShowDiagnostic(false)}
+                 className="text-gray-400 hover:text-gray-600 text-xs"
+               >
+                 關閉
+               </button>
+             </div>
+             
+             <div className="space-y-3 text-xs font-mono">
+               <div>
+                 <strong className="text-gray-700 dark:text-gray-300">📊 Blob存儲狀態：</strong>
+                 <div className="ml-4 mt-1 space-y-1">
+                   <div>總Blob文件數: {diagnosticInfo.blobStorage?.totalBlobs || 0}</div>
+                   <div>專案數據文件: {diagnosticInfo.blobStorage?.hasProjectData ? '✅ 存在' : '❌ 不存在'}</div>
+                   {diagnosticInfo.blobStorage?.hasProjectData && (
+                     <>
+                       <div>文件大小: {diagnosticInfo.blobStorage.contentSize} bytes</div>
+                       <div>JSON格式: {diagnosticInfo.blobStorage.isValidJson ? '✅ 有效' : '❌ 無效'}</div>
+                       <div>專案數量: {diagnosticInfo.blobStorage.projectCount}</div>
+                       <div>密碼數量: {diagnosticInfo.blobStorage.passwordCount}</div>
+                     </>
+                   )}
+                 </div>
+               </div>
+               
+               <div>
+                 <strong className="text-gray-700 dark:text-gray-300">🔧 環境狀態：</strong>
+                 <div className="ml-4 mt-1 space-y-1">
+                   <div>管理員密碼: {diagnosticInfo.environment?.hasAdminPassword ? '✅ 已設定' : '❌ 未設定'}</div>
+                   <div>運行環境: {diagnosticInfo.environment?.vercelEnv || diagnosticInfo.environment?.nodeEnv || '未知'}</div>
+                 </div>
+               </div>
+
+               <div>
+                 <strong className="text-gray-700 dark:text-gray-300">📁 所有Blob文件：</strong>
+                 <div className="ml-4 mt-1 max-h-32 overflow-y-auto">
+                   {diagnosticInfo.allBlobs?.map((blob: any, index: number) => (
+                     <div key={index} className="text-xs">
+                       • {blob.pathname} ({blob.size} bytes, {new Date(blob.uploadedAt).toLocaleString()})
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             </div>
+             
+             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+               <p className="text-xs text-gray-600 dark:text-gray-400">
+                 診斷時間: {new Date(diagnosticInfo.timestamp).toLocaleString()}
+               </p>
+             </div>
+           </div>
+         )}
          
          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
            <button

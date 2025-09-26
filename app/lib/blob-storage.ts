@@ -1,5 +1,6 @@
-import { put, head, PutBlobResult } from '@vercel/blob';
+import { put, head, PutBlobResult, list } from '@vercel/blob';
 import { ProjectData, Project, PasswordEntry, AppSettings } from '@/types';
+import { isEmptyData, validateDataIntegrity, createBackupData } from './data-safety';
 
 const BLOB_FILENAME = 'project-data.json';
 
@@ -31,41 +32,94 @@ export const defaultProjectData: ProjectData = {
   }
 };
 
-// 從Blob讀取資料
+// 從Blob讀取資料 - 直接使用SDK避免循環依賴
 export async function readProjectData(): Promise<ProjectData> {
   try {
-    // 首先嘗試從環境變數或API獲取現有的Blob
-    const response = await fetch('/api/blob/read', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    console.log('🔍 嘗試讀取Blob數據...');
     
-    if (response.ok) {
-      const data = await response.json();
-      if (validateProjectData(data)) {
-        return data;
-      }
+    // 直接使用Vercel Blob SDK列出文件
+    const { blobs } = await list();
+    console.log('📁 找到Blob文件:', blobs.map(b => b.pathname));
+    
+    // 尋找我們的數據文件
+    const dataBlob = blobs.find(blob => blob.pathname === BLOB_FILENAME);
+    
+    if (!dataBlob) {
+      console.log('📄 未找到project-data.json，使用默認數據');
+      return defaultProjectData;
+    }
+
+    console.log('✅ 找到數據文件，正在讀取:', dataBlob.url);
+    
+    // 使用正確的URL讀取Blob內容
+    const response = await fetch(dataBlob.url);
+    
+    if (!response.ok) {
+      console.error('❌ Blob讀取失敗:', response.status, response.statusText);
+      return defaultProjectData;
+    }
+
+    const data = await response.json();
+    
+    // 驗證數據完整性
+    if (!validateProjectData(data)) {
+      console.error('❌ 數據格式驗證失敗');
+      return defaultProjectData;
     }
     
-    // 如果沒有現有數據，才使用默認數據，但不自動保存
-    console.log('No existing data found, using default data');
-    return defaultProjectData;
+    console.log('🎉 成功讀取數據:', {
+      projects: data.projects.length,
+      passwords: data.passwords.length,
+      lastUpdated: new Date(data.metadata.lastUpdated).toLocaleString()
+    });
+    
+    return data;
   } catch (error) {
-    console.error('Error reading project data:', error);
-    // 返回默認數據，但不保存，避免覆蓋現有數據
+    console.error('💥 讀取Blob數據時發生錯誤:', error);
+    console.log('🔄 使用默認數據作為備用方案');
     return defaultProjectData;
   }
 }
 
-// 將資料寫入Blob
-export async function writeProjectData(data: ProjectData): Promise<PutBlobResult> {
+// 安全的數據寫入 - 多層保護防止數據丟失
+export async function writeProjectData(data: ProjectData, forceWrite = false): Promise<PutBlobResult> {
+  console.log('💾 開始安全數據寫入流程...');
+  
+  // 第一層：數據完整性驗證
+  const { isValid, errors } = validateDataIntegrity(data);
+  if (!isValid && !forceWrite) {
+    console.error('❌ 數據完整性驗證失敗:', errors);
+    throw new Error(`數據驗證失敗: ${errors.join(', ')}`);
+  }
+
+  // 第二層：空數據保護
+  if (!forceWrite && isEmptyData(data)) {
+    console.error('🚨 警告：嘗試寫入空數據！');
+    
+    // 讀取現有數據進行比較
+    try {
+      const existingData = await readExistingDataForComparison();
+      if (existingData && !isEmptyData(existingData)) {
+        console.error('🛑 數據保護：阻止空數據覆蓋現有數據');
+        throw new Error('SAFETY_LOCK: 阻止空數據覆蓋現有數據。如需強制寫入，請使用forceWrite=true');
+      }
+    } catch (readError) {
+      if (!readError.message?.includes('SAFETY_LOCK')) {
+        console.warn('⚠️ 無法讀取現有數據，但仍阻止空數據寫入');
+        throw new Error('SAFETY_LOCK: 無法驗證現有數據狀態，拒絕寫入空數據');
+      }
+      throw readError;
+    }
+  }
+
+  // 第三層：創建備份標記
   const updatedData = {
     ...data,
     metadata: {
       ...data.metadata,
       lastUpdated: Date.now(),
+      writeTimestamp: Date.now(),
+      safetyCheck: forceWrite ? 'FORCED' : 'VERIFIED',
       totalProjects: data.projects.length,
       publicProjects: data.projects.filter(p => 
         p.visibility.description && 
@@ -74,23 +128,45 @@ export async function writeProjectData(data: ProjectData): Promise<PutBlobResult
     }
   };
 
-  // 添加數據驗證，避免寫入空數據
-  if (data.projects.length === 0 && data.passwords.length === 0) {
-    console.warn('Attempting to save empty data, checking if this is intentional...');
-  }
-
+  // 執行寫入
+  console.log('💿 執行Blob寫入...');
   const blob = await put(BLOB_FILENAME, JSON.stringify(updatedData, null, 2), {
     access: 'public',
     addRandomSuffix: false
   });
 
-  console.log('Data successfully saved to Blob:', {
+  console.log('🎉 數據安全寫入完成:', {
     projects: updatedData.projects.length,
     passwords: updatedData.passwords.length,
-    blobUrl: blob.url
+    blobUrl: blob.url,
+    safetyCheck: updatedData.metadata.safetyCheck,
+    timestamp: new Date().toISOString()
   });
 
   return blob;
+}
+
+// 僅用於比較的數據讀取（避免循環依賴）
+async function readExistingDataForComparison(): Promise<ProjectData | null> {
+  try {
+    const { blobs } = await list();
+    const dataBlob = blobs.find(blob => blob.pathname === BLOB_FILENAME);
+    
+    if (!dataBlob) {
+      return null;
+    }
+
+    const response = await fetch(dataBlob.url);
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return validateProjectData(data) ? data : null;
+  } catch (error) {
+    console.error('比較數據讀取失敗:', error);
+    return null;
+  }
 }
 
 // 只取公開專案（訪客模式）

@@ -53,6 +53,10 @@ export interface ProjectData {
     version: string;
     totalProjects: number;
     publicProjects: number;
+    writeTimestamp?: number;
+    safetyCheck?: 'VERIFIED' | 'FORCED';
+    backupTimestamp?: number;
+    backupReason?: string;
   };
 }
 
