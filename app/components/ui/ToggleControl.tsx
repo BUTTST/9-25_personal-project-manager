@@ -54,7 +54,7 @@ export function ToggleControl({
       className={`
         ${sizeClasses.toggle}
         relative inline-flex flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-        ${checked ? 'bg-primary-600' : 'bg-gray-200'}
+        ${checked ? 'bg-primary-600' : 'bg-muted'}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
       `}
       onClick={handleClick}

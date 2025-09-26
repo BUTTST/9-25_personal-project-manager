@@ -32,12 +32,12 @@ export function LoadingSpinner({ size = 'md', text, className = '' }: LoadingSpi
   return (
     <div className={`flex flex-col items-center justify-center space-y-3 ${className}`}>
       <div
-        className={`${getSizeClasses()} animate-spin rounded-full border-2 border-gray-300 border-t-primary-600`}
+        className={`${getSizeClasses()} animate-spin rounded-full border-2 border-muted border-t-primary-600`}
       >
         <span className="sr-only">載入中...</span>
       </div>
       {text && (
-        <p className={`${getTextSize()} text-gray-600 font-medium`}>
+        <p className={`${getTextSize()} text-muted-foreground font-medium`}>
           {text}
         </p>
       )}

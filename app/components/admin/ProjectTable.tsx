@@ -117,55 +117,57 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
   });
 
   return (
-    <div className="p-6">
+    <div className="p-6 text-foreground">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">專案列表</h2>
-        <div className="text-sm text-gray-500">
+        <h2 className="text-lg font-semibold">專案列表</h2>
+        <div className="text-sm text-muted-foreground">
           總共 {projects.length} 個專案
         </div>
       </div>
       
       {projects.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">暂無專案</div>
+        <div className="text-center py-12 text-muted-foreground">
+          <div className="mb-4">暂無專案</div>
           <Link href="/admin/new" className="btn-primary">
             新增第一個專案
           </Link>
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-muted/60">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   專案
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   類別
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   連結
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   狀態
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   更新時間
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   操作
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-card divide-y divide-border">
               {sortedProjects.map((project) => (
-                <tr key={project.id} className="hover:bg-gray-50">
+                <tr key={project.id} className="transition-colors hover:bg-muted/50">
                   <td className="px-6 py-4">
                     <div className="flex items-start space-x-3">
                       <button
                         onClick={() => handleFeaturedToggle(project)}
-                        className={`flex-shrink-0 p-1 rounded-full hover:bg-gray-100 transition-colors ${
-                          project.featured ? 'text-yellow-500' : 'text-gray-300'
+                        className={`flex-shrink-0 p-1 rounded-full transition-colors ${
+                          project.featured
+                            ? 'text-yellow-500 hover:bg-yellow-500/10'
+                            : 'text-muted-foreground hover:bg-muted'
                         }`}
                         title={project.featured ? '取消精選' : '設為精選'}
                       >
@@ -176,14 +178,14 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
                         )}
                       </button>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate">
+                        <div className="text-sm font-medium text-foreground truncate">
                           {project.dateAndFileName}
                         </div>
-                        <div className="text-sm text-gray-500 line-clamp-2">
+                        <div className="text-sm text-muted-foreground line-clamp-2">
                           {project.description}
                         </div>
                         {project.developerNote && (
-                          <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded mt-1">
+                          <div className="text-xs text-orange-600 dark:text-orange-200 bg-orange-50 dark:bg-orange-500/10 px-2 py-1 rounded mt-1">
                             開發者註解: {project.developerNote}
                           </div>
                         )}
@@ -198,12 +200,12 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
                   </td>
                   
                   <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 text-muted-foreground">
                       {project.github && (
                         <Link
                           href={project.github}
                           target="_blank"
-                          className="text-gray-400 hover:text-gray-600"
+                          className="hover:text-primary-500"
                           title="GitHub"
                         >
                           <CodeBracketIcon className="h-4 w-4" />
@@ -213,7 +215,7 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
                         <Link
                           href={project.vercel}
                           target="_blank"
-                          className="text-gray-400 hover:text-gray-600"
+                          className="hover:text-primary-500"
                           title="Vercel"
                         >
                           <GlobeAltIcon className="h-4 w-4" />
@@ -224,11 +226,11 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
                   
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-2">
-                      <div className="flex items-center text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-muted-foreground">
                         {project.visibility.description ? (
                           <EyeIcon className="h-3 w-3 text-green-500" />
                         ) : (
-                          <EyeSlashIcon className="h-3 w-3 text-gray-400" />
+                          <EyeSlashIcon className="h-3 w-3 text-muted-foreground" />
                         )}
                         <span className="ml-1">
                           {Object.values(project.visibility).filter(Boolean).length}/
@@ -237,13 +239,13 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
                       </div>
                     </div>
                     {project.statusNote && (
-                      <div className="text-xs text-gray-600 mt-1 line-clamp-2">
+                      <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
                         {project.statusNote}
                       </div>
                     )}
                   </td>
                   
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
                     {formatDate(project.updatedAt)}
                   </td>
                   
@@ -261,13 +263,13 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
                         <div className="flex items-center space-x-1">
                           <button
                             onClick={() => handleDelete(project.id)}
-                            className="text-xs text-red-600 hover:text-red-700 px-2 py-1 bg-red-50 rounded"
+                            className="text-xs text-red-600 hover:text-red-700 px-2 py-1 rounded bg-red-50 dark:bg-red-500/20"
                           >
                             確認
                           </button>
                           <button
                             onClick={() => setDeleteConfirm(null)}
-                            className="text-xs text-gray-600 hover:text-gray-700 px-2 py-1 bg-gray-50 rounded"
+                            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded bg-muted"
                           >
                             取消
                           </button>

@@ -113,22 +113,24 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
   };
 
   return (
-    <div className="card-hover group relative">
+    <div className="card-hover group relative overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-500 via-primary-400 to-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
       {/* 精選標記 */}
       {localProject.featured && (
-        <div className="absolute top-2 right-2 z-10">
-          <StarIconSolid className="h-5 w-5 text-yellow-500" />
+        <div className="absolute top-3 right-3 z-10">
+          <StarIconSolid className="h-5 w-5 text-yellow-400 drop-shadow" />
         </div>
       )}
       
       {/* 管理員控制列 */}
       {isAdmin && (
-        <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="flex items-center space-x-2">
+        <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center space-x-2 bg-card/80 backdrop-blur px-2 py-1 rounded-full shadow-sm">
             <button
               onClick={handleFeaturedToggle}
-              className={`p-1 rounded-full hover:bg-gray-100 transition-colors ${
-                localProject.featured ? 'text-yellow-500' : 'text-gray-400'
+              className={`p-1 rounded-full transition-colors ${
+                localProject.featured ? 'text-yellow-400 hover:bg-yellow-400/10' : 'text-muted-foreground hover:bg-muted'
               }`}
               title={localProject.featured ? '取消精選' : '設為精選'}
             >
@@ -136,7 +138,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
             </button>
             <Link
               href={`/admin/edit/${localProject.id}`}
-              className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-primary-600 transition-colors"
+              className="p-1 rounded-full text-muted-foreground hover:text-primary-500 hover:bg-muted transition-colors"
               title="編輯專案"
             >
               <CodeBracketIcon className="h-4 w-4" />
@@ -152,7 +154,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
           <div className="flex-1">
             {localProject.visibility.dateAndFileName && (
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+                <h3 className="text-lg font-semibold text-foreground line-clamp-2 tracking-tight">
                   {localProject.dateAndFileName}
                 </h3>
                 {isAdmin && showToggleControls && (
@@ -186,7 +188,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
         {localProject.visibility.description && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">說明</span>
+              <span className="text-sm font-medium text-muted-foreground">說明</span>
               {isAdmin && showToggleControls && (
                 <ToggleControl
                   checked={localProject.visibility.description}
@@ -195,7 +197,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
                 />
               )}
             </div>
-            <p className="text-gray-600 text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               {localProject.description}
             </p>
           </div>
@@ -209,7 +211,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
                 href={localProject.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors text-sm"
+                className="flex items-center space-x-2 text-muted-foreground hover:text-primary-500 transition-colors text-sm"
               >
                 <CodeBracketIcon className="h-4 w-4" />
                 <span>查看GitHub</span>
@@ -230,7 +232,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
                 href={localProject.vercel}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors text-sm"
+                className="flex items-center space-x-2 text-muted-foreground hover:text-primary-500 transition-colors text-sm"
               >
                 <GlobeAltIcon className="h-4 w-4" />
                 <span>線上預覽</span>
@@ -247,9 +249,9 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
           
           {localProject.visibility.path && localProject.path && (
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-gray-600 text-sm">
+              <div className="flex items-center space-x-2 text-muted-foreground text-sm">
                 <FolderOpenIcon className="h-4 w-4" />
-                <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
                   {localProject.path}
                 </span>
               </div>
@@ -268,7 +270,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
         {localProject.visibility.statusNote && localProject.statusNote && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">狀態</span>
+              <span className="text-sm font-medium text-muted-foreground">狀態</span>
               {isAdmin && showToggleControls && (
                 <ToggleControl
                   checked={localProject.visibility.statusNote}
@@ -277,7 +279,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
                 />
               )}
             </div>
-            <p className="text-gray-600 text-sm bg-gray-50 p-2 rounded">
+            <p className="text-muted-foreground text-sm bg-muted/60 p-2 rounded">
               {localProject.statusNote}
             </p>
           </div>
@@ -287,7 +289,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
         {localProject.visibility.publicNote && localProject.publicNote && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">註解</span>
+              <span className="text-sm font-medium text-muted-foreground">註解</span>
               {isAdmin && showToggleControls && (
                 <ToggleControl
                   checked={localProject.visibility.publicNote}
@@ -296,7 +298,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
                 />
               )}
             </div>
-            <p className="text-gray-600 text-sm">
+            <p className="text-muted-foreground text-sm">
               {localProject.publicNote}
             </p>
           </div>
@@ -318,15 +320,15 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
                 />
               )}
             </div>
-            <p className="text-orange-700 text-sm bg-orange-50 p-2 rounded border border-orange-200">
+            <p className="text-orange-700 dark:text-orange-200 text-sm bg-orange-50 dark:bg-orange-500/10 p-2 rounded border border-orange-200 dark:border-orange-500/30">
               {localProject.developerNote}
             </p>
           </div>
         )}
 
         {/* 更新時間 */}
-        <div className="pt-2 border-t border-gray-200">
-          <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="pt-2 border-t border-border/80">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>更新於 {formatDate(localProject.updatedAt)}</span>
             {isAdmin && (
               <div className="flex items-center space-x-1">

@@ -165,14 +165,14 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground">
       {/* 標題列 */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-card shadow-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">管理後台</h1>
-              <p className="text-gray-600">專案管理系統</p>
+              <h1 className="text-2xl font-bold">管理後台</h1>
+              <p className="text-muted-foreground">專案管理系統</p>
             </div>
             <div className="flex items-center space-x-4">
               <Link href="/" className="btn-secondary">
@@ -192,23 +192,23 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <div className="card text-center">
             <div className="text-2xl font-bold text-primary-600">{stats.total}</div>
-            <div className="text-sm text-gray-600">總專案</div>
+            <div className="text-sm text-muted-foreground">總專案</div>
           </div>
           <div className="card text-center">
             <div className="text-2xl font-bold text-red-600">{stats.important}</div>
-            <div className="text-sm text-gray-600">重要專案</div>
+            <div className="text-sm text-muted-foreground">重要專案</div>
           </div>
           <div className="card text-center">
             <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-            <div className="text-sm text-gray-600">已完成</div>
+            <div className="text-sm text-muted-foreground">已完成</div>
           </div>
           <div className="card text-center">
             <div className="text-2xl font-bold text-blue-600">{stats.public}</div>
-            <div className="text-sm text-gray-600">公開專案</div>
+            <div className="text-sm text-muted-foreground">公開專案</div>
           </div>
           <div className="card text-center">
             <div className="text-2xl font-bold text-purple-600">{stats.passwords}</div>
-            <div className="text-sm text-gray-600">存储密碼</div>
+            <div className="text-sm text-muted-foreground">存储密碼</div>
           </div>
         </div>
 
@@ -220,7 +220,7 @@ export default function AdminPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'projects'
                   ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
               專案管理
@@ -230,7 +230,7 @@ export default function AdminPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                 activeTab === 'passwords'
                   ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
               <span>密碼管理</span>
@@ -239,7 +239,7 @@ export default function AdminPage() {
                   e.stopPropagation();
                   setShowPasswords(!showPasswords);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground hover:text-foreground"
               >
                 {showPasswords ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
               </button>
@@ -249,7 +249,7 @@ export default function AdminPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'import'
                   ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
               批量導入
@@ -259,7 +259,7 @@ export default function AdminPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'settings'
                   ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
               系統設定
@@ -268,7 +268,7 @@ export default function AdminPage() {
         </div>
 
         {/* 內容區域 */}
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className="bg-card rounded-lg shadow-sm border border-border">
           {activeTab === 'projects' && (
             <ProjectTable
               projects={projectData.projects}

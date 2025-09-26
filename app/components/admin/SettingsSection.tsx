@@ -114,16 +114,16 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
   };
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-8 text-foreground">
       <div className="flex items-center space-x-2 mb-6">
-        <CogIcon className="h-5 w-5 text-gray-500" />
-        <h2 className="text-lg font-semibold text-gray-900">系統設定</h2>
+        <CogIcon className="h-5 w-5 text-muted-foreground" />
+        <h2 className="text-lg font-semibold">系統設定</h2>
       </div>
 
       {/* 顯示控制設定 */}
       <div className="space-y-6">
         <div>
-          <h3 className="text-base font-medium text-gray-900 mb-4">顯示設定</h3>
+          <h3 className="text-base font-medium mb-4">顯示設定</h3>
           <div className="space-y-4">
             <ToggleControl
               checked={localSettings.showToggleControls}
@@ -141,26 +141,9 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
           </div>
         </div>
 
-        {/* 主題設定 */}
-        <div>
-          <h3 className="text-base font-medium text-gray-900 mb-4">主題設定</h3>
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium text-gray-700">主題模式：</label>
-            <select
-              value={localSettings.theme}
-              onChange={(e) => handleSettingChange('theme', e.target.value as 'light' | 'dark' | 'auto')}
-              className="input w-auto"
-            >
-              <option value="light">淺色模式</option>
-              <option value="dark">深色模式</option>
-              <option value="auto">跟隨系統</option>
-            </select>
-          </div>
-        </div>
-
         {/* 預設可見性設定 */}
         <div>
-          <h3 className="text-base font-medium text-gray-900 mb-4">新專案預設可見性</h3>
+          <h3 className="text-base font-medium mb-4">新專案預設可見性</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Object.entries({
               dateAndFileName: '日期和檔名',
@@ -182,15 +165,15 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
               />
             ))}
           </div>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-muted-foreground mt-2">
             設定新專案建立時的預設可見性狀態
           </p>
         </div>
       </div>
 
       {/* 資料管理 */}
-      <div className="border-t pt-6">
-        <h3 className="text-base font-medium text-gray-900 mb-4">資料管理</h3>
+      <div className="border-t border-border pt-6">
+        <h3 className="text-base font-medium text-foreground mb-4">資料管理</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={handleExportData}
@@ -216,31 +199,31 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
             <span>清除快取</span>
           </button>
         </div>
-        <p className="text-sm text-gray-500 mt-2">
+        <p className="text-sm text-muted-foreground mt-2">
           資料匯出/匯入功能將在後續版本提供
         </p>
       </div>
 
       {/* 系統資訊 */}
-      <div className="border-t pt-6">
-        <h3 className="text-base font-medium text-gray-900 mb-4">系統資訊</h3>
-        <div className="bg-gray-50 rounded-lg p-4">
+      <div className="border-t border-border pt-6">
+        <h3 className="text-base font-medium text-foreground mb-4">系統資訊</h3>
+        <div className="bg-muted rounded-lg p-4">
           <dl className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <dt className="font-medium text-gray-700">系統版本：</dt>
-              <dd className="text-gray-600">v1.0.0</dd>
+              <dt className="font-medium text-muted-foreground">系統版本：</dt>
+              <dd className="text-foreground">v1.0.0</dd>
             </div>
             <div>
-              <dt className="font-medium text-gray-700">部署平台：</dt>
-              <dd className="text-gray-600">Vercel</dd>
+              <dt className="font-medium text-muted-foreground">部署平台：</dt>
+              <dd className="text-foreground">Vercel</dd>
             </div>
             <div>
-              <dt className="font-medium text-gray-700">儲存方式：</dt>
-              <dd className="text-gray-600">Vercel Blob</dd>
+              <dt className="font-medium text-muted-foreground">儲存方式：</dt>
+              <dd className="text-foreground">Vercel Blob</dd>
             </div>
             <div>
-              <dt className="font-medium text-gray-700">本地儲存：</dt>
-              <dd className="text-gray-600">
+              <dt className="font-medium text-muted-foreground">本地儲存：</dt>
+              <dd className="text-foreground">
                 {localSettings.rememberPassword ? '已啟用' : '已禁用'}
               </dd>
             </div>

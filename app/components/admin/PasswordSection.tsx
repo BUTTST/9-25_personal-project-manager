@@ -117,24 +117,24 @@ export function PasswordSection({ passwords, showPasswords, onUpdate }: Password
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 text-foreground">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">密碼管理</h2>
-        <div className="text-sm text-red-600 bg-red-50 px-3 py-1 rounded-full">
+        <h2 className="text-lg font-semibold">密碼管理</h2>
+        <div className="text-sm text-red-500 bg-red-100 dark:bg-red-500/20 dark:text-red-200 px-3 py-1 rounded-full">
           ❗ 僅管理員可見
         </div>
       </div>
 
       {/* 新增/編輯表單 */}
       {isAdding && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">
+        <div className="mb-6 p-4 bg-muted rounded-lg border border-border/80">
+          <h3 className="text-sm font-medium mb-3">
             {editingId ? '編輯密碼' : '新增密碼'}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   平台
                 </label>
                 <input
@@ -147,7 +147,7 @@ export function PasswordSection({ passwords, showPasswords, onUpdate }: Password
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   帳號
                 </label>
                 <input
@@ -160,7 +160,7 @@ export function PasswordSection({ passwords, showPasswords, onUpdate }: Password
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   密碼
                 </label>
                 <input
@@ -207,64 +207,64 @@ export function PasswordSection({ passwords, showPasswords, onUpdate }: Password
 
       {/* 密碼列表 */}
       {passwords.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-muted-foreground">
           暂無儲存的密碼
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-muted/60">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   平台
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   帳號
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   密碼
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   更新時間
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   操作
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-card divide-y divide-border">
               {passwords.map((password) => (
-                <tr key={password.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                <tr key={password.id} className="hover:bg-muted/50 transition-colors">
+                  <td className="px-6 py-4 text-sm font-medium text-foreground">
                     {password.platform}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-2">
                       <span className="font-mono">{password.account}</span>
                       <button
                         onClick={() => handleCopy(password.account)}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-muted-foreground hover:text-foreground"
                         title="複製帳號"
                       >
                         <ClipboardIcon className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-2">
                       <span className="font-mono">
                         {showPasswords ? password.password : '•'.repeat(12)}
                       </span>
                       <button
                         onClick={() => handleCopy(password.password)}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-muted-foreground hover:text-foreground"
                         title="複製密碼"
                       >
                         <ClipboardIcon className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
                     {new Date(password.updatedAt).toLocaleDateString('zh-TW')}
                   </td>
                   <td className="px-6 py-4">
@@ -281,13 +281,13 @@ export function PasswordSection({ passwords, showPasswords, onUpdate }: Password
                         <div className="flex items-center space-x-1">
                           <button
                             onClick={() => handleDelete(password.id)}
-                            className="text-xs text-red-600 hover:text-red-700 px-2 py-1 bg-red-50 rounded"
+                            className="text-xs text-red-600 hover:text-red-700 px-2 py-1 rounded bg-red-50 dark:bg-red-500/20"
                           >
                             確認
                           </button>
                           <button
                             onClick={() => setDeleteConfirm(null)}
-                            className="text-xs text-gray-600 hover:text-gray-700 px-2 py-1 bg-gray-50 rounded"
+                            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded bg-muted"
                           >
                             取消
                           </button>

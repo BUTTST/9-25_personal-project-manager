@@ -246,22 +246,22 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 text-foreground">
       <div className="flex items-center space-x-2 mb-4">
-        <TableCellsIcon className="h-5 w-5 text-blue-500" />
-        <h2 className="text-lg font-semibold text-gray-900">表格數據導入</h2>
+        <TableCellsIcon className="h-5 w-5 text-primary-500" />
+        <h2 className="text-lg font-semibold">表格數據導入</h2>
       </div>
 
       {/* 專案表格輸入 */}
       <div className="space-y-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
             專案表格數據
           </label>
           <textarea
             value={tableText}
             onChange={(e) => setTableText(e.target.value)}
-            className="w-full h-40 p-3 border border-gray-300 rounded-lg font-mono text-sm"
+            className="w-full h-40 p-3 border border-border rounded-lg bg-card font-mono text-sm text-foreground placeholder:text-muted-foreground"
             placeholder="請貼上專案表格數據...
 例如：
 | 日期＋檔案名稱 | 說明 | GitHub | vercel | 路徑 | 狀態備註 |
@@ -273,13 +273,13 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
       {/* 密碼表格輸入 */}
       <div className="space-y-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-muted-foreground mb-2">
             密碼表格數據
           </label>
           <textarea
             value={passwordText}
             onChange={(e) => setPasswordText(e.target.value)}
-            className="w-full h-32 p-3 border border-gray-300 rounded-lg font-mono text-sm"
+            className="w-full h-32 p-3 border border-border rounded-lg bg-card font-mono text-sm text-foreground placeholder:text-muted-foreground"
             placeholder="請貼上密碼表格數據...
 例如：
 | 平台 | 帳號 | 密碼 |
@@ -320,17 +320,17 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
       {/* 預覽結果 */}
       {(previewProjects.length > 0 || previewPasswords.length > 0) && (
         <div className="mt-6 space-y-4">
-          <h3 className="text-md font-medium text-gray-900">預覽結果</h3>
+          <h3 className="text-md font-medium">預覽結果</h3>
           
           {previewProjects.length > 0 && (
-            <div className="bg-green-50 p-4 rounded-lg">
+            <div className="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg border border-green-200/60 dark:border-green-500/30">
               <div className="flex items-center space-x-2 mb-2">
                 <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                <span className="font-medium text-green-800">專案數據 ({previewProjects.length} 項)</span>
+                <span className="font-medium text-green-800 dark:text-green-200">專案數據 ({previewProjects.length} 項)</span>
               </div>
               <div className="max-h-40 overflow-y-auto">
                 {previewProjects.map((project, index) => (
-                  <div key={index} className="text-sm text-green-700 py-1">
+                  <div key={index} className="text-sm text-green-700 dark:text-green-200/90 py-1">
                     {project.dateAndFileName} - {project.description}
                   </div>
                 ))}
@@ -339,14 +339,14 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
           )}
 
           {previewPasswords.length > 0 && (
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg border border-blue-200/60 dark:border-blue-500/30">
               <div className="flex items-center space-x-2 mb-2">
                 <CheckCircleIcon className="h-5 w-5 text-blue-500" />
-                <span className="font-medium text-blue-800">密碼數據 ({previewPasswords.length} 項)</span>
+                <span className="font-medium text-blue-800 dark:text-blue-200">密碼數據 ({previewPasswords.length} 項)</span>
               </div>
               <div className="max-h-40 overflow-y-auto">
                 {previewPasswords.map((password, index) => (
-                  <div key={index} className="text-sm text-blue-700 py-1">
+                  <div key={index} className="text-sm text-blue-700 dark:text-blue-200/90 py-1">
                     {password.platform} - {password.account}
                   </div>
                 ))}
@@ -356,8 +356,8 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
         </div>
       )}
 
-      <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
-        <strong>使用說明：</strong>
+      <div className="text-xs text-muted-foreground bg-muted p-3 rounded border border-border/60">
+        <strong className="text-foreground">使用說明：</strong>
         <ul className="mt-1 space-y-1">
           <li>• 請貼上 Markdown 格式的表格數據</li>
           <li>• 專案表格應包含：日期檔名、說明、GitHub、Vercel、路徑、狀態備註等欄位</li>

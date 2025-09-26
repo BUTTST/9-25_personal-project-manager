@@ -68,13 +68,13 @@ export function LoginModal({ onClose }: LoginModalProps) {
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       onClick={handleOverlayClick}
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full animate-slide-up">
+      <div className="bg-card text-foreground rounded-lg shadow-xl border border-border max-w-md w-full animate-slide-up">
         {/* 標題列 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">管理員登入</h2>
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-xl font-semibold">管理員登入</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 p-1 rounded-md hover:bg-gray-100 transition-colors"
+            className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -83,7 +83,7 @@ export function LoginModal({ onClose }: LoginModalProps) {
         {/* 表單內容 */}
         <form onSubmit={handleSubmit} className="p-6">
           <div className="mb-6">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium mb-2">
               管理員密碼
             </label>
             <div className="relative">
@@ -100,7 +100,7 @@ export function LoginModal({ onClose }: LoginModalProps) {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
                 disabled={loading}
               >
                 {showPassword ? (
@@ -118,12 +118,12 @@ export function LoginModal({ onClose }: LoginModalProps) {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-border rounded bg-card"
                 disabled={loading}
               />
-              <span className="ml-2 text-sm text-gray-600">記住密碼</span>
+              <span className="ml-2 text-sm text-muted-foreground">記住密碼</span>
             </label>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               密碼將储存在本機瀏覽器中，下次無需重新輸入
             </p>
           </div>
@@ -153,7 +153,7 @@ export function LoginModal({ onClose }: LoginModalProps) {
         </form>
 
         {/* 提示訊息 */}
-        <div className="px-6 pb-6 text-xs text-gray-500">
+        <div className="px-6 pb-6 text-xs text-muted-foreground">
           <p>提示：登入後您將可以管理專案和查看所有隐藏內容</p>
         </div>
       </div>

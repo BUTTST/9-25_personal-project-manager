@@ -89,36 +89,29 @@ export default function HomePage() {
     setFilteredProjects(projects);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-600 text-lg mb-2">載入失敗</div>
-          <div className="text-gray-600">{error}</div>
-          <button 
-            onClick={loadProjects}
-            className="btn-primary mt-4"
-          >
-            重新載入
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background text-foreground transition-colors">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {loading && (
+          <div className="flex items-center justify-center py-16">
+            <LoadingSpinner text="專案載入中" />
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="my-16">
+            <EmptyState
+              title="載入失敗"
+              description={error}
+              icon="search"
+              action={{ label: '重新載入', onClick: loadProjects }}
+            />
+          </div>
+        )}
+
+        {!loading && !error && (
         {/* 搜尋和篩選區域 */}
         <div className="mb-8 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -140,7 +133,7 @@ export default function HomePage() {
 
         {/* 統計資訊 */}
         {projectData && (
-          <div className="mb-6 flex flex-wrap gap-4 text-sm text-gray-600">
+          <div className="mb-6 flex flex-wrap gap-4 text-sm text-muted-foreground">
             <span>總共 {projectData.metadata.totalProjects} 個專案</span>
             {!isAdmin && (
               <span>公開 {projectData.metadata.publicProjects} 個</span>
@@ -168,6 +161,7 @@ export default function HomePage() {
               />
             ))}
           </div>
+        )}
         )}
       </div>
     </div>

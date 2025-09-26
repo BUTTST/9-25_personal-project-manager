@@ -23,26 +23,26 @@ export function EmptyState({
   const getIcon = () => {
     switch (icon) {
       case 'search':
-        return <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" />;
+        return <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-muted-foreground" />;
       case 'folder':
-        return <FolderIcon className="mx-auto h-12 w-12 text-gray-400" />;
+        return <FolderIcon className="mx-auto h-12 w-12 text-muted-foreground" />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="text-center py-12">
+    <div className="text-center py-12 text-muted-foreground">
       <div className="mb-4">
         {getIcon()}
       </div>
       
-      <h3 className="text-lg font-medium text-gray-900 mb-2">
+      <h3 className="text-lg font-medium text-foreground mb-2">
         {title}
       </h3>
       
       {description && (
-        <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+        <p className="mb-6 max-w-sm mx-auto">
           {description}
         </p>
       )}
