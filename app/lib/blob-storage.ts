@@ -34,14 +34,27 @@ export const defaultProjectData: ProjectData = {
 // 從Blob讀取資料
 export async function readProjectData(): Promise<ProjectData> {
   try {
-    const response = await fetch(`https://vercel-blob.storage/${BLOB_FILENAME}`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch project data');
+    // 首先嘗試從環境變數或API獲取現有的Blob
+    const response = await fetch('/api/blob/read', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (validateProjectData(data)) {
+        return data;
+      }
     }
-    const data = await response.json();
-    return data;
+    
+    // 如果沒有現有數據，才使用默認數據，但不自動保存
+    console.log('No existing data found, using default data');
+    return defaultProjectData;
   } catch (error) {
-    console.log('No existing data found, using default:', error);
+    console.error('Error reading project data:', error);
+    // 返回默認數據，但不保存，避免覆蓋現有數據
     return defaultProjectData;
   }
 }
@@ -61,9 +74,20 @@ export async function writeProjectData(data: ProjectData): Promise<PutBlobResult
     }
   };
 
+  // 添加數據驗證，避免寫入空數據
+  if (data.projects.length === 0 && data.passwords.length === 0) {
+    console.warn('Attempting to save empty data, checking if this is intentional...');
+  }
+
   const blob = await put(BLOB_FILENAME, JSON.stringify(updatedData, null, 2), {
     access: 'public',
     addRandomSuffix: false
+  });
+
+  console.log('Data successfully saved to Blob:', {
+    projects: updatedData.projects.length,
+    passwords: updatedData.passwords.length,
+    blobUrl: blob.url
   });
 
   return blob;

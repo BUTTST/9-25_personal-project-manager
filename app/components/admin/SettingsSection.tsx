@@ -113,6 +113,32 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
     }, 1500);
   };
 
+  const handleInitializeSampleData = async () => {
+    try {
+      const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
+      const response = await fetch('/api/admin/init-data', {
+        method: 'POST',
+        headers: {
+          'x-admin-password': adminPassword
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('初始化失敗');
+      }
+
+      const result = await response.json();
+      showToast('success', '範例數據已恢復', `已創建 ${result.projects} 個專案和 ${result.passwords} 個密碼`);
+      
+      // 重新載入頁面以顯示新數據
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } catch (error) {
+      showToast('error', '數據恢復失敗', error instanceof Error ? error.message : '未知錯誤');
+    }
+  };
+
   return (
     <div className="p-6 space-y-8 text-foreground">
       <div className="flex items-center space-x-2 mb-6">
@@ -164,38 +190,53 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
         </div>
       </div>
 
-      {/* 資料管理 */}
-      <div className="border-t border-border pt-6">
-        <h3 className="text-base font-medium text-foreground mb-4">資料管理</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button
-            onClick={handleExportData}
-            className="btn-secondary flex items-center justify-center space-x-2"
-          >
-            <DocumentArrowDownIcon className="h-4 w-4" />
-            <span>匯出資料</span>
-          </button>
-          
-          <button
-            onClick={handleImportData}
-            className="btn-secondary flex items-center justify-center space-x-2"
-          >
-            <DocumentArrowUpIcon className="h-4 w-4" />
-            <span>匯入資料</span>
-          </button>
-          
-          <button
-            onClick={handleClearCache}
-            className="btn-danger flex items-center justify-center space-x-2"
-          >
-            <TrashIcon className="h-4 w-4" />
-            <span>清除快取</span>
-          </button>
-        </div>
-        <p className="text-sm text-muted-foreground mt-2">
-          資料匯出/匯入功能將在後續版本提供
-        </p>
-      </div>
+       {/* 資料管理 */}
+       <div className="border-t border-border pt-6">
+         <h3 className="text-base font-medium text-foreground mb-4">資料管理</h3>
+         
+         {/* 緊急恢復區域 */}
+         <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 rounded-lg p-4 mb-4">
+           <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">⚠️ 數據恢復工具</h4>
+           <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-3">
+             如果您的專案數據丟失，可以使用此功能恢復範例數據
+           </p>
+           <button
+             onClick={handleInitializeSampleData}
+             className="btn-secondary text-xs bg-yellow-100 dark:bg-yellow-500/20 hover:bg-yellow-200 dark:hover:bg-yellow-500/30 text-yellow-800 dark:text-yellow-200"
+           >
+             恢復範例數據
+           </button>
+         </div>
+         
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           <button
+             onClick={handleExportData}
+             className="btn-secondary flex items-center justify-center space-x-2"
+           >
+             <DocumentArrowDownIcon className="h-4 w-4" />
+             <span>匯出資料</span>
+           </button>
+           
+           <button
+             onClick={handleImportData}
+             className="btn-secondary flex items-center justify-center space-x-2"
+           >
+             <DocumentArrowUpIcon className="h-4 w-4" />
+             <span>匯入資料</span>
+           </button>
+           
+           <button
+             onClick={handleClearCache}
+             className="btn-danger flex items-center justify-center space-x-2"
+           >
+             <TrashIcon className="h-4 w-4" />
+             <span>清除快取</span>
+           </button>
+         </div>
+         <p className="text-sm text-muted-foreground mt-2">
+           匯出功能可用，批量導入請使用「批量導入」選項卡
+         </p>
+       </div>
 
       {/* 系統資訊 */}
       <div className="border-t border-border pt-6">

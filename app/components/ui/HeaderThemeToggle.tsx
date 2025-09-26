@@ -1,39 +1,52 @@
 'use client';
 
-import { useMemo } from 'react';
-import { MoonIcon, SunIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
-import { useTheme } from '@/components/ui/ThemeProvider';
-
-interface ThemeOption {
-  value: 'light' | 'dark' | 'system';
-  icon: React.ReactNode;
-}
+import { useState, useEffect } from 'react';
+import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 
 export function HeaderThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  const themeOptions: ThemeOption[] = useMemo(() => [
-    { value: 'light', icon: <SunIcon className="h-5 w-5" /> },
-    { value: 'dark', icon: <MoonIcon className="h-5 w-5" /> },
-    { value: 'system', icon: <ComputerDesktopIcon className="h-5 w-5" /> },
-  ], []);
+  useEffect(() => {
+    // 檢查本地存儲的主題設定
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || saved === 'light') {
+      setTheme(saved);
+      applyTheme(saved);
+    } else {
+      // 檢查系統偏好
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const defaultTheme = prefersDark ? 'dark' : 'light';
+      setTheme(defaultTheme);
+      applyTheme(defaultTheme);
+    }
+  }, []);
 
-  const currentThemeIndex = themeOptions.findIndex(option => option.value === theme);
-  const currentIcon = themeOptions[currentThemeIndex]?.icon || <ComputerDesktopIcon className="h-5 w-5" />;
+  const applyTheme = (newTheme: 'light' | 'dark') => {
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
-  const handleToggle = () => {
-    const nextThemeIndex = (currentThemeIndex + 1) % themeOptions.length;
-    setTheme(themeOptions[nextThemeIndex].value);
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
   };
 
   return (
     <button
-      className="flex items-center justify-center h-10 w-10 rounded-md bg-muted text-foreground hover:bg-muted/80 transition-colors"
-      onClick={handleToggle}
-      aria-label="Toggle theme"
+      onClick={toggleTheme}
+      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      title={theme === 'light' ? '切換到深色模式' : '切換到淺色模式'}
     >
-      {currentIcon}
+      {theme === 'light' ? (
+        <MoonIcon className="h-5 w-5 text-gray-600" />
+      ) : (
+        <SunIcon className="h-5 w-5 text-yellow-500" />
+      )}
     </button>
   );
 }
-

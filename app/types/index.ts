@@ -26,6 +26,8 @@ export interface Project {
   sortOrder: number; // 新增排序欄位
 }
 
+export type ProjectVisibility = Project['visibility'];
+
 export interface PasswordEntry {
   id: string;
   platform: string; // 平台
