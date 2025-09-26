@@ -43,24 +43,74 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
     const lines = text.trim().split('\n');
     const projects: ParsedProject[] = [];
     
-    for (const line of lines) {
-      if (!line.trim() || line.includes('|---') || line.includes('日期＋檔案名稱')) continue;
+    console.log('總共行數:', lines.length);
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      console.log(`處理第 ${i + 1} 行:`, JSON.stringify(line));
       
-      const columns = line.split('|').map(col => col.trim()).filter(Boolean);
-      if (columns.length >= 6) {
-        const [dateFileName, description, github, vercel, path, statusNote] = columns;
-        
-        projects.push({
-          dateAndFileName: dateFileName,
-          description: description,
-          github: github && github !== 'undefined' && !github.includes('無') ? github : '',
-          vercel: vercel && vercel !== 'undefined' && !vercel.includes('無') && !vercel.includes('未部屬') ? vercel : '',
-          path: path && path !== 'undefined' ? path : '',
-          statusNote: statusNote && statusNote !== 'undefined' ? statusNote : ''
-        });
+      // 跳過表格分隔線和標題行
+      if (line.includes('|---') || line.includes('日期＋檔案名稱')) {
+        console.log(`跳過第 ${i + 1} 行: 表格分隔線或標題行`);
+        continue;
       }
+      
+      const columns = line.split('|').map(col => col.trim());
+      console.log(`第 ${i + 1} 行原始列數:`, columns.length, columns);
+      
+      // 檢查是否有足夠的列數（至少要有7個分隔符產生的列，因為開頭和結尾可能有空的）
+      if (columns.length < 7) {
+        console.log(`跳過第 ${i + 1} 行: 列數不足 (${columns.length} < 7)`);
+        continue;
+      }
+      
+      // 移除首尾空元素（由於|開頭和結尾產生的空字符串）
+      while (columns.length > 0 && columns[0] === '') columns.shift();
+      while (columns.length > 0 && columns[columns.length - 1] === '') columns.pop();
+      
+      console.log(`第 ${i + 1} 行處理後列數:`, columns.length, columns);
+      
+      // 再次檢查列數
+      if (columns.length < 6) {
+        console.log(`跳過第 ${i + 1} 行: 處理後列數不足 (${columns.length} < 6)`);
+        continue;
+      }
+      
+      const [dateFileName, description, github, vercel, path, statusNote] = columns;
+      
+      // 檢查關鍵欄位是否有內容（至少要有日期檔名或說明）
+      if (!dateFileName && !description) {
+        console.log(`跳過第 ${i + 1} 行: 缺少關鍵欄位內容`);
+        continue;
+      }
+      
+      console.log(`第 ${i + 1} 行解析成功:`, { dateFileName, description, github, vercel, path, statusNote });
+      
+      // 處理 Markdown 格式的連結
+      const extractUrl = (text: string): string => {
+        if (!text) return '';
+        // 匹配 [text](url) 格式
+        const markdownMatch = text.match(/\[.*?\]\((.*?)\)/);
+        if (markdownMatch) return markdownMatch[1];
+        // 匹配 **[text]**(url) 格式
+        const boldMarkdownMatch = text.match(/\*\*\[.*?\]\*\*\((.*?)\)/) || text.match(/\[.*?\]\((.*?)\)/);
+        if (boldMarkdownMatch) return boldMarkdownMatch[1];
+        return text;
+      };
+      
+      projects.push({
+        dateAndFileName: dateFileName || '',
+        description: description || '',
+        github: github && github !== 'undefined' && !github.includes('無') && github !== '' 
+          ? extractUrl(github) : '',
+        vercel: vercel && vercel !== 'undefined' && !vercel.includes('無') && !vercel.includes('未部屬') && vercel !== '' 
+          ? extractUrl(vercel) : '',
+        path: path && path !== 'undefined' && path !== '' ? path : '',
+        statusNote: statusNote && statusNote !== 'undefined' && statusNote !== '' ? statusNote : ''
+      });
     }
     
+    console.log('最終解析結果:', projects);
     return projects;
   };
 
@@ -99,8 +149,14 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
 
   const handlePreview = () => {
     try {
+      console.log('開始解析表格數據...');
+      console.log('輸入數據:', tableText);
+      
       const projects = parseProjectTable(tableText);
       const passwords = parsePasswordTable(passwordText);
+      
+      console.log('解析結果 - 專案數量:', projects.length);
+      console.log('解析結果 - 專案詳情:', projects);
       
       setPreviewProjects(projects);
       setPreviewPasswords(passwords);
@@ -111,6 +167,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
         showToast('success', '解析成功', `檢測到 ${projects.length} 個專案和 ${passwords.length} 個密碼`);
       }
     } catch (error) {
+      console.error('解析錯誤:', error);
       showToast('error', '解析失敗', error instanceof Error ? error.message : '表格格式錯誤');
     }
   };
