@@ -40,76 +40,94 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
   const { showToast } = useToast();
 
   const parseProjectTable = (text: string): ParsedProject[] => {
-    // 預處理：處理跨行內容
-    const preprocessedText = text
-      .replace(/\n(?!\|)/g, ' ')  // 將不以|開頭的換行替換為空格（合併跨行內容）
-      .replace(/\s+/g, ' ')       // 將多個空格合併為一個
-      .trim();
-    
-    const lines = preprocessedText.split('\n');
-    const projects: ParsedProject[] = [];
-    
-    console.log('=== 開始解析表格 ===');
-    console.log('總共行數:', lines.length);
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // 跳過空行
-      if (!line.trim()) continue;
-      
-      // 跳過表格分隔線和標題行
-      if (line.includes('|---') || line.includes('日期＋檔案名稱')) continue;
-      
-      // 檢查是否包含表格分隔符
-      if (!line.includes('|')) continue;
-      
-      const columns = line.split('|').map(col => col.trim());
-      
-      // 移除首尾空元素（由於|開頭和結尾產生的空字符串）
-      while (columns.length > 0 && columns[0] === '') columns.shift();
-      while (columns.length > 0 && columns[columns.length - 1] === '') columns.pop();
-      
-      // 檢查列數是否足夠（至少需要6列：日期檔名、說明、GitHub、Vercel、路徑、狀態備註）
-      if (columns.length < 6) continue;
-      
-      const [dateFileName, description, github, vercel, path, statusNote, ...extraColumns] = columns;
-      
-      // 檢查是否為純空行（所有列都為空）
-      const hasContent = columns.some(col => col && col.trim() !== '');
-      if (!hasContent) continue;
-      
-      // 更寬鬆的驗證：只要有說明就算有效行，即使日期檔名為空
-      if (!description || description.trim() === '') continue;
-      
-      // 處理 Markdown 格式的連結
-      const extractUrl = (text: string): string => {
-        if (!text) return '';
-        // 匹配 [text](url) 格式
-        const markdownMatch = text.match(/\[.*?\]\((.*?)\)/);
-        if (markdownMatch) return markdownMatch[1];
-        // 匹配 **[text]**(url) 格式  
-        const boldMarkdownMatch = text.match(/\*\*\[.*?\]\*\*\((.*?)\)/);
-        if (boldMarkdownMatch) return boldMarkdownMatch[1];
-        return text;
-      };
-      
-      const project = {
-        dateAndFileName: dateFileName || '',
-        description: description || '',
-        github: github && github !== 'undefined' && !github.includes('無') && github.trim() !== '' 
-          ? extractUrl(github) : '',
-        vercel: vercel && vercel !== 'undefined' && !vercel.includes('無') && !vercel.includes('未部屬') && vercel.trim() !== '' 
-          ? extractUrl(vercel) : '',
-        path: path && path !== 'undefined' && path.trim() !== '' ? path : '',
-        statusNote: statusNote && statusNote !== 'undefined' && statusNote.trim() !== '' ? statusNote : ''
-      };
-      
-      projects.push(project);
+    const lines = text.split('\n');
+    const rowStrings: string[] = [];
+    let currentRow: string | null = null;
+
+    for (const rawLine of lines) {
+      const trimmedLine = rawLine.trimEnd();
+      if (!trimmedLine.trim()) continue;
+
+      if (trimmedLine.trimStart().startsWith('|')) {
+        if (currentRow) {
+          rowStrings.push(currentRow);
+        }
+        currentRow = trimmedLine;
+      } else if (currentRow) {
+        currentRow += ` ${trimmedLine}`;
+      }
     }
-    
-    console.log('=== 解析完成 ===');
-    console.log('最終項目數量:', projects.length);
+
+    if (currentRow) {
+      rowStrings.push(currentRow);
+    }
+
+    const projects: ParsedProject[] = [];
+
+    const extractUrl = (value: string): string => {
+      const trimmed = value?.trim?.() ?? '';
+      if (!trimmed || trimmed === 'undefined') return '';
+      if (trimmed.includes('無') || trimmed.includes('未部屬')) return '';
+
+      const boldMatch = trimmed.match(/\*\*\[.*?\]\*\*\((.*?)\)/);
+      if (boldMatch) return boldMatch[1];
+
+      const markdownMatch = trimmed.match(/\[.*?\]\((.*?)\)/);
+      if (markdownMatch) return markdownMatch[1];
+
+      return trimmed;
+    };
+
+    for (const row of rowStrings) {
+      if (!row.includes('|')) continue;
+      if (row.includes('|---') || row.includes('日期＋檔案名稱')) continue;
+
+      const rawColumns = row.split('|');
+
+      if (rawColumns[0] === '') rawColumns.shift();
+      if (rawColumns.length && rawColumns[rawColumns.length - 1].trim() === '') {
+        rawColumns.pop();
+      }
+
+      const columns = rawColumns.map(col => col.trim());
+
+      // 跳過分隔符行（包含多個 --- 的行）
+      const isSeparatorRow = columns.some(col => col.includes('---')) ||
+                            columns.every(col => col === '' || col === '---' || !col);
+      if (isSeparatorRow) continue;
+
+      if (columns.every(col => !col)) continue;
+
+      while (columns.length < 6) {
+        columns.push('');
+      }
+
+      const [
+        dateFileName = '',
+        description = '',
+        github = '',
+        vercel = '',
+        path = '',
+        statusNote = '',
+        ...extraColumns
+      ] = columns;
+
+      if (!description.trim()) continue;
+
+      const combinedStatusNote = [statusNote, ...extraColumns]
+        .filter(Boolean)
+        .join(' ');
+
+      projects.push({
+        dateAndFileName: dateFileName.trim(),
+        description: description.trim(),
+        github: extractUrl(github),
+        vercel: extractUrl(vercel),
+        path: path && path !== 'undefined' ? path.trim() : '',
+        statusNote: combinedStatusNote && combinedStatusNote !== 'undefined' ? combinedStatusNote.trim() : ''
+      });
+    }
+
     return projects;
   };
 
