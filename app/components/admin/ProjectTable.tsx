@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { Project, CategoryDisplayName } from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { useToast } from '@/components/ui/ToastProvider';
-import { 
-  PencilIcon, 
-  TrashIcon, 
-  ExternalLinkIcon,
+import {
+  PencilIcon,
+  TrashIcon,
   CodeBracketIcon,
   GlobeAltIcon,
   StarIcon,
