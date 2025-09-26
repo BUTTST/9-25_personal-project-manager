@@ -83,7 +83,8 @@ export async function POST(request: NextRequest) {
       },
       featured: false,
       createdAt: Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      sortOrder: formData.sortOrder ?? data.projects.length, // 設定 sortOrder
     };
     
     data.projects.push(newProject);

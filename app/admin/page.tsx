@@ -16,14 +16,20 @@ import {
   CogIcon, 
   ChartBarIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  UserIcon,
+  PencilIcon // Import PencilIcon
 } from '@heroicons/react/24/outline';
+import { ToggleControl } from '@/components/ui/ToggleControl';
+import { HeaderThemeToggle } from '@/components/ui/HeaderThemeToggle';
 
 export default function AdminPage() {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'projects' | 'passwords' | 'import' | 'settings'>('projects');
   const [showPasswords, setShowPasswords] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false); // Add isEditMode state
   
   const { isAdmin } = useAuth();
   const { showToast } = useToast();
@@ -96,6 +102,19 @@ export default function AdminPage() {
       ...projectData,
       settings: updatedSettings
     });
+  };
+
+  const handleShowToggleControlsChange = (checked: boolean) => {
+    if (!projectData) return;
+    
+    const updatedSettings = {
+      ...projectData.settings,
+      showToggleControls: checked,
+    };
+    
+    handleSettingsUpdate(updatedSettings);
+    // You might want to save this to the server as well
+    // showToast('success', '設定已更新');
   };
 
   const handleImportComplete = async (newProjects: Project[], newPasswords: PasswordEntry[]) => {
@@ -175,6 +194,14 @@ export default function AdminPage() {
               <p className="text-muted-foreground">專案管理系統</p>
             </div>
             <div className="flex items-center space-x-4">
+              <button onClick={() => setIsEditMode(!isEditMode)} className={`btn-secondary flex items-center space-x-2 ${isEditMode ? 'ring-2 ring-primary-500' : ''}`}>
+                <PencilIcon className="h-4 w-4" />
+                <span>{isEditMode ? '結束編輯' : '編輯模式'}</span>
+              </button>
+              <button onClick={() => setIsPreviewMode(!isPreviewMode)} className="btn-secondary flex items-center space-x-2">
+                {isPreviewMode ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                <span>{isPreviewMode ? '結束預覽' : '預覽訪客狀態'}</span>
+              </button>
               <Link href="/" className="btn-secondary">
                 返回首頁
               </Link>
@@ -182,125 +209,162 @@ export default function AdminPage() {
                 <PlusIcon className="h-4 w-4" />
                 <span>新增專案</span>
               </Link>
+              <HeaderThemeToggle />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 統計卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <div className="card text-center">
-            <div className="text-2xl font-bold text-primary-600">{stats.total}</div>
-            <div className="text-sm text-muted-foreground">總專案</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-2xl font-bold text-red-600">{stats.important}</div>
-            <div className="text-sm text-muted-foreground">重要專案</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-            <div className="text-sm text-muted-foreground">已完成</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-2xl font-bold text-blue-600">{stats.public}</div>
-            <div className="text-sm text-muted-foreground">公開專案</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-2xl font-bold text-purple-600">{stats.passwords}</div>
-            <div className="text-sm text-muted-foreground">存储密碼</div>
+      {isPreviewMode ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Render a simplified view for preview */}
+          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+            <h2 className="text-xl font-bold mb-4">訪客預覽模式</h2>
+            <p className="text-muted-foreground mb-4">
+              您現在看到的是訪客所見的頁面內容。
+            </p>
+            {/* You would typically render your main page component here, 
+                but for simplicity, we'll just show the project list for now.
+                To do this properly, you might need to refactor your main page
+                into a component that can be rendered here.
+            */}
+            {projectData && (
+              <ProjectTable
+                projects={projectData.projects.filter(p => 
+                  Object.values(p.visibility).some(v => v)
+                )}
+                showToggleControls={false}
+                onUpdate={() => {}}
+                onDelete={() => {}}
+              />
+            )}
           </div>
         </div>
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* 統計卡片 */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+            <div className="card text-center">
+              <div className="text-2xl font-bold text-primary-600">{stats.total}</div>
+              <div className="text-sm text-muted-foreground">總專案</div>
+            </div>
+            <div className="card text-center">
+              <div className="text-2xl font-bold text-red-600">{stats.important}</div>
+              <div className="text-sm text-muted-foreground">重要專案</div>
+            </div>
+            <div className="card text-center">
+              <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
+              <div className="text-sm text-muted-foreground">已完成</div>
+            </div>
+            <div className="card text-center">
+              <div className="text-2xl font-bold text-blue-600">{stats.public}</div>
+              <div className="text-sm text-muted-foreground">公開專案</div>
+            </div>
+            <div className="card text-center">
+              <div className="text-2xl font-bold text-purple-600">{stats.passwords}</div>
+              <div className="text-sm text-muted-foreground">存储密碼</div>
+            </div>
+          </div>
 
-        {/* 選項卡列 */}
-        <div className="mb-6">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('projects')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'projects'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              專案管理
-            </button>
-            <button
-              onClick={() => setActiveTab('passwords')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                activeTab === 'passwords'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              <span>密碼管理</span>
+          <div className="flex justify-end mb-4">
+            <ToggleControl
+              checked={projectData.settings.showToggleControls}
+              onChange={handleShowToggleControlsChange}
+              label="顯示開關控制項"
+              size="sm"
+            />
+          </div>
+
+          {/* 選項卡列 */}
+          <div className="mb-6">
+            <nav className="flex space-x-8">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowPasswords(!showPasswords);
-                }}
-                className="text-muted-foreground hover:text-foreground"
+                onClick={() => setActiveTab('projects')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'projects'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                }`}
               >
-                {showPasswords ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                專案管理
               </button>
-            </button>
-            <button
-              onClick={() => setActiveTab('import')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'import'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              批量導入
-            </button>
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'settings'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              系統設定
-            </button>
-          </nav>
-        </div>
+              <button
+                onClick={() => setActiveTab('passwords')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                  activeTab === 'passwords'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                }`}
+              >
+                <span>密碼管理</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPasswords(!showPasswords);
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  {showPasswords ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                </button>
+              </button>
+              <button
+                onClick={() => setActiveTab('import')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'import'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                }`}
+              >
+                批量導入
+              </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'settings'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                }`}
+              >
+                系統設定
+              </button>
+            </nav>
+          </div>
 
-        {/* 內容區域 */}
-        <div className="bg-card rounded-lg shadow-sm border border-border">
-          {activeTab === 'projects' && (
-            <ProjectTable
-              projects={projectData.projects}
-              showToggleControls={projectData.settings.showToggleControls}
-              onUpdate={handleProjectUpdate}
-              onDelete={handleProjectDelete}
-            />
-          )}
-          
-          {activeTab === 'passwords' && (
-            <PasswordSection
-              passwords={projectData.passwords}
-              showPasswords={showPasswords}
-              onUpdate={handlePasswordUpdate}
-            />
-          )}
-          
-          {activeTab === 'import' && (
-            <TableImportSection
-              onImportComplete={handleImportComplete}
-            />
-          )}
-          
-          {activeTab === 'settings' && (
-            <SettingsSection
-              settings={projectData.settings}
-              projectData={projectData}
-              onUpdate={handleSettingsUpdate}
-            />
-          )}
+          {/* 內容區域 */}
+          <div className="bg-card rounded-lg shadow-sm border border-border">
+            {activeTab === 'projects' && (
+              <ProjectTable
+                projects={projectData.projects}
+                showToggleControls={projectData.settings.showToggleControls}
+                onUpdate={handleProjectUpdate}
+                onDelete={handleProjectDelete}
+              />
+            )}
+            
+            {activeTab === 'passwords' && (
+              <PasswordSection
+                passwords={projectData.passwords}
+                showPasswords={showPasswords}
+                onUpdate={handlePasswordUpdate}
+              />
+            )}
+            
+            {activeTab === 'import' && (
+              <TableImportSection
+                onImportComplete={handleImportComplete}
+              />
+            )}
+            
+            {activeTab === 'settings' && (
+              <SettingsSection
+                settings={projectData.settings}
+                projectData={projectData}
+                onUpdate={handleSettingsUpdate}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ interface ToggleControlProps {
   onChange: (checked: boolean) => void;
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
+  hidden?: boolean; // Add hidden prop
   label?: string;
   description?: string;
 }
@@ -14,6 +15,7 @@ export function ToggleControl({
   onChange, 
   size = 'md', 
   disabled = false, 
+  hidden = false, // Add hidden prop
   label,
   description 
 }: ToggleControlProps) {
@@ -54,7 +56,7 @@ export function ToggleControl({
       className={`
         ${sizeClasses.toggle}
         relative inline-flex flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-        ${checked ? 'bg-primary-600' : 'bg-muted'}
+        ${hidden ? 'bg-gray-300' : (checked ? 'bg-primary-600' : 'bg-muted')}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
       `}
       onClick={handleClick}
@@ -66,7 +68,7 @@ export function ToggleControl({
         className={`
           ${sizeClasses.handle}
           pointer-events-none inline-block transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
-          ${checked ? sizeClasses.translate : 'translate-x-0'}
+          ${hidden ? 'translate-x-0' : (checked ? sizeClasses.translate : 'translate-x-0')}
         `}
       />
     </button>

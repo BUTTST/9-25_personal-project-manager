@@ -84,3 +84,6 @@ pids
 .env.test.local
 .env.production.local
 
+# Cursor
+.cursor-doc.md
+

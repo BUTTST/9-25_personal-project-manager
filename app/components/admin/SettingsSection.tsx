@@ -126,13 +126,6 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
           <h3 className="text-base font-medium mb-4">顯示設定</h3>
           <div className="space-y-4">
             <ToggleControl
-              checked={localSettings.showToggleControls}
-              onChange={(checked) => handleSettingChange('showToggleControls', checked)}
-              label="顯示開關控制項"
-              description="是否在專案卡片上顯示可見性開關按鈕"
-            />
-            
-            <ToggleControl
               checked={localSettings.rememberPassword}
               onChange={(checked) => handleSettingChange('rememberPassword', checked)}
               label="記住密碼"

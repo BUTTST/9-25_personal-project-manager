@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Project, CategoryDisplayName } from '@/types';
+import { Project, CategoryDisplayName, ProjectVisibility } from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { 
   GlobeAltIcon, 
@@ -15,9 +15,38 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
+const GitHubIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+    fill="currentColor"
+    className="h-4 w-4"
+    aria-hidden="true"
+  >
+    <path
+      d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+    ></path>
+  </svg>
+);
+
+const VercelIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 116 100"
+    fill="currentColor"
+    className="h-4 w-4"
+    aria-hidden="true"
+  >
+    <path
+      d="M57.5 0L115 100H0L57.5 0z"
+    ></path>
+  </svg>
+);
+
 interface ProjectCardProps {
   project: Project;
   isAdmin: boolean;
+  isEditMode?: boolean; // Add isEditMode prop
   showToggleControls: boolean;
   onUpdate?: (updatedProject: Project) => void;
 }
@@ -30,11 +59,11 @@ const categoryDisplayNames: CategoryDisplayName = {
   abandoned: '［已捨棄］'
 };
 
-export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: ProjectCardProps) {
+export function ProjectCard({ project, isAdmin, isEditMode, showToggleControls, onUpdate }: ProjectCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localProject, setLocalProject] = useState(project);
 
-  const handleVisibilityToggle = async (field: keyof Project['visibility']) => {
+  const handleVisibilityToggle = async (field: keyof ProjectVisibility) => {
     if (!isAdmin) return;
     
     const updatedProject = {
@@ -91,6 +120,64 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
       setLocalProject(localProject);
       onUpdate?.(localProject);
     }
+  };
+
+  const handleFieldChange = (field: keyof Project, value: any) => {
+    if (!isAdmin) return;
+    const updatedProject = {
+      ...localProject,
+      [field]: value,
+      updatedAt: Date.now()
+    };
+    setLocalProject(updatedProject);
+    onUpdate?.(updatedProject);
+
+    try {
+      fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ [field]: value }),
+      });
+    } catch (error) {
+      console.error(`Failed to update project ${field}:`, error);
+      setLocalProject(localProject);
+      onUpdate?.(localProject);
+    }
+  };
+
+  const handleVisibilityChange = (field: keyof ProjectVisibility, value: boolean) => {
+    if (!isAdmin) return;
+    const updatedVisibility = { ...localProject.visibility, [field]: value };
+    handleFieldChange('visibility', updatedVisibility);
+  };
+
+  const handleLinkEdit = (field: 'github' | 'vercel', newUrl: string) => {
+    if (!isAdmin || !isEditMode) return;
+    handleFieldChange(field, newUrl);
+  };
+
+  const renderEditableLink = (field: 'github' | 'vercel', url: string | undefined) => {
+    if (isAdmin && isEditMode) {
+      return (
+        <input
+          type="text"
+          value={url || ''}
+          onChange={(e) => handleLinkEdit(field, e.target.value)}
+          onBlur={() => {
+            // This assumes handleFieldChange already saves the data
+          }}
+          className="input input-sm w-full"
+          placeholder={`${field} URL`}
+        />
+      );
+    }
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline truncate">
+        {url}
+      </a>
+    );
   };
 
   const getCategoryBadgeClass = (category: Project['category']) => {
@@ -197,9 +284,18 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
                 />
               )}
             </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {localProject.description}
-            </p>
+            {isAdmin && isEditMode ? (
+              <textarea
+                value={localProject.description}
+                onChange={(e) => handleFieldChange('description', e.target.value)}
+                className="textarea w-full"
+                rows={4}
+              />
+            ) : (
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {localProject.description}
+              </p>
+            )}
           </div>
         )}
 
@@ -207,15 +303,10 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
         <div className="space-y-2">
           {localProject.visibility.github && localProject.github && (
             <div className="flex items-center justify-between">
-              <Link
-                href={localProject.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-muted-foreground hover:text-primary-500 transition-colors text-sm"
-              >
-                <CodeBracketIcon className="h-4 w-4" />
-                <span>查看GitHub</span>
-              </Link>
+              <div className="flex items-center space-x-2 text-muted-foreground text-sm">
+                <GitHubIcon />
+                {renderEditableLink('github', localProject.github)}
+              </div>
               {isAdmin && showToggleControls && (
                 <ToggleControl
                   checked={localProject.visibility.github}
@@ -228,15 +319,10 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
           
           {localProject.visibility.vercel && localProject.vercel && (
             <div className="flex items-center justify-between">
-              <Link
-                href={localProject.vercel}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 text-muted-foreground hover:text-primary-500 transition-colors text-sm"
-              >
-                <GlobeAltIcon className="h-4 w-4" />
-                <span>線上預覽</span>
-              </Link>
+              <div className="flex items-center space-x-2 text-muted-foreground text-sm">
+                <VercelIcon />
+                {renderEditableLink('vercel', localProject.vercel)}
+              </div>
               {isAdmin && showToggleControls && (
                 <ToggleControl
                   checked={localProject.visibility.vercel}

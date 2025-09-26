@@ -11,6 +11,43 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { getPublicProjects } from '@/lib/blob-storage';
 import { useAuth } from '@/components/auth/AuthProvider';
 
+function EditableContent({ value, onSave, isAdmin, isEditMode }: { value: string, onSave: (newValue: string) => void, isAdmin: boolean, isEditMode: boolean }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentValue, setCurrentValue] = useState(value);
+
+  const handleSave = () => {
+    onSave(currentValue);
+    setIsEditing(false);
+  };
+
+  if (isAdmin && isEditMode) {
+    if (isEditing) {
+      return (
+        <div>
+          <input
+            type="text"
+            value={currentValue}
+            onChange={(e) => setCurrentValue(e.target.value)}
+            className="input text-sm"
+          />
+          <button onClick={handleSave} className="btn-primary btn-sm ml-2">儲存</button>
+          <button onClick={() => setIsEditing(false)} className="btn-secondary btn-sm ml-2">取消</button>
+        </div>
+      );
+    }
+    return (
+      <div className="relative group">
+        <span>{value}</span>
+        <button onClick={() => setIsEditing(true)} className="absolute -top-2 -right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+          ✏️
+        </button>
+      </div>
+    );
+  }
+
+  return <span>{value}</span>;
+}
+
 export default function HomePage() {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
@@ -18,6 +55,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isEditMode, setIsEditMode] = useState(false); // Add isEditMode state
   
   const { isAdmin } = useAuth();
 
@@ -89,11 +127,25 @@ export default function HomePage() {
     setFilteredProjects(projects);
   };
 
+  const handleContentSave = (key: string, newValue: string) => {
+    // Here you would typically make an API call to save the content
+    console.log(`Saving ${key}: ${newValue}`);
+    // For now, we'll just update the local state for demonstration
+    // In a real app, you would update the projectData state
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {isAdmin && (
+          <div className="flex justify-end mb-4">
+            <button onClick={() => setIsEditMode(!isEditMode)} className={`btn-primary ${isEditMode ? 'ring-2 ring-offset-2 ring-primary-500' : ''}`}>
+              {isEditMode ? '結束編輯' : '編輯頁面內容'}
+            </button>
+          </div>
+        )}
         {loading && (
           <div className="flex items-center justify-center py-16">
             <LoadingSpinner text="專案載入中" />
@@ -112,56 +164,74 @@ export default function HomePage() {
         )}
 
         {!loading && !error && (
-        {/* 搜尋和篩選區域 */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <SearchBar 
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="搜尋專案名稱、說明或備註..."
-              />
-            </div>
-            <div className="sm:w-64">
-              <CategoryFilter 
-                value={selectedCategory}
-                onChange={setSelectedCategory}
-              />
+        <>
+          {/* 搜尋和篩選區域 */}
+          <div className="mb-8 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <SearchBar 
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="搜尋專案名稱、說明或備註..."
+                />
+              </div>
+              <div className="sm:w-64">
+                <CategoryFilter 
+                  value={selectedCategory}
+                  onChange={setSelectedCategory}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* 統計資訊 */}
-        {projectData && (
-          <div className="mb-6 flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <span>總共 {projectData.metadata.totalProjects} 個專案</span>
-            {!isAdmin && (
-              <span>公開 {projectData.metadata.publicProjects} 個</span>
-            )}
-            {filteredProjects.length !== (isAdmin ? projectData.metadata.totalProjects : projectData.metadata.publicProjects) && (
-              <span>篩選結果 {filteredProjects.length} 個</span>
-            )}
-          </div>
-        )}
-
-        {/* 專案列表 */}
-        {filteredProjects.length === 0 ? (
-          <EmptyState 
-            title={searchQuery || selectedCategory !== 'all' ? '無符合條件的專案' : '暂無專案'}
-            description={searchQuery || selectedCategory !== 'all' ? '試試調整搜尋條件或篩選器' : '目前還沒有任何專案'}
-          />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <ProjectCard 
-                key={project.id} 
-                project={project} 
+          {/* 統計資訊 */}
+          {projectData && (
+            <div className="mb-6 flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <EditableContent
+                value={`總共 ${projectData.metadata.totalProjects} 個專案`}
+                onSave={(newValue) => handleContentSave('totalProjectsText', newValue)}
                 isAdmin={isAdmin}
-                showToggleControls={projectData?.settings.showToggleControls ?? true}
+                isEditMode={isEditMode}
               />
-            ))}
-          </div>
-        )}
+              {!isAdmin && (
+                <EditableContent
+                  value={`公開 ${projectData.metadata.publicProjects} 個`}
+                  onSave={(newValue) => handleContentSave('publicProjectsText', newValue)}
+                  isAdmin={isAdmin}
+                  isEditMode={isEditMode}
+                />
+              )}
+              {filteredProjects.length !== (isAdmin ? projectData.metadata.totalProjects : projectData.metadata.publicProjects) && (
+                <EditableContent
+                  value={`篩選結果 ${filteredProjects.length} 個`}
+                  onSave={(newValue) => handleContentSave('filteredProjectsText', newValue)}
+                  isAdmin={isAdmin}
+                  isEditMode={isEditMode}
+                />
+              )}
+            </div>
+          )}
+
+          {/* 專案列表 */}
+          {filteredProjects.length === 0 ? (
+            <EmptyState 
+              title={searchQuery || selectedCategory !== 'all' ? '無符合條件的專案' : '暂無專案'}
+              description={searchQuery || selectedCategory !== 'all' ? '試試調整搜尋條件或篩選器' : '目前還沒有任何專案'}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProjects.map((project) => (
+                <ProjectCard 
+                  key={project.id} 
+                  project={project} 
+                  isAdmin={isAdmin}
+                  isEditMode={isEditMode}
+                  showToggleControls={projectData?.settings.showToggleControls ?? true}
+                />
+              ))}
+            </div>
+          )}
+        </>
         )}
       </div>
     </div>

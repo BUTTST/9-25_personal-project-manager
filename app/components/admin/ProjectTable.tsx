@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, DragEvent } from 'react';
 import Link from 'next/link';
 import { Project, CategoryDisplayName } from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
@@ -15,6 +15,35 @@ import {
   EyeSlashIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+
+const GitHubIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+    fill="currentColor"
+    className="h-4 w-4"
+    aria-hidden="true"
+  >
+    <path
+      d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+    ></path>
+  </svg>
+);
+
+const VercelIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 116 100"
+    fill="currentColor"
+    className="h-4 w-4"
+    aria-hidden="true"
+  >
+    <path
+      d="M57.5 0L115 100H0L57.5 0z"
+    ></path>
+  </svg>
+);
+
 
 interface ProjectTableProps {
   projects: Project[];
@@ -33,7 +62,31 @@ const categoryDisplayNames: CategoryDisplayName = {
 
 export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete }: ProjectTableProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [displayProjects, setDisplayProjects] = useState<Project[]>([]);
+  const [draggingProject, setDraggingProject] = useState<Project | null>(null);
+
   const { showToast } = useToast();
+
+  useEffect(() => {
+    // 根據 sortOrder 排序，如果沒有則使用舊的排序邏輯
+    const sorted = [...projects].sort((a, b) => {
+      if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
+        return a.sortOrder - b.sortOrder;
+      }
+      if (a.featured !== b.featured) {
+        return a.featured ? -1 : 1;
+      }
+      const categoryOrder = ['important', 'secondary', 'practice', 'completed', 'abandoned'];
+      const aIndex = categoryOrder.indexOf(a.category);
+      const bIndex = categoryOrder.indexOf(b.category);
+      if (aIndex !== bIndex) {
+        return aIndex - bIndex;
+      }
+      return b.updatedAt - a.updatedAt;
+    });
+    setDisplayProjects(sorted);
+  }, [projects]);
+
 
   const handleFeaturedToggle = async (project: Project) => {
     const updatedProject = {
@@ -82,6 +135,58 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
     } finally {
       setDeleteConfirm(null);
     }
+  };
+
+  const handleDragStart = (e: DragEvent<HTMLTableRowElement>, project: Project) => {
+    setDraggingProject(project);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', project.id);
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLTableRowElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e: DragEvent<HTMLTableRowElement>, targetProject: Project) => {
+    e.preventDefault();
+    if (!draggingProject) return;
+
+    const draggingIndex = displayProjects.findIndex(p => p.id === draggingProject.id);
+    const targetIndex = displayProjects.findIndex(p => p.id === targetProject.id);
+
+    if (draggingIndex === -1 || targetIndex === -1) return;
+
+    const newProjects = [...displayProjects];
+    const [removed] = newProjects.splice(draggingIndex, 1);
+    newProjects.splice(targetIndex, 0, removed);
+
+    const updatedProjects = newProjects.map((p, index) => ({ ...p, sortOrder: index }));
+    
+    setDisplayProjects(updatedProjects);
+    setDraggingProject(null);
+
+    const orderToSave = updatedProjects.map(p => ({ id: p.id, sortOrder: p.sortOrder }));
+    
+    try {
+      const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
+      await fetch('/api/projects/reorder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': adminPassword,
+        },
+        body: JSON.stringify(orderToSave),
+      });
+      showToast('success', '專案順序已更新');
+    } catch (error) {
+      showToast('error', '更新專案順序失敗');
+      // Revert to the original order on failure
+      setDisplayProjects(displayProjects);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggingProject(null);
   };
 
   const getCategoryBadgeClass = (category: Project['category']) => {
@@ -158,8 +263,19 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
               </tr>
             </thead>
             <tbody className="bg-card divide-y divide-border">
-              {sortedProjects.map((project) => (
-                <tr key={project.id} className="transition-colors hover:bg-muted/50">
+              {displayProjects.map((project) => (
+                <tr 
+                  key={project.id} 
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, project)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, project)}
+                  onDragEnd={handleDragEnd}
+                  className={`transition-colors hover:bg-muted/50 ${
+                    draggingProject?.id === project.id ? 'opacity-50 bg-primary-100' : ''
+                  }`}
+                  style={{ cursor: 'grab' }}
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-start space-x-3">
                       <button
@@ -202,24 +318,26 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-2 text-muted-foreground">
                       {project.github && (
-                        <Link
+                        <a
                           href={project.github}
                           target="_blank"
+                          rel="noopener noreferrer"
                           className="hover:text-primary-500"
                           title="GitHub"
                         >
-                          <CodeBracketIcon className="h-4 w-4" />
-                        </Link>
+                          <GitHubIcon />
+                        </a>
                       )}
                       {project.vercel && (
-                        <Link
+                        <a
                           href={project.vercel}
                           target="_blank"
+                          rel="noopener noreferrer"
                           className="hover:text-primary-500"
                           title="Vercel"
                         >
-                          <GlobeAltIcon className="h-4 w-4" />
-                        </Link>
+                          <VercelIcon />
+                        </a>
                       )}
                     </div>
                   </td>

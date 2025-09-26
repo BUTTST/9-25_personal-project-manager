@@ -23,6 +23,7 @@ export interface Project {
   featured: boolean; // 是否為精選項目
   createdAt: number;
   updatedAt: number;
+  sortOrder: number; // 新增排序欄位
 }
 
 export interface PasswordEntry {
@@ -78,6 +79,7 @@ export interface ProjectFormData {
   statusNote?: string;
   publicNote?: string;
   developerNote?: string;
+  sortOrder?: number; // 新增排序欄位
 }
 
 export interface PasswordFormData {
