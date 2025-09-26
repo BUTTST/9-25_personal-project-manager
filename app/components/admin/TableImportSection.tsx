@@ -40,51 +40,47 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
   const { showToast } = useToast();
 
   const parseProjectTable = (text: string): ParsedProject[] => {
-    const lines = text.trim().split('\n');
+    // 預處理：處理跨行內容
+    const preprocessedText = text
+      .replace(/\n(?!\|)/g, ' ')  // 將不以|開頭的換行替換為空格（合併跨行內容）
+      .replace(/\s+/g, ' ')       // 將多個空格合併為一個
+      .trim();
+    
+    const lines = preprocessedText.split('\n');
     const projects: ParsedProject[] = [];
     
+    console.log('=== 開始解析表格 ===');
     console.log('總共行數:', lines.length);
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      console.log(`處理第 ${i + 1} 行:`, JSON.stringify(line));
+      
+      // 跳過空行
+      if (!line.trim()) continue;
       
       // 跳過表格分隔線和標題行
-      if (line.includes('|---') || line.includes('日期＋檔案名稱')) {
-        console.log(`跳過第 ${i + 1} 行: 表格分隔線或標題行`);
-        continue;
-      }
+      if (line.includes('|---') || line.includes('日期＋檔案名稱')) continue;
+      
+      // 檢查是否包含表格分隔符
+      if (!line.includes('|')) continue;
       
       const columns = line.split('|').map(col => col.trim());
-      console.log(`第 ${i + 1} 行原始列數:`, columns.length, columns);
-      
-      // 檢查是否有足夠的列數（至少要有7個分隔符產生的列，因為開頭和結尾可能有空的）
-      if (columns.length < 7) {
-        console.log(`跳過第 ${i + 1} 行: 列數不足 (${columns.length} < 7)`);
-        continue;
-      }
       
       // 移除首尾空元素（由於|開頭和結尾產生的空字符串）
       while (columns.length > 0 && columns[0] === '') columns.shift();
       while (columns.length > 0 && columns[columns.length - 1] === '') columns.pop();
       
-      console.log(`第 ${i + 1} 行處理後列數:`, columns.length, columns);
+      // 檢查列數是否足夠（至少需要6列：日期檔名、說明、GitHub、Vercel、路徑、狀態備註）
+      if (columns.length < 6) continue;
       
-      // 再次檢查列數
-      if (columns.length < 6) {
-        console.log(`跳過第 ${i + 1} 行: 處理後列數不足 (${columns.length} < 6)`);
-        continue;
-      }
+      const [dateFileName, description, github, vercel, path, statusNote, ...extraColumns] = columns;
       
-      const [dateFileName, description, github, vercel, path, statusNote] = columns;
+      // 檢查是否為純空行（所有列都為空）
+      const hasContent = columns.some(col => col && col.trim() !== '');
+      if (!hasContent) continue;
       
-      // 檢查關鍵欄位是否有內容（至少要有日期檔名或說明）
-      if (!dateFileName && !description) {
-        console.log(`跳過第 ${i + 1} 行: 缺少關鍵欄位內容`);
-        continue;
-      }
-      
-      console.log(`第 ${i + 1} 行解析成功:`, { dateFileName, description, github, vercel, path, statusNote });
+      // 更寬鬆的驗證：只要有說明就算有效行，即使日期檔名為空
+      if (!description || description.trim() === '') continue;
       
       // 處理 Markdown 格式的連結
       const extractUrl = (text: string): string => {
@@ -92,25 +88,28 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
         // 匹配 [text](url) 格式
         const markdownMatch = text.match(/\[.*?\]\((.*?)\)/);
         if (markdownMatch) return markdownMatch[1];
-        // 匹配 **[text]**(url) 格式
-        const boldMarkdownMatch = text.match(/\*\*\[.*?\]\*\*\((.*?)\)/) || text.match(/\[.*?\]\((.*?)\)/);
+        // 匹配 **[text]**(url) 格式  
+        const boldMarkdownMatch = text.match(/\*\*\[.*?\]\*\*\((.*?)\)/);
         if (boldMarkdownMatch) return boldMarkdownMatch[1];
         return text;
       };
       
-      projects.push({
+      const project = {
         dateAndFileName: dateFileName || '',
         description: description || '',
-        github: github && github !== 'undefined' && !github.includes('無') && github !== '' 
+        github: github && github !== 'undefined' && !github.includes('無') && github.trim() !== '' 
           ? extractUrl(github) : '',
-        vercel: vercel && vercel !== 'undefined' && !vercel.includes('無') && !vercel.includes('未部屬') && vercel !== '' 
+        vercel: vercel && vercel !== 'undefined' && !vercel.includes('無') && !vercel.includes('未部屬') && vercel.trim() !== '' 
           ? extractUrl(vercel) : '',
-        path: path && path !== 'undefined' && path !== '' ? path : '',
-        statusNote: statusNote && statusNote !== 'undefined' && statusNote !== '' ? statusNote : ''
-      });
+        path: path && path !== 'undefined' && path.trim() !== '' ? path : '',
+        statusNote: statusNote && statusNote !== 'undefined' && statusNote.trim() !== '' ? statusNote : ''
+      };
+      
+      projects.push(project);
     }
     
-    console.log('最終解析結果:', projects);
+    console.log('=== 解析完成 ===');
+    console.log('最終項目數量:', projects.length);
     return projects;
   };
 
@@ -149,14 +148,8 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
 
   const handlePreview = () => {
     try {
-      console.log('開始解析表格數據...');
-      console.log('輸入數據:', tableText);
-      
       const projects = parseProjectTable(tableText);
       const passwords = parsePasswordTable(passwordText);
-      
-      console.log('解析結果 - 專案數量:', projects.length);
-      console.log('解析結果 - 專案詳情:', projects);
       
       setPreviewProjects(projects);
       setPreviewPasswords(passwords);
