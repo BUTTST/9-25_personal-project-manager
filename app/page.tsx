@@ -10,6 +10,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getPublicProjects } from '@/lib/blob-storage';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { ToggleControl } from '@/components/ui/ToggleControl';
+import { EyeIcon, EyeSlashIcon, PencilIcon } from '@heroicons/react/24/outline';
 
 function EditableContent({ value, onSave, isAdmin, isEditMode }: { value: string, onSave: (newValue: string) => void, isAdmin: boolean, isEditMode: boolean }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -55,7 +57,8 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [isEditMode, setIsEditMode] = useState(false); // Add isEditMode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   
   const { isAdmin } = useAuth();
 
@@ -67,7 +70,7 @@ export default function HomePage() {
     if (projectData) {
       filterProjects();
     }
-  }, [projectData, searchQuery, selectedCategory, isAdmin]);
+  }, [projectData, searchQuery, selectedCategory, isAdmin, isPreviewMode]);
 
   const loadProjects = async () => {
     try {
@@ -88,7 +91,10 @@ export default function HomePage() {
   const filterProjects = () => {
     if (!projectData) return;
     
-    let projects = isAdmin ? projectData.projects : getPublicProjects(projectData.projects);
+    // 根據預覽模式決定顯示哪些專案
+    let projects = (isAdmin && !isPreviewMode) 
+      ? projectData.projects 
+      : getPublicProjects(projectData.projects);
     
     // 依照類別篩選
     if (selectedCategory !== 'all') {
@@ -103,7 +109,7 @@ export default function HomePage() {
         project.description.toLowerCase().includes(query) ||
         project.statusNote?.toLowerCase().includes(query) ||
         project.publicNote?.toLowerCase().includes(query) ||
-        (isAdmin && project.developerNote?.toLowerCase().includes(query))
+        (isAdmin && !isPreviewMode && project.developerNote?.toLowerCase().includes(query))
       );
     }
     
@@ -140,12 +146,40 @@ export default function HomePage() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {isAdmin && (
-          <div className="flex justify-end mb-4">
-            <button onClick={() => setIsEditMode(!isEditMode)} className={`btn-primary ${isEditMode ? 'ring-2 ring-offset-2 ring-primary-500' : ''}`}>
-              {isEditMode ? '結束編輯' : '編輯頁面內容'}
+          <div className="flex justify-end items-center space-x-3 mb-4">
+            <button 
+              onClick={() => setIsEditMode(!isEditMode)} 
+              className={`btn-primary flex items-center space-x-2 ${isEditMode ? 'ring-2 ring-offset-2 ring-primary-500' : ''}`}
+            >
+              <PencilIcon className="h-4 w-4" />
+              <span>{isEditMode ? '結束編輯' : '編輯頁面內容'}</span>
+            </button>
+            
+            <button 
+              onClick={() => setIsPreviewMode(!isPreviewMode)} 
+              className={`btn-secondary flex items-center space-x-2 ${isPreviewMode ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`}
+            >
+              {isPreviewMode ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+              <span>{isPreviewMode ? '結束預覽' : '預覽訪客狀態'}</span>
             </button>
           </div>
         )}
+        
+        {/* 預覽模式提示 */}
+        {isAdmin && isPreviewMode && (
+          <div className="mb-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <EyeIcon className="h-5 w-5 text-blue-500" />
+              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                您正在以訪客身份預覽此頁面
+              </span>
+            </div>
+            <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+              只顯示對訪客可見的內容，開發者註解和隱藏專案不會顯示
+            </p>
+          </div>
+        )}
+        
         {loading && (
           <div className="flex items-center justify-center py-16">
             <LoadingSpinner text="專案載入中" />
@@ -224,7 +258,7 @@ export default function HomePage() {
                 <ProjectCard 
                   key={project.id} 
                   project={project} 
-                  isAdmin={isAdmin}
+                  isAdmin={isAdmin && !isPreviewMode}
                   isEditMode={isEditMode}
                   showToggleControls={projectData?.settings.showToggleControls ?? true}
                 />

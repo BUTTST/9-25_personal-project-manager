@@ -28,8 +28,6 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'projects' | 'passwords' | 'import' | 'settings'>('projects');
   const [showPasswords, setShowPasswords] = useState(false);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // Add isEditMode state
   
   const { isAdmin } = useAuth();
   const { showToast } = useToast();
@@ -104,18 +102,6 @@ export default function AdminPage() {
     });
   };
 
-  const handleShowToggleControlsChange = (checked: boolean) => {
-    if (!projectData) return;
-    
-    const updatedSettings = {
-      ...projectData.settings,
-      showToggleControls: checked,
-    };
-    
-    handleSettingsUpdate(updatedSettings);
-    // You might want to save this to the server as well
-    // showToast('success', '設定已更新');
-  };
 
   const handleImportComplete = async (newProjects: Project[], newPasswords: PasswordEntry[]) => {
     if (!projectData) return;
@@ -193,55 +179,20 @@ export default function AdminPage() {
               <h1 className="text-2xl font-bold">管理後台</h1>
               <p className="text-muted-foreground">專案管理系統</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <button onClick={() => setIsEditMode(!isEditMode)} className={`btn-secondary flex items-center space-x-2 ${isEditMode ? 'ring-2 ring-primary-500' : ''}`}>
-                <PencilIcon className="h-4 w-4" />
-                <span>{isEditMode ? '結束編輯' : '編輯模式'}</span>
-              </button>
-              <button onClick={() => setIsPreviewMode(!isPreviewMode)} className="btn-secondary flex items-center space-x-2">
-                {isPreviewMode ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                <span>{isPreviewMode ? '結束預覽' : '預覽訪客狀態'}</span>
-              </button>
-              <Link href="/" className="btn-secondary">
-                返回首頁
-              </Link>
-              <Link href="/admin/new" className="btn-primary flex items-center space-x-2">
-                <PlusIcon className="h-4 w-4" />
-                <span>新增專案</span>
-              </Link>
-              <HeaderThemeToggle />
-            </div>
+             <div className="flex items-center space-x-4">
+               <Link href="/" className="btn-secondary">
+                 返回首頁
+               </Link>
+               <Link href="/admin/new" className="btn-primary flex items-center space-x-2">
+                 <PlusIcon className="h-4 w-4" />
+                 <span>新增專案</span>
+               </Link>
+             </div>
           </div>
         </div>
       </div>
 
-      {isPreviewMode ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Render a simplified view for preview */}
-          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-            <h2 className="text-xl font-bold mb-4">訪客預覽模式</h2>
-            <p className="text-muted-foreground mb-4">
-              您現在看到的是訪客所見的頁面內容。
-            </p>
-            {/* You would typically render your main page component here, 
-                but for simplicity, we'll just show the project list for now.
-                To do this properly, you might need to refactor your main page
-                into a component that can be rendered here.
-            */}
-            {projectData && (
-              <ProjectTable
-                projects={projectData.projects.filter(p => 
-                  Object.values(p.visibility).some(v => v)
-                )}
-                showToggleControls={false}
-                onUpdate={() => {}}
-                onDelete={() => {}}
-              />
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* 統計卡片 */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
             <div className="card text-center">
@@ -266,14 +217,6 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="flex justify-end mb-4">
-            <ToggleControl
-              checked={projectData.settings.showToggleControls}
-              onChange={handleShowToggleControlsChange}
-              label="顯示開關控制項"
-              size="sm"
-            />
-          </div>
 
           {/* 選項卡列 */}
           <div className="mb-6">

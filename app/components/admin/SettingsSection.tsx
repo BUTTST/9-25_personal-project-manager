@@ -148,17 +148,20 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
 
       {/* 顯示控制設定 */}
       <div className="space-y-6">
-        <div>
-          <h3 className="text-base font-medium mb-4">顯示設定</h3>
-          <div className="space-y-4">
-            <ToggleControl
-              checked={localSettings.rememberPassword}
-              onChange={(checked) => handleSettingChange('rememberPassword', checked)}
-              label="記住密碼"
-              description="登入時自動記住管理員密碼"
-            />
-          </div>
-        </div>
+         <div>
+           <h3 className="text-base font-medium mb-4">使用者體驗設定</h3>
+           <div className="space-y-4">
+             <ToggleControl
+               checked={localSettings.rememberPassword}
+               onChange={(checked) => handleSettingChange('rememberPassword', checked)}
+               label="記住密碼"
+               description="登入時自動記住管理員密碼"
+             />
+           </div>
+           <p className="text-sm text-muted-foreground mt-2">
+             💡 提示：專案的顯示開關控制項已移至各專案的編輯頁面
+           </p>
+         </div>
 
         {/* 預設可見性設定 */}
         <div>
