@@ -49,7 +49,7 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-password': localStorage.getItem('remembered_password') || ''
+          'x-admin-password': typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : ''
         },
         body: JSON.stringify({ featured: updatedProject.featured }),
       });
@@ -67,7 +67,7 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
       const response = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE',
         headers: {
-          'x-admin-password': localStorage.getItem('remembered_password') || ''
+          'x-admin-password': typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : ''
         }
       });
       

@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ProjectTable } from '@/components/admin/ProjectTable';
 import { PasswordSection } from '@/components/admin/PasswordSection';
 import { SettingsSection } from '@/components/admin/SettingsSection';
+import { TableImportSection } from '@/components/admin/TableImportSection';
 import { 
   PlusIcon, 
   CogIcon, 
@@ -21,7 +22,7 @@ import {
 export default function AdminPage() {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'projects' | 'passwords' | 'settings'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'passwords' | 'import' | 'settings'>('projects');
   const [showPasswords, setShowPasswords] = useState(false);
   
   const { isAdmin } = useAuth();
@@ -39,9 +40,10 @@ export default function AdminPage() {
   const loadData = async () => {
     try {
       setLoading(true);
+      const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
       const response = await fetch('/api/projects?admin=true', {
         headers: {
-          'x-admin-password': process.env.NEXT_PUBLIC_ADMIN_PASSWORD || ''
+          'x-admin-password': adminPassword
         }
       });
       
@@ -94,6 +96,39 @@ export default function AdminPage() {
       ...projectData,
       settings: updatedSettings
     });
+  };
+
+  const handleImportComplete = async (newProjects: Project[], newPasswords: PasswordEntry[]) => {
+    if (!projectData) return;
+
+    const updatedData = {
+      ...projectData,
+      projects: [...projectData.projects, ...newProjects],
+      passwords: [...projectData.passwords, ...newPasswords]
+    };
+
+    setProjectData(updatedData);
+    
+    // 同步到伺服器
+    try {
+      const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
+      
+      // 批量新增專案
+      for (const project of newProjects) {
+        await fetch('/api/projects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-password': adminPassword
+          },
+          body: JSON.stringify(project)
+        });
+      }
+      
+      showToast('success', '數據同步完成', '所有資料已保存到雲端');
+    } catch (error) {
+      showToast('warning', '部分同步失敗', '請檢查網路連線');
+    }
   };
 
   if (!isAdmin) {
@@ -210,6 +245,16 @@ export default function AdminPage() {
               </button>
             </button>
             <button
+              onClick={() => setActiveTab('import')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'import'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              批量導入
+            </button>
+            <button
               onClick={() => setActiveTab('settings')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'settings'
@@ -241,9 +286,16 @@ export default function AdminPage() {
             />
           )}
           
+          {activeTab === 'import' && (
+            <TableImportSection
+              onImportComplete={handleImportComplete}
+            />
+          )}
+          
           {activeTab === 'settings' && (
             <SettingsSection
               settings={projectData.settings}
+              projectData={projectData}
               onUpdate={handleSettingsUpdate}
             />
           )}

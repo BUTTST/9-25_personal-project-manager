@@ -16,10 +16,11 @@ import {
 
 interface SettingsSectionProps {
   settings: ProjectData['settings'];
+  projectData: ProjectData;
   onUpdate: (settings: ProjectData['settings']) => void;
 }
 
-export function SettingsSection({ settings, onUpdate }: SettingsSectionProps) {
+export function SettingsSection({ settings, projectData, onUpdate }: SettingsSectionProps) {
   const [localSettings, setLocalSettings] = useState(settings);
   const { showToast } = useToast();
 
@@ -49,13 +50,59 @@ export function SettingsSection({ settings, onUpdate }: SettingsSectionProps) {
   };
 
   const handleExportData = () => {
-    // TODO: 實作資料匯出功能
-    showToast('info', '功能開發中', '資料匯出功能將在後續版本提供');
+    try {
+      // 創建匯出數據
+      const exportData = {
+        projects: projectData.projects || [],
+        passwords: projectData.passwords || [],
+        settings: projectData.settings,
+        exportDate: new Date().toISOString(),
+        version: '1.0.0'
+      };
+
+      // 創建並下載 JSON 檔案
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `project-showcase-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      
+      URL.revokeObjectURL(url);
+      showToast('success', '資料匯出成功', '備份檔案已下載');
+    } catch (error) {
+      showToast('error', '匯出失敗', error instanceof Error ? error.message : '未知錯誤');
+    }
   };
 
   const handleImportData = () => {
-    // TODO: 實作資料匯入功能
-    showToast('info', '功能開發中', '資料匯入功能將在後續版本提供');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const importData = JSON.parse(text);
+        
+        // 驗證數據格式
+        if (!importData.projects || !Array.isArray(importData.projects)) {
+          throw new Error('無效的數據格式');
+        }
+
+        // 這裡需要調用父組件的更新函數
+        showToast('info', '導入功能開發中', '請使用表格導入功能');
+      } catch (error) {
+        showToast('error', '導入失敗', error instanceof Error ? error.message : '檔案格式錯誤');
+      }
+    };
+    
+    input.click();
   };
 
   const handleClearCache = () => {
