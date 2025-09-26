@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { list, put } from '@vercel/blob';
-import { isAdminRequest } from '@/lib/auth';
 import { Project } from '@/types';
 
 export async function POST(request: NextRequest) {
-  if (!isAdminRequest(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const password = request.headers.get('x-admin-password');
+
+  if (!password || password !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: '未授權訪問' }, { status: 401 });
   }
 
   try {
