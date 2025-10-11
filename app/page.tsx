@@ -112,26 +112,28 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-foreground transition-colors">
       <Header />
       
+      {/* 懸浮的預覽訪客視角按鈕 */}
+      {isAdmin && (
+        <div className="fixed top-20 right-6 z-50 animate-slide-left">
+          <button 
+            onClick={() => setIsPreviewMode(!isPreviewMode)} 
+            className={`
+              flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm
+              transition-all duration-200 shadow-2xl hover:scale-105
+              ${isPreviewMode 
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800' 
+                : 'bg-card text-foreground border-2 border-border hover:border-blue-400 dark:hover:border-blue-500 backdrop-blur-sm'
+              }
+            `}
+            title={isPreviewMode ? '點擊結束預覽模式' : '點擊以訪客身份預覽'}
+          >
+            {isPreviewMode ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+            <span className="hidden sm:inline">{isPreviewMode ? '結束預覽' : '預覽訪客'}</span>
+          </button>
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 管理員控制列 */}
-        {isAdmin && (
-          <div className="flex justify-end items-center space-x-3 mb-6">
-            <button 
-              onClick={() => setIsPreviewMode(!isPreviewMode)} 
-              className={`
-                flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm
-                transition-all duration-200
-                ${isPreviewMode 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700' 
-                  : 'bg-card text-foreground border-2 border-border hover:border-blue-400 dark:hover:border-blue-500'
-                }
-              `}
-            >
-              {isPreviewMode ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-              <span>{isPreviewMode ? '結束預覽' : '預覽訪客視角'}</span>
-            </button>
-          </div>
-        )}
         
         {/* 預覽模式提示 */}
         {isAdmin && isPreviewMode && (
