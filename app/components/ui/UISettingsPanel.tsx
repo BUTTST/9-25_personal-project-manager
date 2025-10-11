@@ -47,7 +47,7 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
   };
 
   const getDragAfterElement = (container: HTMLElement, y: number): HTMLElement | null => {
-    const draggableElements = [...container.querySelectorAll('[draggable="true"]:not([style*="opacity: 0.4"]))] as HTMLElement[];
+    const draggableElements = [...container.querySelectorAll('[draggable="true"]:not([style*="opacity: 0.4"])')] as HTMLElement[];
     
     return draggableElements.reduce<{offset: number, element: HTMLElement | null}>((closest, child) => {
       const box = child.getBoundingClientRect();
