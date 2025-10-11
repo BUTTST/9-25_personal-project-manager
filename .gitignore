@@ -87,3 +87,6 @@ pids
 # Cursor
 .cursor-doc.md
 
+# ChatGPT 聊天紀錄
+ChatGPT*.md
+

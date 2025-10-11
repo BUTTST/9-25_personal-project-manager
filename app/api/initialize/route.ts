@@ -5,6 +5,15 @@ import { isEmptyData } from '@/lib/data-safety';
 
 // 自動初始化端點 - 僅在首次部署時運行
 export async function GET(request: NextRequest) {
+  // 核心問題：此端點會在讀取失敗時觸發強制覆寫，風險極高。
+  // 我們將其停用，改為手動、安全的初始化方式。
+  return NextResponse.json({
+    message: '此自動初始化端點已被停用以確保資料安全。請使用管理後台的手動初始化功能。',
+    action: 'disabled',
+    timestamp: new Date().toISOString()
+  });
+
+  /* 原有的危險邏輯
   try {
     console.log('🔍 檢查是否需要初始化數據...');
     
@@ -46,4 +55,5 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+  */
 }

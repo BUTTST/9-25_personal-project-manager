@@ -22,11 +22,12 @@ import {
 } from '@heroicons/react/24/outline';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { HeaderThemeToggle } from '@/components/ui/HeaderThemeToggle';
+import { DiagnosticsPanel } from '@/components/admin/DiagnosticsPanel';
 
 export default function AdminPage() {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'projects' | 'passwords' | 'import' | 'settings'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'passwords' | 'import' | 'settings' | 'diagnostics'>('projects');
   const [showPasswords, setShowPasswords] = useState(false);
   
   const { isAdmin } = useAuth();
@@ -270,6 +271,16 @@ export default function AdminPage() {
               >
                 系統設定
               </button>
+              <button
+                onClick={() => setActiveTab('diagnostics')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'diagnostics'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                }`}
+              >
+                系統診斷
+              </button>
             </nav>
           </div>
 
@@ -304,6 +315,9 @@ export default function AdminPage() {
                 projectData={projectData}
                 onUpdate={handleSettingsUpdate}
               />
+            )}
+            {activeTab === 'diagnostics' && (
+              <DiagnosticsPanel />
             )}
           </div>
       </div>
