@@ -156,7 +156,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
   };
 
   const handleLinkEdit = (field: 'github' | 'vercel', newUrl: string) => {
-    if (!isAdmin || !isEditMode) return;
+    if (!isAdmin) return;
     handleFieldChange(field, newUrl);
   };
 
