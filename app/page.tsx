@@ -225,11 +225,11 @@ export default function HomePage() {
         {!loading && !error && (
         <>
           {/* 搜尋篩選與統計區塊 */}
-          <div className="mb-8 flex gap-4 items-start">
+          <div className="mb-8 flex gap-4 items-stretch">
             {/* 左側：搜尋與篩選 */}
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 flex flex-col gap-4">
               {/* 搜尋框 */}
-              <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm">
+              <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm flex-shrink-0">
                 <SearchBar 
                   value={searchQuery}
                   onChange={setSearchQuery}
@@ -238,7 +238,7 @@ export default function HomePage() {
               </div>
 
               {/* 篩選按鈕區域 */}
-              <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm">
+              <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm flex-1">
                 <div className="flex flex-wrap gap-2 items-center">
                   {uiSettings && (
                     <DynamicCategoryFilter 
@@ -264,7 +264,7 @@ export default function HomePage() {
 
             {/* 右側：統計區塊 */}
             {projectData && uiSettings && (
-              <div className="w-auto">
+              <div className="w-auto flex items-stretch">
                 <StatisticsGrid 
                   configs={uiSettings.statistics}
                   allProjects={projectData.projects}

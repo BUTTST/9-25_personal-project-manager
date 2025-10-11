@@ -70,7 +70,7 @@ export function StatisticsGrid({
   
   return (
     <div 
-      className="grid grid-rows-2 gap-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm border border-blue-500/30 rounded-xl shadow-lg overflow-hidden"
+      className="grid grid-rows-2 gap-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm border border-blue-500/30 rounded-xl shadow-lg overflow-hidden h-full"
       style={{ 
         gridAutoFlow: 'column', 
         gridAutoColumns: 'minmax(90px, 1fr)' 

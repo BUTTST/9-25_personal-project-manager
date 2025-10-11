@@ -98,7 +98,10 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
         return filter ? { ...filter, order: index } : null;
       }).filter(Boolean) as FilterConfig[];
       
-      setLocalSettings({ ...localSettings, filters: newFilters });
+      const newSettings = { ...localSettings, filters: newFilters };
+      setLocalSettings(newSettings);
+      // 立即通知父組件更新
+      onSave(newSettings).catch(err => console.error('自動儲存失敗:', err));
     } else {
       const newStats = items.map((item, index) => {
         const checkbox = item.querySelector('input[type="checkbox"]');
@@ -107,17 +110,23 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
         return stat ? { ...stat, order: index } : null;
       }).filter(Boolean) as StatisticConfig[];
       
-      setLocalSettings({ ...localSettings, statistics: newStats });
+      const newSettings = { ...localSettings, statistics: newStats };
+      setLocalSettings(newSettings);
+      // 立即通知父組件更新
+      onSave(newSettings).catch(err => console.error('自動儲存失敗:', err));
     }
   };
 
   const handleFilterToggle = (id: string) => {
-    setLocalSettings({
+    const newSettings = {
       ...localSettings,
       filters: localSettings.filters.map(f =>
         f.id === id ? { ...f, enabled: !f.enabled } : f
       )
-    });
+    };
+    setLocalSettings(newSettings);
+    // 立即通知父組件更新
+    onSave(newSettings).catch(err => console.error('自動儲存失敗:', err));
   };
 
   const handleStatToggle = (id: string) => {
@@ -134,12 +143,15 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
       return;
     }
     
-    setLocalSettings({
+    const newSettings = {
       ...localSettings,
       statistics: localSettings.statistics.map(s =>
         s.id === id ? { ...s, enabled: !s.enabled } : s
       )
-    });
+    };
+    setLocalSettings(newSettings);
+    // 立即通知父組件更新
+    onSave(newSettings).catch(err => console.error('自動儲存失敗:', err));
   };
 
   const handleSave = async () => {
