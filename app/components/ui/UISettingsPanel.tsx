@@ -27,15 +27,15 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
   const [draggedElement, setDraggedElement] = useState<HTMLElement | null>(null);
 
   // 拖移排序邏輯
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number, type: 'filter' | 'stat') => {
-    const target = e.currentTarget;
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    const target = e.currentTarget as HTMLElement;
     setDraggedElement(target);
     setTimeout(() => {
       target.style.opacity = '0.4';
     }, 0);
   };
 
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>, type: 'filter' | 'stat') => {
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     if (draggedElement) {
       draggedElement.style.opacity = '1';
       setDraggedElement(null);
@@ -46,35 +46,66 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, dropIndex: number, type: 'filter' | 'stat') => {
-    e.preventDefault();
+  const getDragAfterElement = (container: HTMLElement, y: number): HTMLElement | null => {
+    const draggableElements = [...container.querySelectorAll('[draggable="true"]:not([style*="opacity: 0.4"]))] as HTMLElement[];
     
+    return draggableElements.reduce<{offset: number, element: HTMLElement | null}>((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+  };
+
+  const handleContainerDragOver = (e: React.DragEvent<HTMLDivElement>, type: 'filter' | 'stat') => {
+    e.preventDefault();
+    const target = e.target as HTMLElement;
+    const container = type === 'filter' 
+      ? target.closest('#filtersList') as HTMLElement
+      : target.closest('#statsList') as HTMLElement;
+    
+    if (!container || !draggedElement) return;
+    
+    const afterElement = getDragAfterElement(container, e.clientY);
+    if (afterElement == null) {
+      container.appendChild(draggedElement);
+    } else {
+      container.insertBefore(draggedElement, afterElement);
+    }
+  };
+
+  const handleContainerDrop = (e: React.DragEvent<HTMLDivElement>, type: 'filter' | 'stat') => {
+    e.preventDefault();
     if (!draggedElement) return;
 
-    const dragIndex = parseInt(draggedElement.dataset.index || '0');
+    // 更新順序
+    const container = type === 'filter'
+      ? document.getElementById('filtersList')
+      : document.getElementById('statsList');
     
-    if (dragIndex === dropIndex) return;
+    if (!container) return;
 
+    const items = [...container.querySelectorAll('[draggable="true"]')];
+    
     if (type === 'filter') {
-      const newFilters = [...localSettings.filters];
-      const [draggedItem] = newFilters.splice(dragIndex, 1);
-      newFilters.splice(dropIndex, 0, draggedItem);
-      
-      // 更新 order
-      newFilters.forEach((filter, index) => {
-        filter.order = index;
-      });
+      const newFilters = items.map((item, index) => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        const filterId = checkbox?.getAttribute('data-filter-id');
+        const filter = localSettings.filters.find(f => f.id === filterId);
+        return filter ? { ...filter, order: index } : null;
+      }).filter(Boolean) as FilterConfig[];
       
       setLocalSettings({ ...localSettings, filters: newFilters });
     } else {
-      const newStats = [...localSettings.statistics];
-      const [draggedItem] = newStats.splice(dragIndex, 1);
-      newStats.splice(dropIndex, 0, draggedItem);
-      
-      // 更新 order
-      newStats.forEach((stat, index) => {
-        stat.order = index;
-      });
+      const newStats = items.map((item, index) => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        const statId = checkbox?.getAttribute('data-stat-id');
+        const stat = localSettings.statistics.find(s => s.id === statId);
+        return stat ? { ...stat, order: index } : null;
+      }).filter(Boolean) as StatisticConfig[];
       
       setLocalSettings({ ...localSettings, statistics: newStats });
     }
@@ -253,16 +284,18 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
                 分類篩選器
               </h4>
               
-              <div className="space-y-2 bg-slate-800/50 rounded-lg p-3 max-h-64 overflow-y-auto">
-                {localSettings.filters.map((filter, index) => (
+              <div 
+                id="filtersList"
+                onDragOver={(e) => handleContainerDragOver(e, 'filter')}
+                onDrop={(e) => handleContainerDrop(e, 'filter')}
+                className="space-y-2 bg-slate-800/50 rounded-lg p-3 max-h-64 overflow-y-auto"
+              >
+                {localSettings.filters.sort((a, b) => a.order - b.order).map((filter) => (
                   <div
                     key={filter.id}
-                    data-index={index}
                     draggable
-                    onDragStart={(e) => handleDragStart(e, index, 'filter')}
-                    onDragEnd={(e) => handleDragEnd(e, 'filter')}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, index, 'filter')}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
                     className="flex items-center justify-between p-2 hover:bg-slate-700/50 rounded group cursor-move"
                   >
                     <label className="flex items-center gap-2 text-white cursor-pointer flex-1">
@@ -271,18 +304,11 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
                         type="checkbox"
                         checked={filter.enabled}
                         onChange={() => handleFilterToggle(filter.id)}
+                        data-filter-id={filter.id}
                         className="w-4 h-4 rounded"
                       />
                       <span>{filter.label}</span>
                     </label>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-blue-400 hover:text-blue-300 p-1" title="編輯">
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button className="text-red-400 hover:text-red-300 p-1" title="刪除">
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
                   </div>
                 ))}
               </div>
@@ -302,16 +328,18 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
                 </div>
               </div>
               
-              <div className="space-y-2 bg-slate-800/50 rounded-lg p-3 max-h-64 overflow-y-auto">
-                {localSettings.statistics.map((stat, index) => (
+              <div 
+                id="statsList"
+                onDragOver={(e) => handleContainerDragOver(e, 'stat')}
+                onDrop={(e) => handleContainerDrop(e, 'stat')}
+                className="space-y-2 bg-slate-800/50 rounded-lg p-3 max-h-64 overflow-y-auto"
+              >
+                {localSettings.statistics.sort((a, b) => a.order - b.order).map((stat) => (
                   <div
                     key={stat.id}
-                    data-index={index}
                     draggable
-                    onDragStart={(e) => handleDragStart(e, index, 'stat')}
-                    onDragEnd={(e) => handleDragEnd(e, 'stat')}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, index, 'stat')}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
                     className="flex items-center justify-between p-2 hover:bg-slate-700/50 rounded group cursor-move"
                   >
                     <label className="flex items-center gap-2 text-white cursor-pointer flex-1">
@@ -320,23 +348,16 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
                         type="checkbox"
                         checked={stat.enabled}
                         onChange={() => handleStatToggle(stat.id)}
+                        data-stat-id={stat.id}
                         className="w-4 h-4 rounded"
                       />
                       <span>{stat.label}</span>
                     </label>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-blue-400 hover:text-blue-300 p-1" title="編輯">
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button className="text-red-400 hover:text-red-300 p-1" title="刪除">
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
                   </div>
                 ))}
                 
                 <div className="text-xs text-gray-400 text-center pt-2 border-t border-slate-700">
-                  已選擇 {localSettings.statistics.filter(s => s.enabled).length} 個統計項目（最多8個）
+                  已選擇 {localSettings.statistics.filter(s => s.enabled).length} 個統計項目（最少2個，最多8個）
                 </div>
               </div>
             </div>

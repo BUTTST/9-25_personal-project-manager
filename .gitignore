@@ -91,3 +91,7 @@ pids
 # 使用*符號的萬用字元
 ChatGPT*.md 
 
+# 預覽和報告檔案
+layout-preview.html
+ui-ux-improvement-report.html
+

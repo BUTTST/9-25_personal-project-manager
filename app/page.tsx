@@ -224,20 +224,12 @@ export default function HomePage() {
 
         {!loading && !error && (
         <>
-          {/* 搜尋和篩選區域 */}
-          <div className="mb-8">
-            {/* 卡片包裹 */}
-            <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-2xl shadow-lg border border-border/50 p-6 backdrop-blur-sm">
-              {/* 標題 */}
-              <div className="flex items-center gap-2 mb-5">
-                <div className="p-2 bg-primary-100 dark:bg-primary-500/20 rounded-lg">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-                </div>
-                <h2 className="text-lg font-bold text-foreground">探索專案</h2>
-              </div>
-
-              {/* 搜尋欄 */}
-              <div className="mb-5">
+          {/* 搜尋篩選與統計區塊 */}
+          <div className="mb-8 flex gap-4 items-start">
+            {/* 左側：搜尋與篩選 */}
+            <div className="flex-1 space-y-4">
+              {/* 搜尋框 */}
+              <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm">
                 <SearchBar 
                   value={searchQuery}
                   onChange={setSearchQuery}
@@ -245,12 +237,8 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* 動態分類篩選 */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <FunnelIcon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">分類篩選</span>
-                </div>
+              {/* 篩選按鈕區域 */}
+              <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm">
                 <div className="flex flex-wrap gap-2 items-center">
                   {uiSettings && (
                     <DynamicCategoryFilter 
@@ -273,20 +261,20 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* 動態統計區塊 */}
-          {projectData && uiSettings && (
-            <div className="mb-8">
-              <StatisticsGrid 
-                configs={uiSettings.statistics}
-                allProjects={projectData.projects}
-                filteredProjects={filteredProjects}
-                isAdmin={isAdmin}
-                isPreviewMode={isPreviewMode}
-              />
-            </div>
-          )}
+            {/* 右側：統計區塊 */}
+            {projectData && uiSettings && (
+              <div className="w-auto">
+                <StatisticsGrid 
+                  configs={uiSettings.statistics}
+                  allProjects={projectData.projects}
+                  filteredProjects={filteredProjects}
+                  isAdmin={isAdmin}
+                  isPreviewMode={isPreviewMode}
+                />
+              </div>
+            )}
+          </div>
 
           {/* 專案列表 */}
           {filteredProjects.length === 0 ? (
