@@ -78,16 +78,11 @@ export default function HomePage() {
   // 手動保存（需要密碼確認）
   const handleSaveSettings = async (newSettings: UIDisplaySettings) => {
     try {
-      const sessionData = typeof window !== 'undefined' ? localStorage.getItem('admin-session') : null;
-      const session = sessionData ? JSON.parse(sessionData) : null;
-      
-      if (!session?.isAdmin) {
-        throw new Error('需要管理員權限');
-      }
-      
-      const password = prompt('請輸入管理員密碼以確認變更：');
+      // 提示輸入密碼
+      const password = prompt('請輸入管理員密碼以確認儲存變更：');
       if (!password) {
-        throw new Error('未提供密碼');
+        alert('未提供密碼，取消儲存');
+        return;
       }
       
       const response = await fetch('/api/settings/ui-display', {
@@ -110,10 +105,10 @@ export default function HomePage() {
       // 重新載入專案資料以確保同步
       await loadProjects();
       
-      alert('設定已成功儲存！');
+      alert('✅ 設定已成功儲存到伺服器！');
     } catch (error) {
       console.error('儲存設定失敗:', error);
-      throw error;
+      alert(`❌ 儲存失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
     }
   };
 

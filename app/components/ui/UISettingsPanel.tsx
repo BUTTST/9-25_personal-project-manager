@@ -159,10 +159,11 @@ export function UISettingsPanel({ settings, onClose, onQuickUpdate, onSave }: UI
     setSaving(true);
     try {
       await onSave(localSettings);
+      // 成功後關閉面板
       onClose();
     } catch (error) {
+      // 錯誤已在父組件處理，這裡只需記錄
       console.error('儲存設定失敗:', error);
-      alert('儲存失敗，請稍後再試');
     } finally {
       setSaving(false);
     }
