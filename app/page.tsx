@@ -1,21 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ProjectData, Project } from '@/types';
+import { ProjectData, Project, UIDisplaySettings } from '@/types';
 import { ProjectCard } from '@/components/project/ProjectCard';
-import { CategoryFilter } from '@/components/project/CategoryFilter';
+import { DynamicCategoryFilter } from '@/components/ui/DynamicCategoryFilter';
+import { StatisticsGrid } from '@/components/ui/StatisticsGrid';
+import { UISettingsPanel } from '@/components/ui/UISettingsPanel';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Header } from '@/components/layout/Header';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { getPublicProjects } from '@/lib/blob-storage';
+import { getPublicProjects, defaultProjectData } from '@/lib/blob-storage';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { 
   EyeIcon, 
   EyeSlashIcon,
-  ChartBarIcon,
   FunnelIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 
 export default function HomePage() {
@@ -26,6 +28,8 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [uiSettings, setUiSettings] = useState<UIDisplaySettings | null>(null);
   
   const { isAdmin } = useAuth();
 
@@ -56,10 +60,54 @@ export default function HomePage() {
       }
       const data = await response.json();
       setProjectData(data);
+      
+      // 載入 UI 設定
+      setUiSettings(data.settings.uiDisplay || defaultProjectData.settings.uiDisplay!);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知錯誤');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async (newSettings: UIDisplaySettings) => {
+    try {
+      const sessionData = typeof window !== 'undefined' ? localStorage.getItem('admin-session') : null;
+      const session = sessionData ? JSON.parse(sessionData) : null;
+      
+      if (!session?.isAdmin) {
+        throw new Error('需要管理員權限');
+      }
+      
+      const password = prompt('請輸入管理員密碼以確認變更：');
+      if (!password) {
+        throw new Error('未提供密碼');
+      }
+      
+      const response = await fetch('/api/settings/ui-display', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': password
+        },
+        body: JSON.stringify(newSettings)
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || '儲存失敗');
+      }
+      
+      // 更新本地狀態
+      setUiSettings(newSettings);
+      
+      // 重新載入專案資料以確保同步
+      await loadProjects();
+      
+      alert('設定已成功儲存！');
+    } catch (error) {
+      console.error('儲存設定失敗:', error);
+      throw error;
     }
   };
 
@@ -197,67 +245,46 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* 分類篩選 */}
+              {/* 動態分類篩選 */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <FunnelIcon className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-muted-foreground">分類篩選</span>
                 </div>
-                <CategoryFilter 
-                  value={selectedCategory}
-                  onChange={setSelectedCategory}
-                />
+                <div className="flex flex-wrap gap-2 items-center">
+                  {uiSettings && (
+                    <DynamicCategoryFilter 
+                      configs={uiSettings.filters}
+                      value={selectedCategory}
+                      onChange={setSelectedCategory}
+                    />
+                  )}
+                  
+                  {/* 設定按鈕（僅管理員可見） */}
+                  {isAdmin && !isPreviewMode && (
+                    <button 
+                      onClick={() => setShowSettingsPanel(true)}
+                      className="group relative inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-200 text-muted-foreground bg-card border-border hover:border-primary-300 dark:hover:border-primary-600 hover:bg-muted/50 hover:scale-110"
+                      title="顯示設定"
+                    >
+                      <Cog6ToothIcon className="h-5 w-5 group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* 統計資訊卡片 */}
-          {projectData && (
-            <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* 總專案數 */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-500/10 dark:to-blue-500/5 rounded-xl p-5 border border-blue-200/50 dark:border-blue-500/30 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="p-2 bg-blue-500/10 rounded-lg">
-                    <ChartBarIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                    {isAdmin && !isPreviewMode ? projectData.metadata.totalProjects : projectData.metadata.publicProjects}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-blue-900/70 dark:text-blue-100/70">
-                  {isAdmin && !isPreviewMode ? '總專案數' : '公開專案'}
-                </p>
-              </div>
-
-              {/* 篩選結果 */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-500/10 dark:to-purple-500/5 rounded-xl p-5 border border-purple-200/50 dark:border-purple-500/30 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="p-2 bg-purple-500/10 rounded-lg">
-                    <FunnelIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <span className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                    {filteredProjects.length}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-purple-900/70 dark:text-purple-100/70">
-                  {searchQuery || selectedCategory !== 'all' ? '篩選結果' : '顯示中'}
-                </p>
-              </div>
-
-              {/* 搜尋狀態 */}
-              <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-500/10 dark:to-green-500/5 rounded-xl p-5 border border-green-200/50 dark:border-green-500/30 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="p-2 bg-green-500/10 rounded-lg">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {searchQuery ? '搜尋中' : '✓'}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-green-900/70 dark:text-green-100/70">
-                  {searchQuery ? '已啟用搜尋' : '準備就緒'}
-                </p>
-              </div>
+          {/* 動態統計區塊 */}
+          {projectData && uiSettings && (
+            <div className="mb-8">
+              <StatisticsGrid 
+                configs={uiSettings.statistics}
+                allProjects={projectData.projects}
+                filteredProjects={filteredProjects}
+                isAdmin={isAdmin}
+                isPreviewMode={isPreviewMode}
+              />
             </div>
           )}
 
@@ -301,6 +328,15 @@ export default function HomePage() {
         </>
         )}
       </div>
+      
+      {/* UI 設定面板（僅管理員可見） */}
+      {isAdmin && !isPreviewMode && showSettingsPanel && uiSettings && (
+        <UISettingsPanel 
+          settings={uiSettings}
+          onClose={() => setShowSettingsPanel(false)}
+          onSave={handleSaveSettings}
+        />
+      )}
     </div>
   );
 }

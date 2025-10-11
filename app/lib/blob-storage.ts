@@ -22,7 +22,27 @@ export const defaultProjectData: ProjectData = {
       developerNote: false
     },
     rememberPassword: true,
-    theme: 'light'
+    theme: 'light',
+    uiDisplay: {
+      filters: [
+        { id: 'all', enabled: true, order: 0, label: '全部' },
+        { id: 'important', enabled: true, order: 1, label: '重要' },
+        { id: 'secondary', enabled: true, order: 2, label: '次要' },
+        { id: 'practice', enabled: true, order: 3, label: '實踐' },
+        { id: 'completed', enabled: true, order: 4, label: '完成' },
+        { id: 'abandoned', enabled: true, order: 5, label: '捨棄' }
+      ],
+      statistics: [
+        { id: 'stat-total', type: 'totalProjects', enabled: true, order: 0, label: '總專案數' },
+        { id: 'stat-display', type: 'displayedCount', enabled: true, order: 1, label: '顯示中' },
+        { id: 'stat-public', type: 'publicProjects', enabled: false, order: 2, label: '公開專案' },
+        { id: 'stat-important', type: 'importantCount', enabled: false, order: 3, label: '重要專案' },
+        { id: 'stat-completed', type: 'completedCount', enabled: false, order: 4, label: '已完成' },
+        { id: 'stat-inprogress', type: 'inProgressCount', enabled: false, order: 5, label: '進行中' },
+        { id: 'stat-ready', type: 'readyStatus', enabled: false, order: 6, label: '準備就緒' },
+        { id: 'stat-abandoned', type: 'abandonedCount', enabled: false, order: 7, label: '已捨棄' }
+      ]
+    }
   },
   metadata: {
     lastUpdated: Date.now(),

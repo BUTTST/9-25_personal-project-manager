@@ -42,6 +42,7 @@ export interface AppSettings {
   defaultProjectVisibility: Partial<Project['visibility']>;
   rememberPassword: boolean;
   theme: 'light' | 'dark' | 'auto';
+  uiDisplay?: UIDisplaySettings;  // UI 顯示設定
 }
 
 export interface ProjectData {
@@ -93,3 +94,34 @@ export interface PasswordFormData {
   account: string;
   password: string;
 }
+
+// UI 顯示設定介面
+export interface UIDisplaySettings {
+  filters: FilterConfig[];      // 篩選器配置
+  statistics: StatisticConfig[]; // 統計區塊配置
+}
+
+export interface FilterConfig {
+  id: string;                    // 唯一識別碼（如：'all', 'important'）
+  enabled: boolean;              // 是否啟用顯示
+  order: number;                 // 排序順序
+  label?: string;                // 自訂標籤（選用）
+}
+
+export interface StatisticConfig {
+  id: string;                    // 唯一識別碼
+  type: StatisticType;           // 統計類型
+  enabled: boolean;              // 是否啟用顯示
+  order: number;                 // 排序順序
+  label?: string;                // 自訂標籤
+}
+
+export type StatisticType = 
+  | 'totalProjects'    // 總專案數
+  | 'publicProjects'   // 公開專案數
+  | 'displayedCount'   // 顯示中
+  | 'importantCount'   // 重要專案
+  | 'completedCount'   // 已完成
+  | 'inProgressCount'  // 進行中（important + secondary + practice）
+  | 'readyStatus'      // 準備就緒
+  | 'abandonedCount';  // 已捨棄
