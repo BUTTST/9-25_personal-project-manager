@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Project, ProjectFormData } from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
-import { XMarkIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 interface EditProjectModalProps {
   project: Project;
@@ -26,6 +26,7 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
   });
   const [visibility, setVisibility] = useState<Project['visibility']>(project.visibility);
   const [saving, setSaving] = useState(false);
+  const [lastVisibilityState, setLastVisibilityState] = useState<Project['visibility'] | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -97,6 +98,33 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
     }));
   };
 
+  // 快速切換所有可見性
+  const toggleAllVisibility = () => {
+    const allVisible = Object.values(visibility).every(v => v);
+    
+    if (allVisible) {
+      // 全部可見 -> 全部隱藏（但記住當前狀態）
+      setLastVisibilityState(visibility);
+      const allHidden = Object.keys(visibility).reduce((acc, key) => {
+        acc[key as keyof Project['visibility']] = false;
+        return acc;
+      }, {} as Project['visibility']);
+      setVisibility(allHidden);
+    } else {
+      // 不是全部可見 -> 恢復上次狀態或全部顯示
+      if (lastVisibilityState) {
+        setVisibility(lastVisibilityState);
+        setLastVisibilityState(null);
+      } else {
+        const allVisible = Object.keys(visibility).reduce((acc, key) => {
+          acc[key as keyof Project['visibility']] = true;
+          return acc;
+        }, {} as Project['visibility']);
+        setVisibility(allVisible);
+      }
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -125,10 +153,30 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
             {/* 基本資訊 */}
             <div className="space-y-4">
-              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <div className="w-1 h-5 bg-primary-500 rounded-full"></div>
-                基本資訊
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <div className="w-1 h-5 bg-primary-500 rounded-full"></div>
+                  基本資訊
+                </h3>
+                <button
+                  type="button"
+                  onClick={toggleAllVisibility}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all hover:scale-105 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:shadow-md"
+                  title={Object.values(visibility).every(v => v) ? "隱藏全部項目" : "顯示全部項目"}
+                >
+                  {Object.values(visibility).every(v => v) ? (
+                    <>
+                      <EyeSlashIcon className="h-4 w-4" />
+                      <span>全部隱藏</span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeIcon className="h-4 w-4" />
+                      <span>全部顯示</span>
+                    </>
+                  )}
+                </button>
+              </div>
               
               <div className="space-y-4">
                 {/* 專案名稱 */}

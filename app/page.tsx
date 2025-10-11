@@ -12,6 +12,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getPublicProjects, defaultProjectData } from '@/lib/blob-storage';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { getRememberedPassword } from '@/lib/auth';
 import { 
   EyeIcon, 
   EyeSlashIcon,
@@ -75,13 +76,13 @@ export default function HomePage() {
     setUiSettings(newSettings);
   };
 
-  // 手動保存（需要密碼確認）
+  // 手動保存（使用已登入的密碼）
   const handleSaveSettings = async (newSettings: UIDisplaySettings) => {
     try {
-      // 提示輸入密碼
-      const password = prompt('請輸入管理員密碼以確認儲存變更：');
+      // 使用記憶的密碼
+      const password = getRememberedPassword();
       if (!password) {
-        alert('未提供密碼，取消儲存');
+        alert('❌ 無法獲取管理員密碼，請重新登入');
         return;
       }
       
