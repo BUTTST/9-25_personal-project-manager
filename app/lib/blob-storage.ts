@@ -30,7 +30,11 @@ export const defaultProjectData: ProjectData = {
         { id: 'secondary', enabled: true, order: 2, label: '次要' },
         { id: 'practice', enabled: true, order: 3, label: '實踐' },
         { id: 'completed', enabled: true, order: 4, label: '完成' },
-        { id: 'abandoned', enabled: true, order: 5, label: '捨棄' }
+        { id: 'abandoned', enabled: true, order: 5, label: '捨棄' },
+        { id: 'hot', enabled: false, order: 6, label: '熱門' },
+        { id: 'paused', enabled: false, order: 7, label: '暫停' },
+        { id: 'in-progress', enabled: false, order: 8, label: '進行中' },
+        { id: 'draft', enabled: false, order: 9, label: '草稿' }
       ],
       statistics: [
         { id: 'stat-total', type: 'totalProjects', enabled: true, order: 0, label: '總專案數' },

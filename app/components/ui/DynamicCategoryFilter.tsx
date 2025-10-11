@@ -7,7 +7,11 @@ import {
   BeakerIcon, 
   CheckCircleIcon, 
   ArchiveBoxIcon,
-  Squares2X2Icon 
+  Squares2X2Icon,
+  FireIcon,
+  PauseCircleIcon,
+  PlayCircleIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 interface DynamicCategoryFilterProps {
@@ -23,7 +27,11 @@ const filterIcons: Record<string, any> = {
   'secondary': FlagIcon,
   'practice': BeakerIcon,
   'completed': CheckCircleIcon,
-  'abandoned': ArchiveBoxIcon
+  'abandoned': ArchiveBoxIcon,
+  'hot': FireIcon,
+  'paused': PauseCircleIcon,
+  'in-progress': PlayCircleIcon,
+  'draft': DocumentTextIcon
 };
 
 // 篩選器顏色映射
@@ -61,6 +69,26 @@ const filterColors: Record<string, {
     color: 'text-gray-600 dark:text-gray-400', 
     bgColor: 'bg-gray-100 dark:bg-gray-600/20',
     borderColor: 'border-gray-300 dark:border-gray-500/50'
+  },
+  'hot': { 
+    color: 'text-orange-700 dark:text-orange-300', 
+    bgColor: 'bg-orange-100 dark:bg-orange-500/20',
+    borderColor: 'border-orange-300 dark:border-orange-500/50'
+  },
+  'paused': { 
+    color: 'text-indigo-700 dark:text-indigo-300', 
+    bgColor: 'bg-indigo-100 dark:bg-indigo-500/20',
+    borderColor: 'border-indigo-300 dark:border-indigo-500/50'
+  },
+  'in-progress': { 
+    color: 'text-teal-700 dark:text-teal-300', 
+    bgColor: 'bg-teal-100 dark:bg-teal-500/20',
+    borderColor: 'border-teal-300 dark:border-teal-500/50'
+  },
+  'draft': { 
+    color: 'text-slate-700 dark:text-slate-300', 
+    bgColor: 'bg-slate-100 dark:bg-slate-500/20',
+    borderColor: 'border-slate-300 dark:border-slate-500/50'
   }
 };
 

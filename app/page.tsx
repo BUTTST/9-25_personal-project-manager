@@ -70,6 +70,12 @@ export default function HomePage() {
     }
   };
 
+  // 即時更新（無需密碼，僅更新本地狀態）
+  const handleQuickUpdateSettings = (newSettings: UIDisplaySettings) => {
+    setUiSettings(newSettings);
+  };
+
+  // 手動保存（需要密碼確認）
   const handleSaveSettings = async (newSettings: UIDisplaySettings) => {
     try {
       const sessionData = typeof window !== 'undefined' ? localStorage.getItem('admin-session') : null;
@@ -322,6 +328,7 @@ export default function HomePage() {
         <UISettingsPanel 
           settings={uiSettings}
           onClose={() => setShowSettingsPanel(false)}
+          onQuickUpdate={handleQuickUpdateSettings}
           onSave={handleSaveSettings}
         />
       )}

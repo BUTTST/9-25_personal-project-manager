@@ -14,10 +14,11 @@ import {
 interface UISettingsPanelProps {
   settings: UIDisplaySettings;
   onClose: () => void;
+  onQuickUpdate: (settings: UIDisplaySettings) => void;
   onSave: (settings: UIDisplaySettings) => Promise<void>;
 }
 
-export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelProps) {
+export function UISettingsPanel({ settings, onClose, onQuickUpdate, onSave }: UISettingsPanelProps) {
   const [localSettings, setLocalSettings] = useState<UIDisplaySettings>(settings);
   const [showSizeSettings, setShowSizeSettings] = useState(false);
   const [panelWidth, setPanelWidth] = useState(80);
@@ -100,8 +101,8 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
       
       const newSettings = { ...localSettings, filters: newFilters };
       setLocalSettings(newSettings);
-      // 立即通知父組件更新
-      onSave(newSettings).catch(err => console.error('自動儲存失敗:', err));
+      // 立即通知父組件更新（即時預覽）
+      onQuickUpdate(newSettings);
     } else {
       const newStats = items.map((item, index) => {
         const checkbox = item.querySelector('input[type="checkbox"]');
@@ -112,8 +113,8 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
       
       const newSettings = { ...localSettings, statistics: newStats };
       setLocalSettings(newSettings);
-      // 立即通知父組件更新
-      onSave(newSettings).catch(err => console.error('自動儲存失敗:', err));
+      // 立即通知父組件更新（即時預覽）
+      onQuickUpdate(newSettings);
     }
   };
 
@@ -125,8 +126,8 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
       )
     };
     setLocalSettings(newSettings);
-    // 立即通知父組件更新
-    onSave(newSettings).catch(err => console.error('自動儲存失敗:', err));
+    // 立即通知父組件更新（即時預覽）
+    onQuickUpdate(newSettings);
   };
 
   const handleStatToggle = (id: string) => {
@@ -150,8 +151,8 @@ export function UISettingsPanel({ settings, onClose, onSave }: UISettingsPanelPr
       )
     };
     setLocalSettings(newSettings);
-    // 立即通知父組件更新
-    onSave(newSettings).catch(err => console.error('自動儲存失敗:', err));
+    // 立即通知父組件更新（即時預覽）
+    onQuickUpdate(newSettings);
   };
 
   const handleSave = async () => {
