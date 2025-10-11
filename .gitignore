@@ -87,6 +87,7 @@ pids
 # Cursor
 .cursor-doc.md
 
-# ChatGPT 聊天紀錄
-ChatGPT*.md
+# 自動忽略 "ChatGPT" 開頭的 .md 檔案
+# 使用*符號的萬用字元
+ChatGPT*.md 
 

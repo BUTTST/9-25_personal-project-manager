@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Project, CategoryDisplayName, ProjectVisibility } from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { 
   GlobeAltIcon, 
   CodeBracketIcon, 
@@ -173,10 +174,23 @@ export function ProjectCard({ project, isAdmin, isEditMode, showToggleControls, 
         />
       );
     }
+    
+    if (!url) return null;
+    
+    // 截取網址用於顯示
+    const displayUrl = url.length > 35 ? url.substring(0, 35) + '...' : url;
+    
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline truncate">
-        {url}
-      </a>
+      <Tooltip content={url} position="top" maxWidth="max-w-md">
+        <a 
+          href={url} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline truncate block transition-colors"
+        >
+          {displayUrl}
+        </a>
+      </Tooltip>
     );
   };
 
@@ -200,32 +214,39 @@ export function ProjectCard({ project, isAdmin, isEditMode, showToggleControls, 
   };
 
   return (
-    <div className="card-hover group relative overflow-hidden">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-500 via-primary-400 to-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+    <div className="card-hover group relative overflow-hidden transition-all duration-300 hover:scale-[1.02]">
+      {/* 頂部漸變條 */}
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-500 via-primary-400 to-primary-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
       {/* 精選標記 */}
       {localProject.featured && (
-        <div className="absolute top-3 right-3 z-10">
-          <StarIconSolid className="h-5 w-5 text-yellow-400 drop-shadow" />
+        <div className="absolute top-4 right-4 z-10">
+          <div className="relative">
+            <StarIconSolid className="h-6 w-6 text-yellow-400 drop-shadow-lg animate-pulse-slow" />
+            <div className="absolute inset-0 h-6 w-6 bg-yellow-400/30 rounded-full blur-md"></div>
+          </div>
         </div>
       )}
       
       {/* 管理員控制列 */}
       {isAdmin && (
-        <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="flex items-center space-x-2 bg-card/80 backdrop-blur px-2 py-1 rounded-full shadow-sm">
+        <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <div className="flex items-center space-x-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
             <button
               onClick={handleFeaturedToggle}
-              className={`p-1 rounded-full transition-colors ${
-                localProject.featured ? 'text-yellow-400 hover:bg-yellow-400/10' : 'text-muted-foreground hover:bg-muted'
+              className={`p-1.5 rounded-full transition-all duration-200 ${
+                localProject.featured 
+                  ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-500/10 hover:bg-yellow-100 dark:hover:bg-yellow-500/20' 
+                  : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-500/10'
               }`}
               title={localProject.featured ? '取消精選' : '設為精選'}
             >
               <StarIcon className="h-4 w-4" />
             </button>
+            <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
             <Link
               href={`/admin/edit/${localProject.id}`}
-              className="p-1 rounded-full text-muted-foreground hover:text-primary-500 hover:bg-muted transition-colors"
+              className="p-1.5 rounded-full text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all duration-200"
               title="編輯專案"
             >
               <CodeBracketIcon className="h-4 w-4" />
@@ -235,47 +256,45 @@ export function ProjectCard({ project, isAdmin, isEditMode, showToggleControls, 
       )}
 
       {/* 專案內容 */}
-      <div className="space-y-4">
-        {/* 標題和類別 */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            {localProject.visibility.dateAndFileName && (
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold text-foreground line-clamp-2 tracking-tight">
-                  {localProject.dateAndFileName}
-                </h3>
-                {isAdmin && showToggleControls && (
-                  <ToggleControl
-                    checked={localProject.visibility.dateAndFileName}
-                    onChange={() => handleVisibilityToggle('dateAndFileName')}
-                    size="sm"
-                  />
-                )}
-              </div>
-            )}
-            
-            {localProject.visibility.category && (
-              <div className="flex items-center justify-between mb-2">
-                <span className={getCategoryBadgeClass(localProject.category)}>
-                  {categoryDisplayNames[localProject.category]}
-                </span>
-                {isAdmin && showToggleControls && (
-                  <ToggleControl
-                    checked={localProject.visibility.category}
-                    onChange={() => handleVisibilityToggle('category')}
-                    size="sm"
-                  />
-                )}
-              </div>
-            )}
-          </div>
+      <div className="space-y-5">
+        {/* 標題和類別區 */}
+        <div className="space-y-3">
+          {localProject.visibility.dateAndFileName && (
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-lg font-bold text-foreground line-clamp-2 tracking-tight flex-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                {localProject.dateAndFileName}
+              </h3>
+              {isAdmin && showToggleControls && (
+                <ToggleControl
+                  checked={localProject.visibility.dateAndFileName}
+                  onChange={() => handleVisibilityToggle('dateAndFileName')}
+                  size="sm"
+                />
+              )}
+            </div>
+          )}
+          
+          {localProject.visibility.category && (
+            <div className="flex items-center justify-between gap-3">
+              <span className={`${getCategoryBadgeClass(localProject.category)} text-xs font-semibold px-3 py-1.5`}>
+                {categoryDisplayNames[localProject.category]}
+              </span>
+              {isAdmin && showToggleControls && (
+                <ToggleControl
+                  checked={localProject.visibility.category}
+                  onChange={() => handleVisibilityToggle('category')}
+                  size="sm"
+                />
+              )}
+            </div>
+          )}
         </div>
 
-        {/* 說明 */}
+        {/* 說明區塊 */}
         {localProject.visibility.description && (
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">說明</span>
+          <div className="bg-muted/30 dark:bg-muted/20 rounded-lg p-4 border border-border/50">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">說明</span>
               {isAdmin && showToggleControls && (
                 <ToggleControl
                   checked={localProject.visibility.description}
@@ -292,7 +311,7 @@ export function ProjectCard({ project, isAdmin, isEditMode, showToggleControls, 
                 rows={4}
               />
             ) : (
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <p className="text-sm leading-relaxed text-foreground/80">
                 {localProject.description}
               </p>
             )}
@@ -300,63 +319,87 @@ export function ProjectCard({ project, isAdmin, isEditMode, showToggleControls, 
         )}
 
         {/* 連結區域 */}
-        <div className="space-y-2">
-          {localProject.visibility.github && localProject.github && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-muted-foreground text-sm">
-                <GitHubIcon />
-                {renderEditableLink('github', localProject.github)}
-              </div>
-              {isAdmin && showToggleControls && (
-                <ToggleControl
-                  checked={localProject.visibility.github}
-                  onChange={() => handleVisibilityToggle('github')}
-                  size="sm"
-                />
-              )}
-            </div>
-          )}
-          
-          {localProject.visibility.vercel && localProject.vercel && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-muted-foreground text-sm">
-                <VercelIcon />
-                {renderEditableLink('vercel', localProject.vercel)}
-              </div>
-              {isAdmin && showToggleControls && (
-                <ToggleControl
-                  checked={localProject.visibility.vercel}
-                  onChange={() => handleVisibilityToggle('vercel')}
-                  size="sm"
-                />
-              )}
-            </div>
-          )}
-          
-          {localProject.visibility.path && localProject.path && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-muted-foreground text-sm">
-                <FolderOpenIcon className="h-4 w-4" />
-                <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
-                  {localProject.path}
-                </span>
-              </div>
-              {isAdmin && showToggleControls && (
-                <ToggleControl
-                  checked={localProject.visibility.path}
-                  onChange={() => handleVisibilityToggle('path')}
-                  size="sm"
-                />
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* 狀態備註 */}
-        {localProject.visibility.statusNote && localProject.statusNote && (
-          <div>
+        {((localProject.visibility.github && localProject.github) || 
+          (localProject.visibility.vercel && localProject.vercel) || 
+          (localProject.visibility.path && localProject.path)) && (
+          <div className="bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-500/5 dark:to-purple-500/5 rounded-lg p-4 border border-blue-200/30 dark:border-blue-500/20 space-y-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">狀態</span>
+              <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
+                <GlobeAltIcon className="h-3.5 w-3.5" />
+                連結
+              </span>
+            </div>
+            
+            {localProject.visibility.github && localProject.github && (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center space-x-2.5 text-sm min-w-0 flex-1">
+                  <div className="flex-shrink-0">
+                    <GitHubIcon />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    {renderEditableLink('github', localProject.github)}
+                  </div>
+                </div>
+                {isAdmin && showToggleControls && (
+                  <ToggleControl
+                    checked={localProject.visibility.github}
+                    onChange={() => handleVisibilityToggle('github')}
+                    size="sm"
+                  />
+                )}
+              </div>
+            )}
+            
+            {localProject.visibility.vercel && localProject.vercel && (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center space-x-2.5 text-sm min-w-0 flex-1">
+                  <div className="flex-shrink-0">
+                    <VercelIcon />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    {renderEditableLink('vercel', localProject.vercel)}
+                  </div>
+                </div>
+                {isAdmin && showToggleControls && (
+                  <ToggleControl
+                    checked={localProject.visibility.vercel}
+                    onChange={() => handleVisibilityToggle('vercel')}
+                    size="sm"
+                  />
+                )}
+              </div>
+            )}
+            
+            {localProject.visibility.path && localProject.path && (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center space-x-2.5 text-sm min-w-0 flex-1">
+                  <FolderOpenIcon className="h-4 w-4 flex-shrink-0 text-gray-500" />
+                  <Tooltip content={localProject.path} position="top">
+                    <span className="font-mono text-xs bg-white/60 dark:bg-gray-800/60 px-2.5 py-1.5 rounded border border-gray-300/50 dark:border-gray-600/50 truncate block">
+                      {localProject.path}
+                    </span>
+                  </Tooltip>
+                </div>
+                {isAdmin && showToggleControls && (
+                  <ToggleControl
+                    checked={localProject.visibility.path}
+                    onChange={() => handleVisibilityToggle('path')}
+                    size="sm"
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 狀態備註區塊 */}
+        {localProject.visibility.statusNote && localProject.statusNote && (
+          <div className="bg-amber-50/50 dark:bg-amber-500/5 rounded-lg p-4 border border-amber-200/50 dark:border-amber-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                <ChatBubbleLeftRightIcon className="h-3.5 w-3.5" />
+                狀態
+              </span>
               {isAdmin && showToggleControls && (
                 <ToggleControl
                   checked={localProject.visibility.statusNote}
@@ -365,17 +408,20 @@ export function ProjectCard({ project, isAdmin, isEditMode, showToggleControls, 
                 />
               )}
             </div>
-            <p className="text-muted-foreground text-sm bg-muted/60 p-2 rounded">
+            <p className="text-sm text-amber-900/80 dark:text-amber-100/80 leading-relaxed">
               {localProject.statusNote}
             </p>
           </div>
         )}
 
-        {/* 一般註解 */}
+        {/* 一般註解區塊 */}
         {localProject.visibility.publicNote && localProject.publicNote && (
-          <div>
+          <div className="bg-green-50/50 dark:bg-green-500/5 rounded-lg p-4 border border-green-200/50 dark:border-green-500/20">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">註解</span>
+              <span className="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wider flex items-center gap-1.5">
+                <ChatBubbleLeftRightIcon className="h-3.5 w-3.5" />
+                註解
+              </span>
               {isAdmin && showToggleControls && (
                 <ToggleControl
                   checked={localProject.visibility.publicNote}
@@ -384,19 +430,24 @@ export function ProjectCard({ project, isAdmin, isEditMode, showToggleControls, 
                 />
               )}
             </div>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-green-900/80 dark:text-green-100/80 leading-relaxed">
               {localProject.publicNote}
             </p>
           </div>
         )}
 
-        {/* 開發者註解（僅管理員可見） */}
+        {/* 開發者註解區塊（僅管理員可見） */}
         {isAdmin && localProject.visibility.developerNote && localProject.developerNote && (
-          <div>
+          <div className="bg-gradient-to-br from-orange-50 to-red-50/50 dark:from-orange-500/10 dark:to-red-500/5 rounded-lg p-4 border-2 border-orange-300/50 dark:border-orange-500/30 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-orange-600">開發者註解</span>
-                <EyeSlashIcon className="h-4 w-4 text-orange-500" />
+                <span className="text-xs font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <EyeSlashIcon className="h-3.5 w-3.5" />
+                  開發者註解
+                </span>
+                <span className="text-[10px] bg-orange-200/50 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full font-medium">
+                  僅管理員
+                </span>
               </div>
               {showToggleControls && (
                 <ToggleControl
@@ -406,20 +457,23 @@ export function ProjectCard({ project, isAdmin, isEditMode, showToggleControls, 
                 />
               )}
             </div>
-            <p className="text-orange-700 dark:text-orange-200 text-sm bg-orange-50 dark:bg-orange-500/10 p-2 rounded border border-orange-200 dark:border-orange-500/30">
+            <p className="text-sm text-orange-900 dark:text-orange-100 leading-relaxed font-medium">
               {localProject.developerNote}
             </p>
           </div>
         )}
 
-        {/* 更新時間 */}
-        <div className="pt-2 border-t border-border/80">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>更新於 {formatDate(localProject.updatedAt)}</span>
+        {/* 更新時間和統計 */}
+        <div className="pt-4 border-t border-border/50">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+              <span>更新於 {formatDate(localProject.updatedAt)}</span>
+            </div>
             {isAdmin && (
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1.5 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full">
                 <EyeIcon className="h-3 w-3" />
-                <span>
+                <span className="font-medium">
                   {Object.values(localProject.visibility).filter(Boolean).length}/
                   {Object.keys(localProject.visibility).length}
                 </span>

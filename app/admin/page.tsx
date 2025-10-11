@@ -18,7 +18,9 @@ import {
   EyeIcon,
   EyeSlashIcon,
   UserIcon,
-  PencilIcon // Import PencilIcon
+  PencilIcon,
+  SparklesIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { HeaderThemeToggle } from '@/components/ui/HeaderThemeToggle';
@@ -171,121 +173,200 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary-50/20 dark:to-primary-500/5 text-foreground">
       {/* 標題列 */}
-      <div className="bg-card shadow-sm border-b border-border">
+      <div className="bg-card/80 backdrop-blur-lg shadow-lg border-b border-border/50 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
-            <div>
-              <h1 className="text-2xl font-bold">管理後台</h1>
-              <p className="text-muted-foreground">專案管理系統</p>
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-lg">
+                <CogIcon className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary-600 dark:to-primary-400 bg-clip-text text-transparent">
+                  管理後台
+                </h1>
+                <p className="text-sm text-muted-foreground">專案管理系統</p>
+              </div>
             </div>
-             <div className="flex items-center space-x-4">
-               <Link href="/" className="btn-secondary">
-                 返回首頁
-               </Link>
-               <Link href="/admin/new" className="btn-primary flex items-center space-x-2">
-                 <PlusIcon className="h-4 w-4" />
-                 <span>新增專案</span>
-               </Link>
-             </div>
+            <div className="flex items-center space-x-3">
+              <Link 
+                href="/" 
+                className="btn-secondary shadow-sm hover:shadow-md transition-shadow"
+              >
+                返回首頁
+              </Link>
+              <Link 
+                href="/admin/new" 
+                className="btn-primary flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                <PlusIcon className="h-4 w-4" />
+                <span>新增專案</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* 統計卡片 */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-primary-600">{stats.total}</div>
-              <div className="text-sm text-muted-foreground">總專案</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+            {/* 總專案數 */}
+            <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <ChartBarIcon className="h-8 w-8 text-white/90" />
+                  <div className="text-4xl font-black text-white drop-shadow-lg">{stats.total}</div>
+                </div>
+                <div className="text-sm font-semibold text-white/90 uppercase tracking-wide">總專案</div>
+              </div>
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
             </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-red-600">{stats.important}</div>
-              <div className="text-sm text-muted-foreground">重要專案</div>
+
+            {/* 重要專案 */}
+            <div className="group relative overflow-hidden bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <SparklesIcon className="h-8 w-8 text-white/90" />
+                  <div className="text-4xl font-black text-white drop-shadow-lg">{stats.important}</div>
+                </div>
+                <div className="text-sm font-semibold text-white/90 uppercase tracking-wide">重要專案</div>
+              </div>
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
             </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-              <div className="text-sm text-muted-foreground">已完成</div>
+
+            {/* 已完成 */}
+            <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <CheckCircleIcon className="h-8 w-8 text-white/90" />
+                  <div className="text-4xl font-black text-white drop-shadow-lg">{stats.completed}</div>
+                </div>
+                <div className="text-sm font-semibold text-white/90 uppercase tracking-wide">已完成</div>
+              </div>
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
             </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.public}</div>
-              <div className="text-sm text-muted-foreground">公開專案</div>
+
+            {/* 公開專案 */}
+            <div className="group relative overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <EyeIcon className="h-8 w-8 text-white/90" />
+                  <div className="text-4xl font-black text-white drop-shadow-lg">{stats.public}</div>
+                </div>
+                <div className="text-sm font-semibold text-white/90 uppercase tracking-wide">公開專案</div>
+              </div>
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
             </div>
-            <div className="card text-center">
-              <div className="text-2xl font-bold text-purple-600">{stats.passwords}</div>
-              <div className="text-sm text-muted-foreground">存储密碼</div>
+
+            {/* 存儲密碼 */}
+            <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <UserIcon className="h-8 w-8 text-white/90" />
+                  <div className="text-4xl font-black text-white drop-shadow-lg">{stats.passwords}</div>
+                </div>
+                <div className="text-sm font-semibold text-white/90 uppercase tracking-wide">儲存密碼</div>
+              </div>
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
             </div>
           </div>
 
 
           {/* 選項卡列 */}
           <div className="mb-6">
-            <nav className="flex space-x-8">
-              <button
-                onClick={() => setActiveTab('projects')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'projects'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
-              >
-                專案管理
-              </button>
-              <button
-                onClick={() => setActiveTab('passwords')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                  activeTab === 'passwords'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
-              >
-                <span>密碼管理</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowPasswords(!showPasswords);
+            {/* 新的 Tab 設計 */}
+            <div className="relative bg-card/50 backdrop-blur-sm rounded-2xl p-2 border border-border/50 shadow-lg">
+              <div className="flex space-x-2 relative">
+                {/* 滑動指示器 */}
+                <div 
+                  className="absolute bottom-0 h-1 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-300 ease-out"
+                  style={{
+                    left: activeTab === 'projects' ? '0%' : 
+                          activeTab === 'passwords' ? '20%' :
+                          activeTab === 'import' ? '40%' :
+                          activeTab === 'settings' ? '60%' : '80%',
+                    width: '20%'
                   }}
-                  className="text-muted-foreground hover:text-foreground"
+                />
+                
+                {/* Tab 按鈕 */}
+                <button
+                  onClick={() => setActiveTab('projects')}
+                  className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 ${
+                    activeTab === 'projects'
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
                 >
-                  {showPasswords ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  專案管理
                 </button>
-              </button>
-              <button
-                onClick={() => setActiveTab('import')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'import'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
-              >
-                批量導入
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'settings'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
-              >
-                系統設定
-              </button>
-              <button
-                onClick={() => setActiveTab('diagnostics')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'diagnostics'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
-              >
-                系統診斷
-              </button>
-            </nav>
+                
+                <button
+                  onClick={() => setActiveTab('passwords')}
+                  className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                    activeTab === 'passwords'
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  <span>密碼管理</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPasswords(!showPasswords);
+                    }}
+                    className={`p-1 rounded-md transition-colors ${
+                      activeTab === 'passwords' ? 'hover:bg-white/20' : 'hover:bg-muted'
+                    }`}
+                  >
+                    {showPasswords ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                  </button>
+                </button>
+                
+                <button
+                  onClick={() => setActiveTab('import')}
+                  className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 ${
+                    activeTab === 'import'
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  批量導入
+                </button>
+                
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 ${
+                    activeTab === 'settings'
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  系統設定
+                </button>
+                
+                <button
+                  onClick={() => setActiveTab('diagnostics')}
+                  className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 ${
+                    activeTab === 'diagnostics'
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  系統診斷
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* 內容區域 */}
-          <div className="bg-card rounded-lg shadow-sm border border-border">
+          <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border border-border/50 overflow-hidden animate-fade-in">
             {activeTab === 'projects' && (
               <ProjectTable
                 projects={projectData.projects}
