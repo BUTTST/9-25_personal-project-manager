@@ -69,7 +69,7 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `project-showcase-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `${new Date().toISOString().split('T')[0]}._專案管理平台_backup.json`;
       link.click();
       
       URL.revokeObjectURL(url);
