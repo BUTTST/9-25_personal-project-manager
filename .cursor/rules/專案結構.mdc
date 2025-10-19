@@ -1,0 +1,55 @@
+---
+alwaysApply: true
+---
+# 個人專案管理器 - 專案結構
+
+這是一個使用 Next.js 14 (App Router)、TypeScript、Tailwind CSS 和 Vercel Blob 儲存體建立的個人專案展示與管理平台。
+
+## 核心架構
+
+### 目錄結構
+- [app/](mdc:app/) - Next.js App Router 根目錄
+  - [api/](mdc:app/api/) - 無伺服器 API 路由
+  - [components/](mdc:app/components/) - 按功能組織的 React 元件
+  - [lib/](mdc:app/lib/) - 工具函數與核心邏輯
+  - [types/](mdc:app/types/) - TypeScript 類型定義
+- [public/](mdc:public/) - 靜態資源 (圖示、圖片)
+- [scripts/](mdc:scripts/) - 建置與工具腳本
+
+### 關鍵檔案
+- [app/types/index.ts](mdc:app/types/index.ts) - `Project`、`PasswordEntry`、`AppSettings` 等核心類型定義
+- [app/lib/blob-storage.ts](mdc:app/lib/blob-storage.ts) - Vercel Blob 儲存體操作
+- [app/lib/auth.ts](mdc:app/lib/auth.ts) - 驗證邏輯
+- [app/lib/data-safety.ts](mdc:app/lib/data-safety.ts) - 資料驗證與備份
+- [package.json](mdc:package.json) - 依賴項與腳本
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript 設定與路徑別名
+
+## 路徑別名
+使用已設定的路徑別名：
+- `@/*` 對應 `./app/*`
+- `@/components/*` 對應 `./app/components/*`
+- `@/lib/*` 對應 `./app/lib/*`
+- `@/types/*` 對應 `./app/types/*`
+
+範例： `import { Project } from '@/types'`
+
+## 技術棧
+- **框架**: Next.js 14 (App Router)
+- **語言**: TypeScript
+- **樣式**: Tailwind CSS 與自訂設計系統
+- **圖示**: Heroicons v2
+- **儲存**: Vercel Blob (用於專案、密碼、設定)
+- **部署**: Vercel
+
+## 功能區域
+1. **訪客模式**: 公開專案瀏覽，支援搜尋、篩選與統計
+2. **管理員模式**: 完整的 CRUD 操作、密碼管理、UI 自訂
+3. **驗證**: 基於密碼的管理員驗證與會話管理
+4. **UI 自訂**: 拖放篩選器/統計、可見性控制
+5. **主題支援**: 淺色/深色模式自動偵測
+
+## 資料流
+- 所有持久性資料以 JSON 格式儲存於 Vercel Blob
+- API 路由處理需管理員驗證的 CRUD 操作
+- 客戶端元件管理本地狀態並與 API 同步
+- 伺服器元件擷取資料進行初始渲染

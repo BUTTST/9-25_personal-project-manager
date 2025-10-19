@@ -99,9 +99,9 @@ layout-preview.html
 ui-ux-improvement-report.html
 
 # Cursor IDE
-.cursor
-# Cursor rules directory
-.cursor/rules
-手動備份/25-10-19平台上手動備份的project-data.json
-.cursor/plans/ui-ux------ba8eabc1.plan.md
-.cursor/plans/ui-ux------ba8eabc1.plan.md
+# 只忽略特定檔案和目錄，保留 rules 和 prompts
+.cursor/plans/
+
+# 保留這些目錄（專案規範與提示詞）
+# .cursor/rules/
+# .cursor/prompts/

@@ -1,0 +1,61 @@
+---
+globs: "*.ts,*.tsx"
+---
+# TypeScript 指南
+
+## 類型安全
+- **務必**從 [app/types/index.ts](mdc:app/types/index.ts) 匯入類型
+- 使用正確的 TypeScript 類型，除非絕對必要，否則避免使用 `any`
+- 物件形狀偏好使用 `interface`，聯合/交集類型使用 `type`
+- 使用嚴格模式 (已在 tsconfig 中設定)
+
+## 核心類型定義
+所有類型定義請參閱 [app/types/index.ts](mdc:app/types/index.ts)：
+
+### 主要介面
+- `Project` - 核心專案實體，包含完整的元數據和可見性控制
+- `ProjectVisibility` - 控制哪些欄位對訪客可見
+- `PasswordEntry` - 儲存的密碼 (僅限管理員)
+- `AppSettings` - 全域應用程式設定
+- `ProjectData` - 儲存在 Vercel Blob 中的完整資料結構
+- `UIDisplaySettings` - 自訂 UI 篩選器和統計設定
+- `AuthSession` - 驗證會話資訊
+
+### 分類
+專案分類是嚴格類型化的：
+```typescript
+'important' | 'secondary' | 'practice' | 'completed' | 'abandoned'
+```
+
+### 統計類型
+統計資料的類型定義為：
+```typescript
+'totalProjects' | 'publicProjects' | 'displayedCount' | 'importantCount' | 
+'completedCount' | 'inProgressCount' | 'readyStatus' | 'abandonedCount'
+```
+
+## Props 類型定義
+務必明確定義元件的 props 類型：
+```typescript
+interface MyComponentProps {
+  project: Project;
+  isAdmin: boolean;
+  onUpdate?: (project: Project) => void;
+}
+
+export function MyComponent({ project, isAdmin, onUpdate }: MyComponentProps) {
+  // ...
+}
+```
+
+## API 路由類型定義
+- 使用 'next/server' 中的 `NextRequest` 和 `NextResponse`
+- 適當地為請求主體資料定義類型
+- 回傳類型化的 JSON 回應
+
+## 工具函數
+在 [app/lib/](mdc:app/lib/) 中建立工具函數時：
+- 匯出時需有正確的回傳類型
+- 用註解說明複雜的邏輯
+- 優雅地處理錯誤
+- 需要時使用 TypeScript 的類型防護

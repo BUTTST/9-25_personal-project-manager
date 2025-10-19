@@ -1,0 +1,123 @@
+---
+globs: "app/api/**/*.ts"
+---
+# API 路由指南
+
+## 路由結構
+[app/api/](mdc:app/api/) 中的 API 路由遵循 Next.js App Router 的慣例：
+- 每個路由都是一個 `route.ts` 檔案
+- 匯出命名函數：`GET`、`POST`、`PATCH`、`DELETE`
+- 使用 'next/server' 中的 `NextRequest` 和 `NextResponse`
+
+## 驗證
+需要管理員權限的 API 路由必須驗證密碼：
+```typescript
+import { verifyAdminPassword } from '@/lib/auth';
+
+export async function POST(request: NextRequest) {
+  // 從標頭驗證管理員密碼
+  const password = request.headers.get('x-admin-password');
+  const isValid = await verifyAdminPassword(password);
+  
+  if (!isValid) {
+    return NextResponse.json(
+      { error: '未授權' },
+      { status: 401 }
+    );
+  }
+  
+  // 繼續執行管理員操作
+}
+```
+
+## 資料存取模式
+所有持久性資料操作都透過 [blob-storage.ts](mdc:app/lib/blob-storage.ts) 進行：
+```typescript
+import { readProjectData, writeProjectData } from '@/lib/blob-storage';
+
+// 讀取資料
+const data = await readProjectData();
+
+// 修改資料
+const updatedData = {
+  ...data,
+  projects: [...modifiedProjects],
+  metadata: {
+    ...data.metadata,
+    lastUpdated: Date.now()
+  }
+};
+
+// 寫入資料 (含安全檢查)
+await writeProjectData(updatedData);
+```
+
+## 錯誤處理
+- 將操作包裝在 try-catch 區塊中
+- 回傳適當的 HTTP 狀態碼
+- 提供有意義的錯誤訊息
+- 記錄錯誤以供偵錯
+
+```typescript
+try {
+  // 操作
+} catch (error) {
+  console.error('操作失敗:', error);
+  return NextResponse.json(
+    { error: '執行操作失敗', details: error.message },
+    { status: 500 }
+  );
+}
+```
+
+## 資料安全
+[blob-storage.ts](mdc:app/lib/blob-storage.ts) 中的主要安全功能：
+- **空資料保護**：防止意外的資料遺失
+- **資料驗證**：使用 [data-safety.ts](mdc:app/lib/data-safety.ts) 中的函數
+- **強制寫入選項**：`writeProjectData(data, true)` 可繞過安全檢查
+- **備份元資料**：追蹤時間戳記和安全驗證
+
+## API 端點
+### 公開端點
+- `GET /api/projects` - 獲取公開專案 (無需驗證)
+- `GET /api/initialize` - 初始應用設定
+- `POST /api/auth/login` - 登入驗證
+
+### 管理員端點 (需要 x-admin-password 標頭)
+- `GET /api/projects?admin=true` - 獲取所有專案
+- `POST /api/projects` - 建立專案
+- `PATCH /api/projects/[id]` - 更新專案
+- `DELETE /api/projects/[id]` - 刪除專案
+- `POST /api/projects/reorder` - 重新排序專案
+- `GET /api/settings/ui-display` - 獲取 UI 設定
+- `POST /api/settings/ui-display` - 更新 UI 設定
+
+### 管理員管理
+- `GET /api/admin/diagnose` - 系統診斷
+- `POST /api/admin/force-init` - 強制資料初始化
+- `POST /api/admin/init-data` - 使用範例資料初始化
+
+## 回應格式
+回傳一致的 JSON 回應：
+```typescript
+// 成功
+return NextResponse.json({
+  success: true,
+  data: resultData,
+  message: '操作完成'
+});
+
+// 錯誤
+return NextResponse.json(
+  { 
+    error: '錯誤訊息',
+    details: '額外資訊' 
+  },
+  { status: 400 }
+);
+```
+
+## CORS 與標頭
+- Vercel 自動處理 CORS
+- 需要時設定自訂標頭
+- 對於 JSON 回應，始終使用 'Content-Type': 'application/json'
