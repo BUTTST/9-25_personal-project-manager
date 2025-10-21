@@ -11,7 +11,7 @@ import {
   ensureProjectVisibility,
 } from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
-import { XMarkIcon, EyeIcon, EyeSlashIcon, PlusIcon, TrashIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, EyeIcon, EyeSlashIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { imageGallery } from '@/config/image-gallery';
 
 interface EditProjectModalProps {
@@ -466,57 +466,96 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
                 <span className="text-sm text-muted-foreground">
                   已選擇 {formData.imagePreviews.length} 張圖片
                 </span>
-                <div className="flex items-center gap-3">
-                  <label className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <input
-                      type="radio"
-                      value="single"
-                      checked={formData.imagePreviewMode === 'single'}
-                      onChange={(e) => handleInputChange('imagePreviewMode', e.target.value)}
-                    />
-                    單張切換
-                  </label>
-                  <label className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <input
-                      type="radio"
-                      value="grid"
-                      checked={formData.imagePreviewMode === 'grid'}
-                      onChange={(e) => handleInputChange('imagePreviewMode', e.target.value)}
-                    />
-                    多張同時展開
-                  </label>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <label className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <input
+                        type="radio"
+                        value="single"
+                        checked={formData.imagePreviewMode === 'single'}
+                        onChange={(e) => handleInputChange('imagePreviewMode', e.target.value)}
+                        className="form-radio"
+                      />
+                      單張切換
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <input
+                        type="radio"
+                        value="grid"
+                        checked={formData.imagePreviewMode === 'grid'}
+                        onChange={(e) => handleInputChange('imagePreviewMode', e.target.value)}
+                        className="form-radio"
+                      />
+                      多張並列
+                    </label>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {imageGallery.map((image) => {
-                  const selected = formData.imagePreviews.some((img) => img.id === image.id);
-                  return (
-                    <button
-                      key={image.id}
-                      type="button"
-                      onClick={() => handleImageToggle(image.id)}
-                      className={`relative rounded-lg border p-3 text-left text-sm transition-all ${
-                        selected
-                          ? 'border-primary-400 bg-primary-50 dark:border-primary-500 dark:bg-primary-500/10'
-                          : 'border-border hover:border-primary-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <PhotoIcon className={`h-6 w-6 ${selected ? 'text-primary-500' : 'text-muted-foreground'}`} />
-                        <div className="flex-1">
-                          <div className="font-medium text-foreground line-clamp-1">{image.title}</div>
-                          <div className="text-xs text-muted-foreground">{image.description || image.id}</div>
+              <p className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3 border border-muted/60">
+                💡 <strong>選擇模式說明：</strong>「單張切換」會顯示單張圖片，訪客可點擊或使用按鈕切換；「多張並列」會同時展開所有選中的圖片。
+              </p>
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium text-foreground">選擇圖片</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {imageGallery.map((image) => {
+                    const selected = formData.imagePreviews.some((img) => img.id === image.id);
+                    return (
+                      <button
+                        key={image.id}
+                        type="button"
+                        onClick={() => handleImageToggle(image.id)}
+                        className={`relative group rounded-lg overflow-hidden border-2 transition-all ${
+                          selected
+                            ? 'border-primary-400 bg-primary-50/30 dark:border-primary-500 dark:bg-primary-500/10 ring-2 ring-primary-300 dark:ring-primary-600'
+                            : 'border-border hover:border-primary-300 dark:hover:border-primary-600'
+                        }`}
+                      >
+                        {/* 圖片縮圖 */}
+                        <div className="relative w-full aspect-video overflow-hidden bg-muted">
+                          <img
+                            src={image.src}
+                            alt={image.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                          {/* 半透明覆蓋層 */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
                         </div>
-                      </div>
-                      {selected && (
-                        <span className="absolute right-2 top-2 rounded-full bg-primary-500 px-2 py-0.5 text-[10px] font-medium text-white">
-                          選用中
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+
+                        {/* 文字信息區 */}
+                        <div className="p-2 bg-card">
+                          <div className="text-xs font-medium text-foreground line-clamp-2">
+                            {image.title}
+                          </div>
+                          {image.description && (
+                            <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
+                              {image.description}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 選中標記 */}
+                        {selected && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-primary-500/10 backdrop-blur-sm">
+                            <div className="rounded-full bg-primary-500 p-2 shadow-lg">
+                              <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 懸停時顯示提示 */}
+                        <div className="absolute inset-0 flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                          <span className="text-[10px] font-semibold text-white bg-black/70 px-2 py-1 rounded-full whitespace-nowrap">
+                            點擊 {selected ? '移除' : '新增'}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 

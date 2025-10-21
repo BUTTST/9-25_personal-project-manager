@@ -278,11 +278,16 @@ export default function NewProjectPage() {
                     checked={formData.imagePreviewMode === 'grid'}
                     onChange={(e) => handleInputChange('imagePreviewMode', e.target.value)}
                   />
-                  多張同時展開
+                  多張並列
                 </label>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+            <p className="text-xs text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-200">
+              💡 <strong>選擇模式說明：</strong>「單張切換」會顯示單張圖片，訪客可點擊或使用按鈕切換；「多張並列」會同時展開所有選中的圖片。
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {imageGallery.map((image) => {
                 const selected = formData.imagePreviews.some((img) => img.id === image.id);
                 return (
@@ -290,18 +295,52 @@ export default function NewProjectPage() {
                     key={image.id}
                     type="button"
                     onClick={() => handleImageToggle(image.id)}
-                    className={`flex items-center gap-3 rounded-lg border p-3 text-left transition ${
+                    className={`relative group rounded-lg overflow-hidden border-2 transition-all ${
                       selected
-                        ? 'border-primary-500 bg-primary-50 text-primary-600'
-                        : 'border-gray-200 hover:border-primary-300'
+                        ? 'border-primary-500 bg-primary-50 dark:border-primary-500 dark:bg-primary-500/10 ring-2 ring-primary-300 dark:ring-primary-600'
+                        : 'border-gray-200 hover:border-primary-300 dark:border-gray-700 dark:hover:border-primary-600'
                     }`}
                   >
-                    <PhotoIcon className={`h-5 w-5 ${selected ? 'text-primary-500' : 'text-gray-400'}`} />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-800">{image.title}</div>
-                      <div className="text-xs text-gray-500">{image.description || image.id}</div>
+                    {/* 圖片縮圖 */}
+                    <div className="relative w-full aspect-video overflow-hidden bg-gray-100">
+                      <img
+                        src={image.src}
+                        alt={image.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      {/* 半透明覆蓋層 */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
                     </div>
-                    {selected && <span className="text-xs font-medium text-primary-500">已選</span>}
+
+                    {/* 文字信息區 */}
+                    <div className="p-2 bg-white dark:bg-gray-800">
+                      <div className="text-xs font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                        {image.title}
+                      </div>
+                      {image.description && (
+                        <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1 mt-0.5">
+                          {image.description}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 選中標記 */}
+                    {selected && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-primary-500/10 backdrop-blur-sm">
+                        <div className="rounded-full bg-primary-500 p-2 shadow-lg">
+                          <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 懸停時顯示提示 */}
+                    <div className="absolute inset-0 flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                      <span className="text-[10px] font-semibold text-white bg-black/70 px-2 py-1 rounded-full whitespace-nowrap">
+                        點擊 {selected ? '移除' : '新增'}
+                      </span>
+                    </div>
                   </button>
                 );
               })}

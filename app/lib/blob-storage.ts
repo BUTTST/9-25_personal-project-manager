@@ -172,8 +172,10 @@ function enrichProjectData(data: ProjectData): ProjectData {
   const documentCategory = 'single-doc';
   const settings = data.settings || ({} as AppSettings);
   const uiDisplay = settings.uiDisplay || { filters: [], statistics: [] };
-  const filters = [...uiDisplay.filters];
-  const statistics = [...uiDisplay.statistics];
+  
+  // 如果 filters 或 statistics 為空，使用默認配置
+  const filters = uiDisplay.filters.length > 0 ? [...uiDisplay.filters] : [...defaultProjectData.settings.uiDisplay.filters];
+  const statistics = uiDisplay.statistics.length > 0 ? [...uiDisplay.statistics] : [...defaultProjectData.settings.uiDisplay.statistics];
 
   const projects = data.projects.map((project) => {
     const normalizedCategory = normalizeProjectCategory(project.category);

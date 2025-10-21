@@ -169,6 +169,43 @@ export function UISettingsPanel({ settings, onClose, onQuickUpdate, onSave }: UI
     }
   };
 
+  const handleResetToDefault = async () => {
+    if (!confirm('確定要恢復預設設定嗎？這將清除您的自訂配置。')) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
+      const response = await fetch('/api/settings/reset-ui', {
+        method: 'POST',
+        headers: {
+          'x-admin-password': adminPassword,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('恢復預設設定失敗');
+      }
+
+      const result = await response.json();
+      
+      // 更新本地設定並通知父組件
+      setLocalSettings(result.uiDisplay);
+      onQuickUpdate(result.uiDisplay);
+      
+      alert('✅ 已成功恢復預設設定！');
+      
+      // 重新載入頁面以確保所有變更生效
+      window.location.reload();
+    } catch (error) {
+      console.error('恢復預設設定失敗:', error);
+      alert('❌ 恢復預設設定失敗：' + (error instanceof Error ? error.message : '未知錯誤'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const resetPanelSize = () => {
     setPanelWidth(80);
     setPanelHeight(45);
@@ -378,20 +415,29 @@ export function UISettingsPanel({ settings, onClose, onQuickUpdate, onSave }: UI
           </div>
           
           {/* 底部按鈕 */}
-          <div className="border-t border-blue-500/30 p-4 bg-slate-800/50 flex justify-end gap-3">
+          <div className="border-t border-blue-500/30 p-4 bg-slate-800/50 flex justify-between gap-3">
             <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-            >
-              取消
-            </button>
-            <button
-              onClick={handleSave}
+              onClick={handleResetToDefault}
               disabled={saving}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-yellow-300 hover:text-yellow-100 bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-600/50 hover:border-yellow-500 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {saving ? '儲存中...' : '儲存設定'}
+              🔄 恢復預設
             </button>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg transition-colors"
+              >
+                {saving ? '儲存中...' : '💾 儲存設定'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
