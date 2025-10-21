@@ -28,11 +28,17 @@ const filterIcons: Record<string, any> = {
   secondary: FlagIcon,
   practice: BeakerIcon,
   'single-doc': DocumentTextIcon,
+  completed: CheckCircleIcon,
+  abandoned: ArchiveBoxIcon,
   'status-in-progress': PlayCircleIcon,
   'status-on-hold': PauseCircleIcon,
   'status-long-term': WrenchScrewdriverIcon,
   'status-completed': CheckCircleIcon,
   'status-discarded': XCircleIcon,
+  hot: SparklesIcon,
+  paused: PauseCircleIcon,
+  'in-progress': PlayCircleIcon,
+  draft: DocumentTextIcon,
 };
 
 // 篩選器顏色映射
@@ -65,6 +71,36 @@ const filterColors: Record<string, {
     color: 'text-purple-700 dark:text-purple-300',
     bgColor: 'bg-purple-100 dark:bg-purple-500/20',
     borderColor: 'border-purple-300 dark:border-purple-500/50',
+  },
+  completed: {
+    color: 'text-green-700 dark:text-green-300',
+    bgColor: 'bg-green-100 dark:bg-green-500/20',
+    borderColor: 'border-green-300 dark:border-green-500/50',
+  },
+  abandoned: {
+    color: 'text-gray-700 dark:text-gray-300',
+    bgColor: 'bg-gray-100 dark:bg-gray-500/20',
+    borderColor: 'border-gray-300 dark:border-gray-500/50',
+  },
+  hot: {
+    color: 'text-orange-700 dark:text-orange-300',
+    bgColor: 'bg-orange-100 dark:bg-orange-500/20',
+    borderColor: 'border-orange-300 dark:border-orange-500/50',
+  },
+  paused: {
+    color: 'text-indigo-700 dark:text-indigo-300',
+    bgColor: 'bg-indigo-100 dark:bg-indigo-500/20',
+    borderColor: 'border-indigo-300 dark:border-indigo-500/50',
+  },
+  'in-progress': {
+    color: 'text-teal-700 dark:text-teal-300',
+    bgColor: 'bg-teal-100 dark:bg-teal-500/20',
+    borderColor: 'border-teal-300 dark:border-teal-500/50',
+  },
+  draft: {
+    color: 'text-slate-700 dark:text-slate-300',
+    bgColor: 'bg-slate-100 dark:bg-slate-500/20',
+    borderColor: 'border-slate-300 dark:border-slate-500/50',
   },
   'status-in-progress': {
     color: 'text-teal-700 dark:text-teal-300',
