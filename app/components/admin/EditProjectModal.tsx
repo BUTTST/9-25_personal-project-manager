@@ -1,9 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Project, ProjectFormData } from '@/types';
+import {
+  Project,
+  ProjectFormData,
+  ProjectStatus,
+  categoryDisplayNames,
+  statusDisplayNames,
+  projectStatusOrder,
+  ensureProjectVisibility,
+} from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
-import { XMarkIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, EyeIcon, EyeSlashIcon, PlusIcon, TrashIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { imageGallery } from '@/config/image-gallery';
 
 interface EditProjectModalProps {
   project: Project;
@@ -17,16 +26,23 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
     dateAndFileName: project.dateAndFileName,
     description: project.description,
     category: project.category,
+    status: project.status,
     github: project.github || '',
     vercel: project.vercel || '',
     path: project.path || '',
     statusNote: project.statusNote || '',
     publicNote: project.publicNote || '',
-    developerNote: project.developerNote || ''
+    developerNote: project.developerNote || '',
+    imagePreviews: project.imagePreviews || [],
+    imagePreviewMode: project.imagePreviewMode,
+    customInfoSections: project.customInfoSections || [],
   });
-  const [visibility, setVisibility] = useState<Project['visibility']>(project.visibility);
+  const [visibility, setVisibility] = useState<Project['visibility']>(ensureProjectVisibility(project.visibility));
   const [saving, setSaving] = useState(false);
   const [lastVisibilityState, setLastVisibilityState] = useState<Project['visibility'] | null>(null);
+  const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [newSectionContent, setNewSectionContent] = useState('');
+  const [newSectionType, setNewSectionType] = useState<'text' | 'url'>('text');
 
   useEffect(() => {
     if (isOpen) {
@@ -35,14 +51,18 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
         dateAndFileName: project.dateAndFileName,
         description: project.description,
         category: project.category,
+        status: project.status,
         github: project.github || '',
         vercel: project.vercel || '',
         path: project.path || '',
         statusNote: project.statusNote || '',
         publicNote: project.publicNote || '',
-        developerNote: project.developerNote || ''
+        developerNote: project.developerNote || '',
+        imagePreviews: project.imagePreviews || [],
+        imagePreviewMode: project.imagePreviewMode,
+        customInfoSections: project.customInfoSections || [],
       });
-      setVisibility(project.visibility);
+      setVisibility(ensureProjectVisibility(project.visibility));
     }
   }, [isOpen, project]);
 
@@ -88,6 +108,72 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleStatusChange = (status: ProjectStatus) => {
+    setFormData((prev) => ({
+      ...prev,
+      status,
+    }));
+  };
+
+  const handleImageToggle = (imageId: string) => {
+    setFormData((prev) => {
+      const exists = prev.imagePreviews.some((img) => img.id === imageId);
+      if (exists) {
+        return {
+          ...prev,
+          imagePreviews: prev.imagePreviews.filter((img) => img.id !== imageId),
+        };
+      }
+      const galleryImage = imageGallery.find((img) => img.id === imageId);
+      if (!galleryImage) return prev;
+      return {
+        ...prev,
+        imagePreviews: [...prev.imagePreviews, { ...galleryImage }],
+      };
+    });
+  };
+
+  const handleSectionToggle = (index: number, field: keyof ProjectFormData['customInfoSections'][number], value: string | boolean) => {
+    setFormData((prev) => {
+      const updatedSections = [...prev.customInfoSections];
+      updatedSections[index] = {
+        ...updatedSections[index],
+        [field]: value,
+      };
+      return {
+        ...prev,
+        customInfoSections: updatedSections,
+      };
+    });
+  };
+
+  const handleAddSection = () => {
+    if (!newSectionTitle.trim() || !newSectionContent.trim()) return;
+    setFormData((prev) => ({
+      ...prev,
+      customInfoSections: [
+        ...prev.customInfoSections,
+        {
+          id: `section-${Date.now()}`,
+          title: newSectionTitle,
+          type: newSectionType,
+          content: newSectionContent,
+          visible: true,
+        },
+      ],
+    }));
+    setNewSectionTitle('');
+    setNewSectionContent('');
+    setNewSectionType('text');
+  };
+
+  const handleRemoveSection = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      customInfoSections: prev.customInfoSections.filter((_, i) => i !== index),
     }));
   };
 
@@ -243,8 +329,7 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
                       <option value="important">［重要］</option>
                       <option value="secondary">［次］</option>
                       <option value="practice">［子實踐］</option>
-                      <option value="completed">［已完成］</option>
-                      <option value="abandoned">［已捨棄］</option>
+                      <option value="single-doc">［單檔專案］</option>
                     </select>
                   </div>
                   <div className="flex flex-col items-center gap-1 pt-8">
@@ -255,6 +340,33 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
                     />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
                       {visibility.category ? '可見' : '隱藏'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-foreground mb-2">狀態</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => handleStatusChange(e.target.value as ProjectStatus)}
+                      className="input"
+                    >
+                      {projectStatusOrder.map((statusKey) => (
+                        <option key={statusKey} value={statusKey}>
+                          {statusDisplayNames[statusKey]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 pt-8">
+                    <ToggleControl
+                      checked={visibility.status}
+                      onChange={(checked) => handleVisibilityChange('status', checked)}
+                      size="sm"
+                    />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {visibility.status ? '可見' : '隱藏'}
                     </span>
                   </div>
                 </div>
@@ -343,6 +455,71 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
               </div>
             </div>
 
+            {/* 圖片設定 */}
+            <div className="space-y-4 pt-4 border-t border-border">
+              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <div className="w-1 h-5 bg-purple-500 rounded-full"></div>
+                圖片預覽
+              </h3>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  已選擇 {formData.imagePreviews.length} 張圖片
+                </span>
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <input
+                      type="radio"
+                      value="single"
+                      checked={formData.imagePreviewMode === 'single'}
+                      onChange={(e) => handleInputChange('imagePreviewMode', e.target.value)}
+                    />
+                    單張切換
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <input
+                      type="radio"
+                      value="grid"
+                      checked={formData.imagePreviewMode === 'grid'}
+                      onChange={(e) => handleInputChange('imagePreviewMode', e.target.value)}
+                    />
+                    多張同時展開
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {imageGallery.map((image) => {
+                  const selected = formData.imagePreviews.some((img) => img.id === image.id);
+                  return (
+                    <button
+                      key={image.id}
+                      type="button"
+                      onClick={() => handleImageToggle(image.id)}
+                      className={`relative rounded-lg border p-3 text-left text-sm transition-all ${
+                        selected
+                          ? 'border-primary-400 bg-primary-50 dark:border-primary-500 dark:bg-primary-500/10'
+                          : 'border-border hover:border-primary-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <PhotoIcon className={`h-6 w-6 ${selected ? 'text-primary-500' : 'text-muted-foreground'}`} />
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground line-clamp-1">{image.title}</div>
+                          <div className="text-xs text-muted-foreground">{image.description || image.id}</div>
+                        </div>
+                      </div>
+                      {selected && (
+                        <span className="absolute right-2 top-2 rounded-full bg-primary-500 px-2 py-0.5 text-[10px] font-medium text-white">
+                          選用中
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* 註解資訊 */}
             <div className="space-y-4 pt-4 border-t border-border">
               <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -423,6 +600,113 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
                     </span>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* 自訂資訊區塊 */}
+            <div className="space-y-4 pt-4 border-t border-border">
+              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <div className="w-1 h-5 bg-cyan-500 rounded-full"></div>
+                自訂資訊區塊
+              </h3>
+
+              <div className="space-y-3">
+                {formData.customInfoSections.map((section, index) => (
+                  <div key={section.id} className="rounded-lg border border-border/60 p-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-foreground">區塊 {index + 1}</h4>
+                      <div className="flex items-center gap-2">
+                        <ToggleControl
+                          checked={section.visible}
+                          onChange={(checked) => handleSectionToggle(index, 'visible', checked)}
+                          size="sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSection(index)}
+                          className="text-muted-foreground hover:text-red-500"
+                          title="移除區塊"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground">標題</label>
+                        <input
+                          type="text"
+                          value={section.title}
+                          onChange={(e) => handleSectionToggle(index, 'title', e.target.value)}
+                          className="input mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground">類型</label>
+                        <select
+                          value={section.type}
+                          onChange={(e) => handleSectionToggle(index, 'type', e.target.value as 'text' | 'url')}
+                          className="input mt-1"
+                        >
+                          <option value="text">文本</option>
+                          <option value="url">網址</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs font-medium text-muted-foreground">內容</label>
+                      <textarea
+                        value={section.content}
+                        onChange={(e) => handleSectionToggle(index, 'content', e.target.value)}
+                        className="textarea mt-1"
+                        rows={section.type === 'url' ? 2 : 3}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-lg border border-dashed border-border/60 p-4">
+                <h4 className="text-sm font-semibold text-foreground">新增區塊</h4>
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">標題</label>
+                    <input
+                      type="text"
+                      value={newSectionTitle}
+                      onChange={(e) => setNewSectionTitle(e.target.value)}
+                      className="input mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">類型</label>
+                    <select
+                      value={newSectionType}
+                      onChange={(e) => setNewSectionType(e.target.value as 'text' | 'url')}
+                      className="input mt-1"
+                    >
+                      <option value="text">文本</option>
+                      <option value="url">網址</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <label className="text-xs font-medium text-muted-foreground">內容</label>
+                  <textarea
+                    value={newSectionContent}
+                    onChange={(e) => setNewSectionContent(e.target.value)}
+                    className="textarea mt-1"
+                    rows={newSectionType === 'url' ? 2 : 3}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddSection}
+                  className="mt-3 inline-flex items-center gap-1 rounded-md bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-primary-600"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  新增區塊
+                </button>
               </div>
             </div>
 

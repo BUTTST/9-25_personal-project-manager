@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { list, put } from '@vercel/blob';
-import { Project } from '@/types';
+import { readProjectData, writeProjectData } from '@/lib/blob-storage';
+import { Project, ensureProjectVisibility, migrateLegacyCategoryToStatus, defaultImagePreviewMode } from '@/types';
 
 export async function POST(request: NextRequest) {
   const password = request.headers.get('x-admin-password');
@@ -16,19 +16,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid data format' }, { status: 400 });
     }
 
-    const { blobs } = await list({ prefix: 'projects.json' });
-    if (blobs.length === 0) {
-      return NextResponse.json({ error: 'Data file not found' }, { status: 404 });
-    }
-    const blob = blobs[0];
-    const response = await fetch(blob.url);
-    const data = await response.json();
-    const projects: Project[] = data.projects || [];
+    const data = await readProjectData();
+    const migratedProjects: Project[] = data.projects.map(project => ({
+      ...project,
+      status: project.status || migrateLegacyCategoryToStatus(project.category),
+      visibility: ensureProjectVisibility(project.visibility),
+      imagePreviews: project.imagePreviews ?? [],
+      imagePreviewMode: project.imagePreviewMode || defaultImagePreviewMode,
+      customInfoSections: project.customInfoSections ?? [],
+      documentMeta: project.documentMeta ?? null,
+    }));
 
-    // Create a map for quick lookup
-    const projectMap = new Map(projects.map(p => [p.id, p]));
+    const projectMap = new Map(migratedProjects.map(p => [p.id, p]));
 
-    // Update sortOrder
     reorderData.forEach(({ id, sortOrder }) => {
       const project = projectMap.get(id);
       if (project) {
@@ -36,11 +36,19 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    const updatedData = { ...data, projects: Array.from(projectMap.values()) };
+    const nextProjects = Array.from(projectMap.values()).sort((a, b) => a.sortOrder - b.sortOrder);
 
-    await put('projects.json', JSON.stringify(updatedData, null, 2), {
-      access: 'public',
-      contentType: 'application/json',
+    await writeProjectData({
+      ...data,
+      projects: nextProjects,
+      metadata: {
+        ...data.metadata,
+        lastUpdated: Date.now(),
+        totalProjects: nextProjects.length,
+        publicProjects: nextProjects.filter(
+          (p) => p.visibility.publicNote && p.status !== 'discarded'
+        ).length,
+      },
     });
 
     return NextResponse.json({ message: 'Reorder successful' });

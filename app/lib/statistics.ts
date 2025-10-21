@@ -1,4 +1,4 @@
-import { Project, StatisticType } from '@/types';
+import { Project, StatisticType, normalizeProjectStatus, normalizeProjectCategory, ensureProjectVisibility } from '@/types';
 
 /**
  * 計算統計數值
@@ -16,47 +16,64 @@ export function calculateStatistic(
   isAdmin: boolean,
   isPreviewMode: boolean
 ): string | number {
-  // 根據角色決定可見專案
-  const visibleProjects = (isAdmin && !isPreviewMode) 
-    ? allProjects 
-    : allProjects.filter(p => 
-        p.visibility.description && 
-        p.category !== 'abandoned'
+  const normalizedAllProjects = allProjects.map((project) => ({
+    ...project,
+    category: normalizeProjectCategory(project.category),
+    status: normalizeProjectStatus(project.status, project.category),
+    visibility: ensureProjectVisibility(project.visibility),
+  }));
+
+  const visibleProjects = (isAdmin && !isPreviewMode)
+    ? normalizedAllProjects
+    : normalizedAllProjects.filter((project) =>
+        project.visibility.description &&
+        project.status !== 'discarded'
       );
 
   switch (type) {
     case 'totalProjects':
-      return (isAdmin && !isPreviewMode) ? allProjects.length : visibleProjects.length;
-    
+      return (isAdmin && !isPreviewMode) ? normalizedAllProjects.length : visibleProjects.length;
+
     case 'publicProjects':
       return visibleProjects.length;
-    
+
     case 'displayedCount':
       return filteredProjects.length;
-    
+
     case 'importantCount':
-      return visibleProjects.filter(p => p.category === 'important').length;
-    
+      return visibleProjects.filter((project) => project.category === 'important').length;
+
     case 'completedCount':
-      return visibleProjects.filter(p => p.category === 'completed').length;
-    
+      return visibleProjects.filter((project) => project.status === 'completed').length;
+
     case 'inProgressCount':
-      return visibleProjects.filter(p => 
-        ['important', 'secondary', 'practice'].includes(p.category)
-      ).length;
-    
+      return visibleProjects.filter((project) => project.status === 'in-progress').length;
+
+    case 'statusOnHold':
+      return visibleProjects.filter((project) => project.status === 'on-hold').length;
+
+    case 'statusLongTerm':
+      return visibleProjects.filter((project) => project.status === 'long-term').length;
+
+    case 'statusCompleted':
+      return visibleProjects.filter((project) => project.status === 'completed').length;
+
+    case 'statusDiscarded':
+      return visibleProjects.filter((project) => project.status === 'discarded').length;
+
     case 'readyStatus':
       return '✓';
-    
+
     case 'abandonedCount':
-      return (isAdmin && !isPreviewMode) 
-        ? allProjects.filter(p => p.category === 'abandoned').length 
-        : 0;
+      return (isAdmin && !isPreviewMode)
+        ? normalizedAllProjects.filter((project) => project.status === 'discarded').length
+        : visibleProjects.filter((project) => project.status === 'discarded').length;
+
     case 'singleDocCount':
       return (isAdmin && !isPreviewMode)
-        ? allProjects.filter(p => p.category === 'single-doc').length
-        : visibleProjects.filter(p => p.category === 'single-doc').length;
-    
+        ? normalizedAllProjects.filter((project) => project.category === 'single-doc').length
+        : visibleProjects.filter((project) => project.category === 'single-doc').length;
+
     default:
       return 0;
   }
@@ -121,6 +138,26 @@ export function getStatisticColor(type: StatisticType): {
       gradient: 'from-purple-50 to-purple-100/50 dark:from-purple-500/10 dark:to-purple-500/5',
       border: 'border-purple-200/50 dark:border-purple-500/30',
       icon: 'text-purple-600 dark:text-purple-400'
+    },
+    statusOnHold: {
+      gradient: 'from-yellow-50 to-yellow-100/50 dark:from-yellow-500/10 dark:to-yellow-500/5',
+      border: 'border-yellow-200/50 dark:border-yellow-500/30',
+      icon: 'text-yellow-600 dark:text-yellow-300'
+    },
+    statusLongTerm: {
+      gradient: 'from-sky-50 to-sky-100/50 dark:from-sky-500/10 dark:to-sky-500/5',
+      border: 'border-sky-200/50 dark:border-sky-500/30',
+      icon: 'text-sky-600 dark:text-sky-400'
+    },
+    statusCompleted: {
+      gradient: 'from-emerald-50 to-emerald-100/50 dark:from-emerald-500/10 dark:to-emerald-500/5',
+      border: 'border-emerald-200/50 dark:border-emerald-500/30',
+      icon: 'text-emerald-600 dark:text-emerald-400'
+    },
+    statusDiscarded: {
+      gradient: 'from-rose-50 to-rose-100/50 dark:from-rose-500/10 dark:to-rose-500/5',
+      border: 'border-rose-200/50 dark:border-rose-500/30',
+      icon: 'text-rose-600 dark:text-rose-400'
     }
   };
 
@@ -142,7 +179,11 @@ export function getStatisticIconType(type: StatisticType): string {
     inProgressCount: 'clock',
     readyStatus: 'check',
     abandonedCount: 'archive-box',
-    singleDocCount: 'document-text'
+    singleDocCount: 'document-text',
+    statusOnHold: 'pause-circle',
+    statusLongTerm: 'wrench-screwdriver',
+    statusCompleted: 'check-circle',
+    statusDiscarded: 'x-circle'
   };
   
   return iconMap[type] || 'chart-bar';

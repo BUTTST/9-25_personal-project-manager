@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ProjectData, Project, UIDisplaySettings } from '@/types';
+import { ProjectData, Project, UIDisplaySettings, normalizeProjectStatus, ensureProjectVisibility } from '@/types';
 import { ProjectCard } from '@/components/project/ProjectCard';
 import { DynamicCategoryFilter } from '@/components/ui/DynamicCategoryFilter';
 import { StatisticsGrid } from '@/components/ui/StatisticsGrid';
@@ -13,12 +13,14 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { getPublicProjects, defaultProjectData } from '@/lib/blob-storage';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getRememberedPassword } from '@/lib/auth';
-import { 
-  EyeIcon, 
+import {
+  EyeIcon,
   EyeSlashIcon,
   FunnelIcon,
   MagnifyingGlassIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  PhotoIcon,
+  Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 
 export default function HomePage() {
@@ -27,7 +29,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
+  const [areImagesCollapsed, setAreImagesCollapsed] = useState<boolean>(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [uiSettings, setUiSettings] = useState<UIDisplaySettings | null>(null);
@@ -42,7 +45,7 @@ export default function HomePage() {
     if (projectData) {
       filterProjects();
     }
-  }, [projectData, searchQuery, selectedCategory, isAdmin, isPreviewMode]);
+  }, [projectData, searchQuery, selectedFilter, isAdmin, isPreviewMode]);
 
   const loadProjects = async () => {
     try {
@@ -116,14 +119,21 @@ export default function HomePage() {
   const filterProjects = () => {
     if (!projectData) return;
     
-    // 根據預覽模式決定顯示哪些專案
-    let projects = (isAdmin && !isPreviewMode) 
-      ? projectData.projects 
-      : getPublicProjects(projectData.projects);
-    
-    // 依照類別篩選
-    if (selectedCategory !== 'all') {
-      projects = projects.filter(project => project.category === selectedCategory);
+    const normalizedProjects = projectData.projects.map((project) => ({
+      ...project,
+      status: normalizeProjectStatus(project.status, project.category),
+      visibility: ensureProjectVisibility(project.visibility),
+    }));
+
+    let projects = isAdmin && !isPreviewMode ? normalizedProjects : getPublicProjects(normalizedProjects);
+
+    if (selectedFilter !== 'all') {
+      if (selectedFilter.startsWith('status-')) {
+        const statusKey = selectedFilter.replace('status-', '') as Project['status'];
+        projects = projects.filter((project) => project.status === statusKey);
+      } else {
+        projects = projects.filter((project) => project.category === selectedFilter);
+      }
     }
     
     // 依照搜尋關鍵字篩選
@@ -232,7 +242,7 @@ export default function HomePage() {
             <div className="flex-1 flex flex-col gap-4">
               {/* 搜尋框 */}
               <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm flex-shrink-0">
-                <SearchBar 
+                <SearchBar
                   value={searchQuery}
                   onChange={setSearchQuery}
                   placeholder="搜尋專案名稱、說明或備註..."
@@ -243,16 +253,27 @@ export default function HomePage() {
               <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm flex-1">
                 <div className="flex flex-wrap gap-2 items-center">
                   {uiSettings && (
-                    <DynamicCategoryFilter 
+                    <DynamicCategoryFilter
                       configs={uiSettings.filters}
-                      value={selectedCategory}
-                      onChange={setSelectedCategory}
+                      value={selectedFilter}
+                      onChange={setSelectedFilter}
                     />
                   )}
-                  
+
+                  {filteredProjects.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setAreImagesCollapsed(!areImagesCollapsed)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary-400 hover:text-primary-500"
+                    >
+                      <PhotoIcon className="h-4 w-4" />
+                      <span>{areImagesCollapsed ? '展開全部圖片' : '收折全部圖片'}</span>
+                    </button>
+                  )}
+
                   {/* 設定按鈕（僅管理員可見） */}
                   {isAdmin && !isPreviewMode && (
-                    <button 
+                    <button
                       onClick={() => setShowSettingsPanel(true)}
                       className="group relative inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-200 text-muted-foreground bg-card border-border hover:border-primary-300 dark:hover:border-primary-600 hover:bg-muted/50 hover:scale-110"
                       title="顯示設定"
@@ -267,7 +288,7 @@ export default function HomePage() {
             {/* 右側：統計區塊 */}
             {projectData && uiSettings && (
               <div className="w-auto flex items-stretch">
-                <StatisticsGrid 
+                <StatisticsGrid
                   configs={uiSettings.statistics}
                   allProjects={projectData.projects}
                   filteredProjects={filteredProjects}
@@ -280,10 +301,10 @@ export default function HomePage() {
 
           {/* 專案列表 */}
           {filteredProjects.length === 0 ? (
-            <EmptyState 
-              title={searchQuery || selectedCategory !== 'all' ? '無符合條件的專案' : '暫無專案'}
-              description={searchQuery || selectedCategory !== 'all' ? '試試調整搜尋條件或篩選器' : '目前還沒有任何專案'}
-              icon={searchQuery || selectedCategory !== 'all' ? 'search' : 'inbox'}
+            <EmptyState
+              title={searchQuery || selectedFilter !== 'all' ? '無符合條件的專案' : '暫無專案'}
+              description={searchQuery || selectedFilter !== 'all' ? '試試調整搜尋條件或篩選器' : '目前還沒有任何專案'}
+              icon={searchQuery || selectedFilter !== 'all' ? 'search' : 'inbox'}
             />
           ) : (
             <div>
@@ -300,15 +321,25 @@ export default function HomePage() {
               {/* 專案網格 */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-fade-in">
                 {filteredProjects.map((project, index) => (
-                  <div 
+                  <div
                     key={project.id}
                     className="animate-slide-up"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <ProjectCard 
-                      project={project} 
+                    <ProjectCard
+                      project={{ ...project, imagePreviews: project.imagePreviews }}
                       isAdmin={isAdmin && !isPreviewMode}
                       showToggleControls={projectData?.settings.showToggleControls ?? true}
+                      imageCollapsedOverride={areImagesCollapsed}
+                      onUpdate={(updatedProject) => {
+                        if (!projectData) return;
+                        setProjectData({
+                          ...projectData,
+                          projects: projectData.projects.map((p) =>
+                            p.id === updatedProject.id ? updatedProject : p
+                          ),
+                        });
+                      }}
                     />
                   </div>
                 ))}
@@ -321,7 +352,7 @@ export default function HomePage() {
       
       {/* UI 設定面板（僅管理員可見） */}
       {isAdmin && !isPreviewMode && showSettingsPanel && uiSettings && (
-        <UISettingsPanel 
+        <UISettingsPanel
           settings={uiSettings}
           onClose={() => setShowSettingsPanel(false)}
           onQuickUpdate={handleQuickUpdateSettings}

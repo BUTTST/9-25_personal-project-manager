@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readProjectData, writeProjectData } from '@/lib/blob-storage';
-import { Project } from '@/types';
+import { Project, ensureProjectVisibility, migrateLegacyCategoryToStatus, defaultImagePreviewMode } from '@/types';
 
 interface RouteParams {
   params: {
@@ -21,18 +21,28 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (!project) {
       return NextResponse.json({ error: '專案不存在' }, { status: 404 });
     }
-    
+
+    const migratedProject: Project = {
+      ...project,
+      status: project.status || migrateLegacyCategoryToStatus(project.category),
+      visibility: ensureProjectVisibility(project.visibility),
+      imagePreviews: project.imagePreviews ?? [],
+      imagePreviewMode: project.imagePreviewMode || defaultImagePreviewMode,
+      customInfoSections: project.customInfoSections ?? [],
+      documentMeta: project.documentMeta ?? null,
+    };
+
     // 非管理員且非公開專案
-    if (!isAdmin && (!project.visibility.description || project.category === 'abandoned')) {
+    if (!isAdmin && (!migratedProject.visibility.description || migratedProject.status === 'discarded')) {
       return NextResponse.json({ error: '未授權訪問' }, { status: 403 });
     }
     
     // 移除敏感資訊
     if (!isAdmin) {
-      project.developerNote = '';
+      migratedProject.developerNote = '';
     }
     
-    return NextResponse.json(project);
+    return NextResponse.json(migratedProject);
   } catch (error) {
     console.error('Failed to get project:', error);
     return NextResponse.json(
@@ -54,23 +64,47 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     
     const updates = await request.json();
     const data = await readProjectData();
-    
-    const projectIndex = data.projects.findIndex(p => p.id === id);
+
+    const migratedProjects = data.projects.map(project => ({
+      ...project,
+      status: project.status || migrateLegacyCategoryToStatus(project.category),
+      visibility: ensureProjectVisibility(project.visibility),
+      imagePreviews: project.imagePreviews ?? [],
+      imagePreviewMode: project.imagePreviewMode || defaultImagePreviewMode,
+      customInfoSections: project.customInfoSections ?? [],
+      documentMeta: project.documentMeta ?? null,
+    }));
+
+    const projectIndex = migratedProjects.findIndex(p => p.id === id);
     if (projectIndex === -1) {
       return NextResponse.json({ error: '專案不存在' }, { status: 404 });
     }
-    
-    // 更新專案
-    data.projects[projectIndex] = {
-      ...data.projects[projectIndex],
+
+    migratedProjects[projectIndex] = {
+      ...migratedProjects[projectIndex],
       ...updates,
-      id, // 保護ID不被更改
-      updatedAt: Date.now()
+      id,
+      updatedAt: Date.now(),
     };
+
+    const nextData = {
+      ...data,
+      projects: migratedProjects,
+    };
+
+    await writeProjectData({
+      ...nextData,
+      metadata: {
+        ...nextData.metadata,
+        lastUpdated: Date.now(),
+        totalProjects: nextData.projects.length,
+        publicProjects: nextData.projects.filter(
+          (p) => p.visibility.publicNote && p.status !== 'discarded'
+        ).length,
+      },
+    });
     
-    await writeProjectData(data);
-    
-    return NextResponse.json(data.projects[projectIndex]);
+    return NextResponse.json(migratedProjects[projectIndex]);
   } catch (error) {
     console.error('Failed to update project:', error);
     return NextResponse.json(
@@ -91,20 +125,45 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
     
     const data = await readProjectData();
-    
-    const projectIndex = data.projects.findIndex(p => p.id === id);
+
+    const migratedProjects = data.projects.map(project => ({
+      ...project,
+      status: project.status || migrateLegacyCategoryToStatus(project.category),
+      visibility: ensureProjectVisibility(project.visibility),
+      imagePreviews: project.imagePreviews ?? [],
+      imagePreviewMode: project.imagePreviewMode || defaultImagePreviewMode,
+      customInfoSections: project.customInfoSections ?? [],
+      documentMeta: project.documentMeta ?? null,
+    }));
+
+    const projectIndex = migratedProjects.findIndex(p => p.id === id);
     if (projectIndex === -1) {
       return NextResponse.json({ error: '專案不存在' }, { status: 404 });
     }
+
+    const deletedProject = migratedProjects[projectIndex];
+    migratedProjects.splice(projectIndex, 1);
+
+    const nextData = {
+      ...data,
+      projects: migratedProjects,
+    };
+
+    await writeProjectData({
+      ...nextData,
+      metadata: {
+        ...nextData.metadata,
+        lastUpdated: Date.now(),
+        totalProjects: nextData.projects.length,
+        publicProjects: nextData.projects.filter(
+          (p) => p.visibility.publicNote && p.status !== 'discarded'
+        ).length,
+      },
+    });
     
-    const deletedProject = data.projects[projectIndex];
-    data.projects.splice(projectIndex, 1);
-    
-    await writeProjectData(data);
-    
-    return NextResponse.json({ 
-      message: '專案刪除成功', 
-      deletedProject 
+    return NextResponse.json({
+      message: '專案刪除成功',
+      deletedProject,
     });
   } catch (error) {
     console.error('Failed to delete project:', error);

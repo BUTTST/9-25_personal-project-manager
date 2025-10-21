@@ -2,9 +2,32 @@ export type ProjectCategory =
   | 'important'
   | 'secondary'
   | 'practice'
-  | 'completed'
-  | 'abandoned'
   | 'single-doc';
+
+export type ProjectStatus =
+  | 'in-progress'
+  | 'on-hold'
+  | 'long-term'
+  | 'completed'
+  | 'discarded';
+
+export interface ImagePreview {
+  id: string;
+  title: string;
+  description?: string;
+  src: string;
+  thumbnail?: string;
+}
+
+export type ImagePreviewDisplayMode = 'single' | 'grid';
+
+export interface CustomInfoSection {
+  id: string;
+  title: string;
+  type: 'text' | 'url';
+  content: string;
+  visible: boolean;
+}
 
 export interface DocumentMeta {
   filePath: string;
@@ -17,31 +40,38 @@ export interface DocumentMeta {
 
 export interface Project {
   id: string;
-  dateAndFileName: string; // 日期＋檔案名稱
-  description: string; // 說明
-  category: ProjectCategory; // ［重要］［次］［子實踐］［已完成］［已捨棄］或單檔
-  github?: string; // GitHub 連結
-  vercel?: string; // Vercel 連結
-  path?: string; // 路徑
-  statusNote?: string; // 狀態備註
-  publicNote?: string; // 一般註解（訪客可見）
-  developerNote?: string; // 開發者註解（僅管理員可見）
-  documentMeta?: DocumentMeta | null; // 單檔專案專屬資訊
+  dateAndFileName: string;
+  description: string;
+  category: ProjectCategory;
+  status: ProjectStatus;
+  github?: string;
+  vercel?: string;
+  path?: string;
+  statusNote?: string;
+  publicNote?: string;
+  developerNote?: string;
+  documentMeta?: DocumentMeta | null;
   visibility: {
     dateAndFileName: boolean;
     description: boolean;
     category: boolean;
+    status: boolean;
     github: boolean;
     vercel: boolean;
     path: boolean;
     statusNote: boolean;
     publicNote: boolean;
     developerNote: boolean;
+    imagePreviews: boolean;
+    customInfoSections: boolean;
   };
-  featured: boolean; // 是否為精選項目
+  imagePreviews: ImagePreview[];
+  imagePreviewMode: ImagePreviewDisplayMode;
+  featured: boolean;
+  customInfoSections: CustomInfoSection[];
   createdAt: number;
   updatedAt: number;
-  sortOrder: number; // 新增排序欄位
+  sortOrder: number;
 }
 
 export type ProjectVisibility = Project['visibility'];
@@ -56,11 +86,13 @@ export interface PasswordEntry {
 }
 
 export interface AppSettings {
-  showToggleControls: boolean; // 是否顯示開關控制項
+  showToggleControls: boolean;
   defaultProjectVisibility: Partial<Project['visibility']>;
   rememberPassword: boolean;
   theme: 'light' | 'dark' | 'auto';
-  uiDisplay?: UIDisplaySettings;  // UI 顯示設定
+  uiDisplay?: UIDisplaySettings;
+  defaultStatus?: ProjectStatus;
+  defaultImagePreviewMode?: ImagePreviewDisplayMode;
 }
 
 export interface ProjectData {
@@ -88,17 +120,47 @@ export interface AuthSession {
 
 export type CategoryDisplayName = {
   important: '［重要］';
-  secondary: '［次］';
+  secondary: '［次要］';
   practice: '［子實踐］';
-  completed: '［已完成］';
-  abandoned: '［已捨棄］';
   'single-doc': '［單檔］';
 };
+
+export const categoryDisplayNames: CategoryDisplayName = {
+  important: '［重要］',
+  secondary: '［次要］',
+  practice: '［子實踐］',
+  'single-doc': '［單檔］',
+};
+
+export type StatusDisplayName = {
+  'in-progress': '進行中';
+  'on-hold': '暫緩';
+  'long-term': '長期維護';
+  completed: '已完成';
+  discarded: '捨棄';
+};
+
+export const statusDisplayNames: StatusDisplayName = {
+  'in-progress': '進行中',
+  'on-hold': '暫緩',
+  'long-term': '長期維護',
+  completed: '已完成',
+  discarded: '捨棄',
+};
+
+export const projectStatusOrder: ProjectStatus[] = [
+  'in-progress',
+  'on-hold',
+  'long-term',
+  'completed',
+  'discarded',
+];
 
 export interface ProjectFormData {
   dateAndFileName: string;
   description: string;
   category: Project['category'];
+  status: Project['status'];
   github?: string;
   vercel?: string;
   path?: string;
@@ -106,7 +168,11 @@ export interface ProjectFormData {
   publicNote?: string;
   developerNote?: string;
   documentMeta?: DocumentMeta | null;
-  sortOrder?: number; // 新增排序欄位
+  imagePreviews: ImagePreview[];
+  imagePreviewMode: ImagePreviewDisplayMode;
+  customInfoSections: CustomInfoSection[];
+  visibility?: ProjectVisibility;
+  sortOrder?: number;
 }
 
 export interface PasswordFormData {
@@ -136,13 +202,128 @@ export interface StatisticConfig {
   label?: string;                // 自訂標籤
 }
 
-export type StatisticType = 
-  | 'totalProjects'    // 總專案數
-  | 'publicProjects'   // 公開專案數
-  | 'displayedCount'   // 顯示中
-  | 'importantCount'   // 重要專案
-  | 'completedCount'   // 已完成
-  | 'inProgressCount'  // 進行中（important + secondary + practice）
-  | 'readyStatus'      // 準備就緒
-  | 'abandonedCount'   // 已捨棄
-  | 'singleDocCount';  // 單檔專案數
+export type StatisticType =
+  | 'totalProjects'
+  | 'publicProjects'
+  | 'displayedCount'
+  | 'importantCount'
+  | 'completedCount'
+  | 'inProgressCount'
+  | 'readyStatus'
+  | 'abandonedCount'
+  | 'singleDocCount'
+  | 'statusOnHold'
+  | 'statusLongTerm'
+  | 'statusCompleted'
+  | 'statusDiscarded';
+
+export function getDefaultVisibility(): Project['visibility'] {
+  return {
+    dateAndFileName: true,
+    description: true,
+    category: true,
+    status: true,
+    github: true,
+    vercel: true,
+    path: false,
+    statusNote: true,
+    publicNote: true,
+    developerNote: false,
+    imagePreviews: true,
+    customInfoSections: true,
+  };
+}
+
+export const defaultCustomInfoSection = (): CustomInfoSection => ({
+  id: '',
+  title: '',
+  type: 'text',
+  content: '',
+  visible: true,
+});
+
+export const defaultProjectStatus: ProjectStatus = 'in-progress';
+export const defaultImagePreviewMode: ImagePreviewDisplayMode = 'grid';
+
+export function migrateLegacyCategoryToStatus(category: ProjectCategory | string): ProjectStatus {
+  switch (category) {
+    case 'important':
+    case 'secondary':
+    case 'practice':
+      return 'in-progress';
+    case 'single-doc':
+      return 'completed';
+    case 'completed':
+      return 'completed';
+    case 'abandoned':
+      return 'discarded';
+    default:
+      return defaultProjectStatus;
+  }
+}
+
+export function ensureProjectVisibility(visibility?: Partial<Project['visibility']>): Project['visibility'] {
+  return {
+    ...getDefaultVisibility(),
+    ...visibility,
+  };
+}
+
+export function normalizeProjectStatus(status?: string, category?: ProjectCategory | string): ProjectStatus {
+  if (!status) {
+    return migrateLegacyCategoryToStatus(category || 'secondary');
+  }
+  switch (status) {
+    case 'in-progress':
+    case 'on-hold':
+    case 'long-term':
+    case 'completed':
+    case 'discarded':
+      return status;
+    default:
+      return migrateLegacyCategoryToStatus(category || 'secondary');
+  }
+}
+
+export function normalizeProjectCategory(category?: string): ProjectCategory {
+  switch (category) {
+    case 'important':
+      return 'important';
+    case 'practice':
+    case '[重要]子實踐':
+      return 'practice';
+    case 'single-doc':
+      return 'single-doc';
+    case 'secondary':
+    case '次要項目':
+    case '次要':
+    case 'completed':
+    case 'abandoned':
+    default:
+      return 'secondary';
+  }
+}
+
+export function normalizeCustomInfoSections(sections?: CustomInfoSection[]): CustomInfoSection[] {
+  if (!Array.isArray(sections)) return [];
+  return sections.map((section, index) => ({
+    id: section.id || `section-${index}`,
+    title: section.title || '自訂資訊',
+    type: section.type === 'url' ? 'url' : 'text',
+    content: section.content || '',
+    visible: section.visible !== false,
+  }));
+}
+
+export function normalizeImagePreviews(images?: ImagePreview[]): ImagePreview[] {
+  if (!Array.isArray(images)) return [];
+  return images
+    .filter((image) => !!image && !!image.src)
+    .map((image, index) => ({
+      id: image.id || `image-${index}`,
+      title: image.title || '',
+      description: image.description,
+      src: image.src,
+      thumbnail: image.thumbnail,
+    }));
+}

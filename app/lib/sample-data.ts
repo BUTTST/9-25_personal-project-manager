@@ -1,4 +1,4 @@
-import { ProjectData, Project } from '@/types';
+import { ProjectData, Project, normalizeCustomInfoSections, normalizeImagePreviews } from '@/types';
 import { generateId } from './auth';
 
 // 基於用戶提供的表格建立範例資料
@@ -8,6 +8,7 @@ export const sampleProjects: Project[] = [
     dateAndFileName: '7-30 V6_確認vercel授權-9 保持最新yt-dlp',
     description: '［重要］核心whisper專案',
     category: 'important',
+    status: 'in-progress',
     github: 'https://github.com/BUTTST/8-14_Whisper__vercel-RunPod-GitHub-',
     vercel: 'https://vercel.com/titans-projects-0ee27614/8-14-whisper-vercel-run-pod-git-hub',
     path: 'E:\\u500b人項目',
@@ -18,23 +19,31 @@ export const sampleProjects: Project[] = [
       dateAndFileName: true,
       description: true,
       category: true,
+      status: true,
       github: true,
       vercel: true,
-      path: false, // 路徑不對外放示示
+      path: false,
       statusNote: true,
       publicNote: true,
-      developerNote: true
+      developerNote: true,
+      imagePreviews: true,
+      customInfoSections: true,
     },
+    imagePreviews: [],
+    imagePreviewMode: 'grid',
+    customInfoSections: [],
+    documentMeta: null,
     featured: true,
     createdAt: new Date('2024-07-30').getTime(),
     updatedAt: Date.now(),
-    sortOrder: 0
+    sortOrder: 0,
   },
   {
     id: generateId(),
     dateAndFileName: '7-24 抓取實測 計劃模式',
     description: '［重要］金流系統',
     category: 'important',
+    status: 'on-hold',
     github: 'https://github.com/BUTTST/7-24-CashCalculator_PlanningMode',
     vercel: 'https://vercel.com/titans-projects-0ee27614/7-24-cash-calculator-planning-mode',
     path: 'E:\\u500b人項目',
@@ -45,23 +54,31 @@ export const sampleProjects: Project[] = [
       dateAndFileName: true,
       description: true,
       category: true,
+      status: true,
       github: true,
       vercel: true,
       path: false,
       statusNote: true,
       publicNote: true,
-      developerNote: true
+      developerNote: true,
+      imagePreviews: true,
+      customInfoSections: true,
     },
+    imagePreviews: [],
+    imagePreviewMode: 'grid',
+    customInfoSections: [],
+    documentMeta: null,
     featured: false,
     createdAt: new Date('2024-07-24').getTime(),
     updatedAt: Date.now(),
-    sortOrder: 1
+    sortOrder: 1,
   },
   {
     id: generateId(),
     dateAndFileName: '9-12_Idea-Collector',
     description: '［次］想法採集器',
     category: 'secondary',
+    status: 'in-progress',
     github: 'https://github.com/BUTTST/9-12_Idea-Collector',
     vercel: 'https://vercel.com/titans-projects-0ee27614/9-12-idea-collector',
     path: '',
@@ -72,23 +89,31 @@ export const sampleProjects: Project[] = [
       dateAndFileName: true,
       description: true,
       category: true,
+      status: true,
       github: true,
       vercel: true,
       path: false,
       statusNote: true,
       publicNote: true,
-      developerNote: false // 這個對訪客隱藏
+      developerNote: false,
+      imagePreviews: true,
+      customInfoSections: true,
     },
+    imagePreviews: [],
+    imagePreviewMode: 'grid',
+    customInfoSections: [],
+    documentMeta: null,
     featured: false,
     createdAt: new Date('2024-09-12').getTime(),
     updatedAt: Date.now(),
-    sortOrder: 2
+    sortOrder: 2,
   },
   {
     id: generateId(),
     dateAndFileName: '9-10-ui-components',
     description: '［次］預覽樣式合集',
     category: 'secondary',
+    status: 'long-term',
     github: 'https://github.com/BUTTST/9-10-ui-components',
     vercel: '',
     path: '',
@@ -99,23 +124,31 @@ export const sampleProjects: Project[] = [
       dateAndFileName: true,
       description: true,
       category: true,
+      status: true,
       github: true,
-      vercel: false, // 沒有vercel連結時隱藏
+      vercel: false,
       path: false,
       statusNote: true,
       publicNote: true,
-      developerNote: false
+      developerNote: false,
+      imagePreviews: true,
+      customInfoSections: true,
     },
+    imagePreviews: [],
+    imagePreviewMode: 'grid',
+    customInfoSections: [],
+    documentMeta: null,
     featured: false,
     createdAt: new Date('2024-09-10').getTime(),
     updatedAt: Date.now(),
-    sortOrder: 3
+    sortOrder: 3,
   },
   {
     id: generateId(),
     dateAndFileName: '8-23 應用圖標（icon）',
     description: '［子實踐］圖標實踐',
     category: 'practice',
+    status: 'completed',
     github: 'https://github.com/BUTTST/8-23_pwa-icons-maskable',
     vercel: '',
     path: 'E:\\u500b人項目',
@@ -126,23 +159,31 @@ export const sampleProjects: Project[] = [
       dateAndFileName: true,
       description: true,
       category: true,
+      status: true,
       github: true,
       vercel: false,
       path: false,
       statusNote: true,
       publicNote: true,
-      developerNote: false
+      developerNote: false,
+      imagePreviews: true,
+      customInfoSections: true,
     },
+    imagePreviews: [],
+    imagePreviewMode: 'grid',
+    customInfoSections: [],
+    documentMeta: null,
     featured: false,
     createdAt: new Date('2024-08-23').getTime(),
     updatedAt: Date.now(),
-    sortOrder: 4
+    sortOrder: 4,
   },
   {
     id: generateId(),
     dateAndFileName: '7-18 翻譯colab 倒出效果',
     description: '［已完成］ Colab 查詢 Gemini API 模型 視覺化排版列表',
-    category: 'completed',
+    category: 'single-doc',
+    status: 'completed',
     github: '',
     vercel: '',
     path: 'E:\\u500b人項目',
@@ -153,23 +194,31 @@ export const sampleProjects: Project[] = [
       dateAndFileName: true,
       description: true,
       category: true,
-      github: false, // 沒有GitHub連結
-      vercel: false, // 沒有Vercel連結
+      status: true,
+      github: false,
+      vercel: false,
       path: false,
       statusNote: true,
       publicNote: true,
-      developerNote: false
+      developerNote: false,
+      imagePreviews: true,
+      customInfoSections: true,
     },
+    imagePreviews: [],
+    imagePreviewMode: 'grid',
+    customInfoSections: [],
+    documentMeta: null,
     featured: false,
     createdAt: new Date('2024-07-18').getTime(),
     updatedAt: Date.now(),
-    sortOrder: 5
+    sortOrder: 5,
   },
   {
     id: generateId(),
     dateAndFileName: '7-30 Colab多項目＋ 專題whisper合併',
     description: '［已捨棄］ 之前的嘗試合併',
-    category: 'abandoned',
+    category: 'practice',
+    status: 'discarded',
     github: 'https://github.com/BUTTST/8-1_Colab-MultiProject_WhisperProject',
     vercel: '',
     path: 'E:\\u500b人項目',
@@ -180,18 +229,25 @@ export const sampleProjects: Project[] = [
       dateAndFileName: true,
       description: true,
       category: true,
+      status: true,
       github: true,
       vercel: false,
       path: false,
-      statusNote: false, // 捨棄的項目不顯示狀態
-      publicNote: false, // 捨棄的項目不顯示公開註解
-      developerNote: false
+      statusNote: false,
+      publicNote: false,
+      developerNote: false,
+      imagePreviews: true,
+      customInfoSections: true,
     },
+    imagePreviews: [],
+    imagePreviewMode: 'grid',
+    customInfoSections: [],
+    documentMeta: null,
     featured: false,
     createdAt: new Date('2024-07-30').getTime(),
     updatedAt: Date.now(),
-    sortOrder: 6
-  }
+    sortOrder: 6,
+  },
 ];
 
 // 範例密碼資料（基於用戶表格）
@@ -202,16 +258,16 @@ export const samplePasswords = [
     account: 'billy051015@gmail.com',
     password: 'n9una8YZrw1JKGnLsviX',
     createdAt: Date.now(),
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
   },
   {
     id: generateId(),
     platform: 'Paddle sandbox',
-    account: 'billy051015@gmail.com', 
+    account: 'billy051015@gmail.com',
     password: 'n9una8YZrw1JKGnLsviX',
     createdAt: Date.now(),
-    updatedAt: Date.now()
-  }
+    updatedAt: Date.now(),
+  },
 ];
 
 export const sampleProjectData: ProjectData = {
@@ -223,23 +279,27 @@ export const sampleProjectData: ProjectData = {
       dateAndFileName: true,
       description: true,
       category: true,
+      status: true,
       github: true,
       vercel: true,
       path: false,
       statusNote: true,
       publicNote: true,
-      developerNote: false
+      developerNote: false,
+      imagePreviews: true,
+      customInfoSections: true,
     },
     rememberPassword: true,
-    theme: 'light'
+    theme: 'light',
+    defaultStatus: 'in-progress',
+    defaultImagePreviewMode: 'grid',
   },
   metadata: {
     lastUpdated: Date.now(),
     version: '1.0.0',
     totalProjects: sampleProjects.length,
-    publicProjects: sampleProjects.filter(p => 
-      p.visibility.description && 
-      p.category !== 'abandoned'
-    ).length
-  }
+    publicProjects: sampleProjects.filter(
+      (p) => p.visibility.publicNote && p.status !== 'discarded'
+    ).length,
+  },
 };

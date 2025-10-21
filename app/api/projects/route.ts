@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readProjectData, writeProjectData, getPublicProjects, validateProjectData } from '@/lib/blob-storage';
 import { generateId } from '@/lib/auth';
-import { Project, ProjectFormData } from '@/types';
+import { Project, ProjectFormData, defaultProjectStatus, defaultImagePreviewMode, ensureProjectVisibility, migrateLegacyCategoryToStatus } from '@/types';
 
 // 獲取專案列表
 export async function GET(request: NextRequest) {
@@ -18,16 +18,29 @@ export async function GET(request: NextRequest) {
     }
     
     const data = await readProjectData();
+
+    const migratedProjects = data.projects.map((project) => ({
+      ...project,
+      status: project.status || migrateLegacyCategoryToStatus(project.category),
+      visibility: ensureProjectVisibility(project.visibility),
+      imagePreviews: project.imagePreviews ?? [],
+      imagePreviewMode: project.imagePreviewMode || defaultImagePreviewMode,
+      customInfoSections: project.customInfoSections ?? [],
+      documentMeta: project.documentMeta ?? null,
+    }));
+
+    const enrichedData = {
+      ...data,
+      projects: migratedProjects,
+    };
     
     if (isAdmin) {
-      // 管理員可看所有資料
-      return NextResponse.json(data);
+      return NextResponse.json(enrichedData);
     } else {
-      // 訪客只能看公開專案
       return NextResponse.json({
-        ...data,
-        projects: getPublicProjects(data.projects),
-        passwords: [] // 訪客永遠不能看到密碼
+        ...enrichedData,
+        projects: getPublicProjects(enrichedData.projects),
+        passwords: [],
       });
     }
   } catch (error) {
@@ -58,39 +71,66 @@ export async function POST(request: NextRequest) {
     }
     
     const data = await readProjectData();
-    
+
+    const migratedProjects = data.projects.map((project) => ({
+      ...project,
+      status: project.status || migrateLegacyCategoryToStatus(project.category),
+      visibility: ensureProjectVisibility(project.visibility),
+      imagePreviews: project.imagePreviews ?? [],
+      imagePreviewMode: project.imagePreviewMode || defaultImagePreviewMode,
+      customInfoSections: project.customInfoSections ?? [],
+      documentMeta: project.documentMeta ?? null,
+    }));
+
+    const nextData = {
+      ...data,
+      projects: migratedProjects,
+    };
+
     const newProject: Project = {
       id: generateId(),
       dateAndFileName: formData.dateAndFileName.trim(),
       description: formData.description.trim(),
       category: formData.category || 'secondary',
+      status: formData.status || migrateLegacyCategoryToStatus(formData.category || 'secondary'),
       github: formData.github?.trim(),
       vercel: formData.vercel?.trim(),
       path: formData.path?.trim(),
       statusNote: formData.statusNote?.trim(),
       publicNote: formData.publicNote?.trim(),
       developerNote: formData.developerNote?.trim(),
-      visibility: {
-        dateAndFileName: true,
-        description: true,
-        category: true,
+      visibility: ensureProjectVisibility({
         github: !!formData.github?.trim(),
         vercel: !!formData.vercel?.trim(),
         path: !!formData.path?.trim(),
         statusNote: !!formData.statusNote?.trim(),
         publicNote: !!formData.publicNote?.trim(),
-        developerNote: !!formData.developerNote?.trim()
-      },
+        developerNote: !!formData.developerNote?.trim(),
+      }),
+      imagePreviews: formData.imagePreviews ?? [],
+      imagePreviewMode: formData.imagePreviewMode || defaultImagePreviewMode,
+      customInfoSections: formData.customInfoSections ?? [],
       featured: false,
+      documentMeta: formData.documentMeta ?? null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      sortOrder: data.projects.length // 設定 sortOrder
+      sortOrder: migratedProjects.length,
     };
-    
-    data.projects.push(newProject);
-    
-    await writeProjectData(data);
-    
+
+    nextData.projects.push(newProject);
+
+    await writeProjectData({
+      ...nextData,
+      metadata: {
+        ...nextData.metadata,
+        lastUpdated: Date.now(),
+        totalProjects: nextData.projects.length,
+        publicProjects: nextData.projects.filter(
+          (p) => p.visibility.publicNote && p.status !== 'discarded'
+        ).length,
+      },
+    });
+
     return NextResponse.json(newProject, { status: 201 });
   } catch (error) {
     console.error('Failed to create project:', error);

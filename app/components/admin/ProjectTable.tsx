@@ -2,7 +2,7 @@
 
 import { useState, useEffect, DragEvent } from 'react';
 import Link from 'next/link';
-import { Project, CategoryDisplayName } from '@/types';
+import { Project, categoryDisplayNames, statusDisplayNames, normalizeProjectStatus, normalizeProjectCategory } from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { useToast } from '@/components/ui/ToastProvider';
 import {
@@ -12,7 +12,8 @@ import {
   GlobeAltIcon,
   StarIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  PhotoIcon,
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
@@ -52,14 +53,6 @@ interface ProjectTableProps {
   onDelete: (projectId: string) => void;
 }
 
-const categoryDisplayNames: CategoryDisplayName = {
-  important: '［重要］',
-  secondary: '［次］',
-  practice: '［子實踐］',
-  completed: '［已完成］',
-  abandoned: '［已捨棄］'
-};
-
 export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete }: ProjectTableProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [displayProjects, setDisplayProjects] = useState<Project[]>([]);
@@ -68,19 +61,24 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
   const { showToast } = useToast();
 
   useEffect(() => {
-    // 根據 sortOrder 排序，如果沒有則使用舊的排序邏輯
-    const sorted = [...projects].sort((a, b) => {
+    const normalized = projects.map((project) => ({
+      ...project,
+      category: normalizeProjectCategory(project.category),
+      status: normalizeProjectStatus(project.status, project.category),
+    }));
+
+    const sorted = [...normalized].sort((a, b) => {
       if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
         return a.sortOrder - b.sortOrder;
       }
       if (a.featured !== b.featured) {
         return a.featured ? -1 : 1;
       }
-      const categoryOrder = ['important', 'secondary', 'practice', 'completed', 'abandoned'];
-      const aIndex = categoryOrder.indexOf(a.category);
-      const bIndex = categoryOrder.indexOf(b.category);
-      if (aIndex !== bIndex) {
-        return aIndex - bIndex;
+      const statusOrder: Project['status'][] = ['in-progress', 'on-hold', 'long-term', 'completed', 'discarded'];
+      const aStatusIndex = statusOrder.indexOf(a.status);
+      const bStatusIndex = statusOrder.indexOf(b.status);
+      if (aStatusIndex !== bStatusIndex) {
+        return aStatusIndex - bStatusIndex;
       }
       return b.updatedAt - a.updatedAt;
     });
@@ -246,7 +244,10 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
                   專案
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  類別
+                  類別/狀態
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  圖片
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   連結
@@ -310,9 +311,21 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
                   </td>
                   
                   <td className="px-6 py-4">
-                    <span className={getCategoryBadgeClass(project.category)}>
-                      {categoryDisplayNames[project.category]}
-                    </span>
+                    <div className="flex flex-col gap-2">
+                      <span className={getCategoryBadgeClass(project.category)}>
+                        {categoryDisplayNames[project.category]}
+                      </span>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {statusDisplayNames[project.status] || project.status}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <PhotoIcon className={`h-4 w-4 ${project.imagePreviews.length > 0 ? 'text-primary-500' : 'text-muted-foreground'}`} />
+                      <span>{project.imagePreviews.length} 張</span>
+                    </div>
                   </td>
                   
                   <td className="px-6 py-4">

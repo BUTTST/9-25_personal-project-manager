@@ -1,17 +1,20 @@
 'use client';
 
 import { StatisticConfig, Project } from '@/types';
-import { calculateStatistic, getStatisticColor } from '@/lib/statistics';
-import { 
-  ChartBarIcon, 
-  EyeIcon, 
-  FunnelIcon, 
-  SparklesIcon, 
+import { calculateStatistic, getStatisticColor, getStatisticIconType } from '@/lib/statistics';
+import {
+  ChartBarIcon,
+  EyeIcon,
+  FunnelIcon,
+  SparklesIcon,
   CheckCircleIcon,
   ClockIcon,
   CheckIcon,
   ArchiveBoxIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  PauseCircleIcon,
+  WrenchScrewdriverIcon,
+  XCircleIcon,
 } from '@heroicons/react/24/outline';
 
 interface StatisticsGridProps {
@@ -24,90 +27,73 @@ interface StatisticsGridProps {
 
 const iconMap = {
   'chart-bar': ChartBarIcon,
-  'eye': EyeIcon,
-  'funnel': FunnelIcon,
-  'sparkles': SparklesIcon,
+  eye: EyeIcon,
+  funnel: FunnelIcon,
+  sparkles: SparklesIcon,
   'check-circle': CheckCircleIcon,
-  'clock': ClockIcon,
-  'check': CheckIcon,
+  clock: ClockIcon,
+  check: CheckIcon,
   'archive-box': ArchiveBoxIcon,
-  'document-text': DocumentTextIcon
+  'document-text': DocumentTextIcon,
+  'pause-circle': PauseCircleIcon,
+  'wrench-screwdriver': WrenchScrewdriverIcon,
+  'x-circle': XCircleIcon,
 };
 
 function getIconComponent(type: string) {
   return iconMap[type as keyof typeof iconMap] || ChartBarIcon;
 }
 
-function getIconTypeFromStatType(statType: string): string {
-  const map: Record<string, string> = {
-    'totalProjects': 'chart-bar',
-    'publicProjects': 'eye',
-    'displayedCount': 'funnel',
-    'importantCount': 'sparkles',
-    'completedCount': 'check-circle',
-    'inProgressCount': 'clock',
-    'readyStatus': 'check',
-    'abandonedCount': 'archive-box'
-  };
-  return map[statType] || 'chart-bar';
-}
-
-export function StatisticsGrid({ 
-  configs, 
-  allProjects, 
-  filteredProjects, 
-  isAdmin, 
-  isPreviewMode 
+export function StatisticsGrid({
+  configs,
+  allProjects,
+  filteredProjects,
+  isAdmin,
+  isPreviewMode,
 }: StatisticsGridProps) {
-  // 只顯示啟用的統計項目，並按順序排序
   const enabledStats = configs
-    .filter(c => c.enabled)
+    .filter((c) => c.enabled)
     .sort((a, b) => a.order - b.order);
-  
-  const count = enabledStats.length;
 
-  if (count === 0) {
+  if (enabledStats.length === 0) {
     return null;
   }
-  
+
   return (
-    <div 
+    <div
       className="grid grid-rows-2 gap-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm border border-blue-500/30 rounded-xl shadow-lg overflow-hidden h-full"
-      style={{ 
-        gridAutoFlow: 'column', 
-        gridAutoColumns: 'minmax(90px, 1fr)' 
+      style={{
+        gridAutoFlow: 'column',
+        gridAutoColumns: 'minmax(90px, 1fr)',
       }}
     >
       {enabledStats.map((config, index) => {
         const value = calculateStatistic(
-          config.type, 
-          allProjects, 
-          filteredProjects, 
-          isAdmin, 
-          isPreviewMode
+          config.type,
+          allProjects,
+          filteredProjects,
+          isAdmin,
+          isPreviewMode,
         );
         const colors = getStatisticColor(config.type);
-        
-        // 計算邊框邏輯
+
         const col = Math.floor(index / 2);
-        const isLastCol = (col === Math.ceil(count / 2) - 1);
+        const isLastCol = col === Math.ceil(enabledStats.length / 2) - 1;
         const needsRightBorder = !isLastCol;
-        
-        const isFirstRow = (index % 2 === 0);
-        const hasPair = (index + 1 < count);
+        const isFirstRow = index % 2 === 0;
+        const hasPair = index + 1 < enabledStats.length;
         const needsBottomBorder = isFirstRow && hasPair;
-        
-        // 獲取圖標組件
-        const iconType = getIconTypeFromStatType(config.type);
+
+        const iconType = getStatisticIconType(config.type);
         const IconComponent = getIconComponent(iconType);
-        
+
         return (
-          <div 
-            key={config.id} 
+          <div
+            key={config.id}
             className={`
-              bg-gradient-to-br ${colors.gradient} 
-              rounded-sm p-4 
-              ${needsRightBorder ? 'border-r border-blue-500/20' : ''} 
+              bg-gradient-to-br ${colors.gradient}
+              rounded-sm p-4
+              ${needsRightBorder ? 'border-r border-blue-500/20' : ''}
               ${needsBottomBorder ? 'border-b border-blue-500/20' : ''}
               hover:shadow-md transition-shadow
               flex flex-col items-center justify-center

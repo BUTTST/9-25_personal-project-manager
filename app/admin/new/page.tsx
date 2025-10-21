@@ -4,22 +4,40 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/ToastProvider';
-import { ProjectFormData } from '@/types';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import {
+  ProjectFormData,
+  ProjectStatus,
+  categoryDisplayNames,
+  statusDisplayNames,
+  projectStatusOrder,
+  defaultImagePreviewMode,
+  ensureProjectVisibility,
+} from '@/types';
+import { imageGallery } from '@/config/image-gallery';
+import { ArrowLeftIcon, PhotoIcon, PlusIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { ToggleControl } from '@/components/ui/ToggleControl';
 
 export default function NewProjectPage() {
   const [formData, setFormData] = useState<ProjectFormData>({
     dateAndFileName: '',
     description: '',
     category: 'secondary',
+    status: 'in-progress',
     github: '',
     vercel: '',
     path: '',
     statusNote: '',
     publicNote: '',
-    developerNote: ''
+    developerNote: '',
+    imagePreviews: [],
+    imagePreviewMode: defaultImagePreviewMode,
+    customInfoSections: [],
+    visibility: ensureProjectVisibility(),
   });
   const [loading, setLoading] = useState(false);
+  const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [newSectionContent, setNewSectionContent] = useState('');
+  const [newSectionType, setNewSectionType] = useState<'text' | 'url'>('text');
   
   const { isAdmin } = useAuth();
   const { showToast } = useToast();
@@ -69,6 +87,82 @@ export default function NewProjectPage() {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleStatusChange = (status: ProjectStatus) => {
+    setFormData((prev) => ({
+      ...prev,
+      status,
+    }));
+  };
+
+  const handleVisibilityChange = (field: keyof ProjectFormData['visibility'], value: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      visibility: {
+        ...prev.visibility,
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleImageToggle = (imageId: string) => {
+    setFormData((prev) => {
+      const exists = prev.imagePreviews.some((img) => img.id === imageId);
+      if (exists) {
+        return {
+          ...prev,
+          imagePreviews: prev.imagePreviews.filter((img) => img.id !== imageId),
+        };
+      }
+      const galleryImage = imageGallery.find((img) => img.id === imageId);
+      if (!galleryImage) return prev;
+      return {
+        ...prev,
+        imagePreviews: [...prev.imagePreviews, { ...galleryImage }],
+      };
+    });
+  };
+
+  const handleAddSection = () => {
+    if (!newSectionTitle.trim() || !newSectionContent.trim()) return;
+    setFormData((prev) => ({
+      ...prev,
+      customInfoSections: [
+        ...prev.customInfoSections,
+        {
+          id: `section-${Date.now()}`,
+          title: newSectionTitle,
+          type: newSectionType,
+          content: newSectionContent,
+          visible: true,
+        },
+      ],
+    }));
+    setNewSectionTitle('');
+    setNewSectionContent('');
+    setNewSectionType('text');
+  };
+
+  const handleSectionChange = (index: number, field: keyof ProjectFormData['customInfoSections'][number], value: string | boolean) => {
+    setFormData((prev) => {
+      const updatedSections = [...prev.customInfoSections];
+      updatedSections[index] = {
+        ...updatedSections[index],
+        [field]: value,
+      };
+      return {
+        ...prev,
+        customInfoSections: updatedSections,
+      };
+    });
+  };
+
+  const handleRemoveSection = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      customInfoSections: prev.customInfoSections.filter((_, i) => i !== index),
     }));
   };
 
@@ -139,19 +233,85 @@ export default function NewProjectPage() {
                 onChange={(e) => handleInputChange('category', e.target.value)}
                 className="input"
               >
-                <option value="important">［重要］</option>
-                <option value="secondary">［次］</option>
-                <option value="practice">［子實踐］</option>
-                <option value="completed">［已完成］</option>
-                <option value="abandoned">［已捨棄］</option>
+                <option value="important">{categoryDisplayNames.important}</option>
+                <option value="secondary">{categoryDisplayNames.secondary}</option>
+                <option value="practice">{categoryDisplayNames.practice}</option>
+                <option value="single-doc">{categoryDisplayNames['single-doc']}</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">狀態</label>
+              <select
+                value={formData.status}
+                onChange={(e) => handleStatusChange(e.target.value as ProjectStatus)}
+                className="input"
+              >
+                {projectStatusOrder.map((statusKey) => (
+                  <option key={statusKey} value={statusKey}>
+                    {statusDisplayNames[statusKey]}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
+          {/* 圖片預覽 */}
+          <div className="space-y-4 border-t border-gray-200 pt-6">
+            <h2 className="text-lg font-medium text-gray-900">圖片預覽</h2>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">已選擇 {formData.imagePreviews.length} 張圖片</span>
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    value="single"
+                    checked={formData.imagePreviewMode === 'single'}
+                    onChange={(e) => handleInputChange('imagePreviewMode', e.target.value)}
+                  />
+                  單張切換
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    value="grid"
+                    checked={formData.imagePreviewMode === 'grid'}
+                    onChange={(e) => handleInputChange('imagePreviewMode', e.target.value)}
+                  />
+                  多張同時展開
+                </label>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {imageGallery.map((image) => {
+                const selected = formData.imagePreviews.some((img) => img.id === image.id);
+                return (
+                  <button
+                    key={image.id}
+                    type="button"
+                    onClick={() => handleImageToggle(image.id)}
+                    className={`flex items-center gap-3 rounded-lg border p-3 text-left transition ${
+                      selected
+                        ? 'border-primary-500 bg-primary-50 text-primary-600'
+                        : 'border-gray-200 hover:border-primary-300'
+                    }`}
+                  >
+                    <PhotoIcon className={`h-5 w-5 ${selected ? 'text-primary-500' : 'text-gray-400'}`} />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-800">{image.title}</div>
+                      <div className="text-xs text-gray-500">{image.description || image.id}</div>
+                    </div>
+                    {selected && <span className="text-xs font-medium text-primary-500">已選</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* 連結資訊 */}
-          <div className="space-y-4">
+          <div className="space-y-4 border-t border-gray-200 pt-6">
             <h2 className="text-lg font-medium text-gray-900">連結資訊</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">GitHub 連結</label>
@@ -189,9 +349,9 @@ export default function NewProjectPage() {
           </div>
 
           {/* 註解資訊 */}
-          <div className="space-y-4">
+          <div className="space-y-4 border-t border-gray-200 pt-6">
             <h2 className="text-lg font-medium text-gray-900">註解資訊</h2>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">狀態備註</label>
               <textarea
@@ -229,6 +389,129 @@ export default function NewProjectPage() {
                 placeholder="開發相關的內部註解..."
                 rows={2}
               />
+            </div>
+          </div>
+
+          {/* 自訂資訊區塊 */}
+          <div className="space-y-4 border-t border-gray-200 pt-6">
+            <h2 className="text-lg font-medium text-gray-900">自訂資訊區塊</h2>
+
+            <div className="space-y-3">
+              {formData.customInfoSections.map((section, index) => (
+                <div key={section.id} className="rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-gray-800">區塊 {index + 1}</h4>
+                    <div className="flex items-center gap-2">
+                      <ToggleControl
+                        checked={section.visible}
+                        onChange={(checked) => handleSectionChange(index, 'visible', checked)}
+                        size="sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSection(index)}
+                        className="text-gray-400 hover:text-red-500"
+                        title="移除區塊"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600">標題</label>
+                      <input
+                        type="text"
+                        value={section.title}
+                        onChange={(e) => handleSectionChange(index, 'title', e.target.value)}
+                        className="input mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600">類型</label>
+                      <select
+                        value={section.type}
+                        onChange={(e) => handleSectionChange(index, 'type', e.target.value)}
+                        className="input mt-1"
+                      >
+                        <option value="text">文本</option>
+                        <option value="url">網址</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="block text-xs font-medium text-gray-600">內容</label>
+                    <textarea
+                      value={section.content}
+                      onChange={(e) => handleSectionChange(index, 'content', e.target.value)}
+                      className="textarea mt-1"
+                      rows={section.type === 'url' ? 2 : 3}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-lg border border-dashed border-gray-300 p-4">
+              <h4 className="text-sm font-semibold text-gray-800">新增區塊</h4>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600">標題</label>
+                  <input
+                    type="text"
+                    value={newSectionTitle}
+                    onChange={(e) => setNewSectionTitle(e.target.value)}
+                    className="input mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600">類型</label>
+                  <select
+                    value={newSectionType}
+                    onChange={(e) => setNewSectionType(e.target.value as 'text' | 'url')}
+                    className="input mt-1"
+                  >
+                    <option value="text">文本</option>
+                    <option value="url">網址</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-gray-600">內容</label>
+                <textarea
+                  value={newSectionContent}
+                  onChange={(e) => setNewSectionContent(e.target.value)}
+                  className="textarea mt-1"
+                  rows={newSectionType === 'url' ? 2 : 3}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleAddSection}
+                className="mt-3 inline-flex items-center gap-1 rounded-md bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-primary-600"
+              >
+                <PlusIcon className="h-4 w-4" />
+                新增區塊
+              </button>
+            </div>
+          </div>
+
+          {/* 訪客可見設定 */}
+          <div className="space-y-4 border-t border-gray-200 pt-6">
+            <h2 className="text-lg font-medium text-gray-900">訪客可見設定</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {Object.entries(formData.visibility).map(([key, value]) => (
+                <div key={key} className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                  <div className="text-sm font-medium text-gray-700">
+                    {key}
+                  </div>
+                  <ToggleControl
+                    checked={value}
+                    onChange={(checked) => handleVisibilityChange(key as keyof ProjectFormData['visibility'], checked)}
+                    size="sm"
+                  />
+                </div>
+              ))}
             </div>
           </div>
 

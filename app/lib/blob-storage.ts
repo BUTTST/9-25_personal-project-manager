@@ -1,5 +1,18 @@
 import { put, head, PutBlobResult, list } from '@vercel/blob';
-import { ProjectData, Project, PasswordEntry, AppSettings } from '@/types';
+import {
+  ProjectData,
+  Project,
+  PasswordEntry,
+  AppSettings,
+  defaultProjectStatus,
+  defaultImagePreviewMode,
+  ensureProjectVisibility,
+  migrateLegacyCategoryToStatus,
+  normalizeCustomInfoSections,
+  normalizeImagePreviews,
+  normalizeProjectStatus,
+  normalizeProjectCategory,
+} from '@/types';
 import { isEmptyData, validateDataIntegrity, createBackupData } from './data-safety';
 import localBackup from './local-backup.json';
 
@@ -17,15 +30,20 @@ export const defaultProjectData: ProjectData = {
       dateAndFileName: true,
       description: true,
       category: true,
+      status: true,
       github: true,
       vercel: true,
       path: false,
       statusNote: true,
       publicNote: true,
-      developerNote: false
+      developerNote: false,
+      imagePreviews: true,
+      customInfoSections: true,
     },
     rememberPassword: true,
     theme: 'light',
+    defaultStatus: defaultProjectStatus,
+    defaultImagePreviewMode: defaultImagePreviewMode,
     uiDisplay: {
       filters: [
         { id: 'all', enabled: true, order: 0, label: '全部' },
@@ -33,12 +51,11 @@ export const defaultProjectData: ProjectData = {
         { id: 'secondary', enabled: true, order: 2, label: '次要' },
         { id: 'practice', enabled: true, order: 3, label: '實踐' },
         { id: 'single-doc', enabled: true, order: 4, label: '單檔專案' },
-        { id: 'completed', enabled: true, order: 5, label: '完成' },
-        { id: 'abandoned', enabled: true, order: 6, label: '捨棄' },
-        { id: 'hot', enabled: false, order: 7, label: '熱門' },
-        { id: 'paused', enabled: false, order: 8, label: '暫停' },
-        { id: 'in-progress', enabled: false, order: 9, label: '進行中' },
-        { id: 'draft', enabled: false, order: 10, label: '草稿' }
+        { id: 'status-in-progress', enabled: true, order: 5, label: '進行中' },
+        { id: 'status-on-hold', enabled: true, order: 6, label: '暫緩' },
+        { id: 'status-long-term', enabled: false, order: 7, label: '長期維護' },
+        { id: 'status-completed', enabled: true, order: 8, label: '已完成' },
+        { id: 'status-discarded', enabled: true, order: 9, label: '捨棄' },
       ],
       statistics: [
         { id: 'stat-total', type: 'totalProjects', enabled: true, order: 0, label: '總專案數' },
@@ -49,7 +66,11 @@ export const defaultProjectData: ProjectData = {
         { id: 'stat-completed', type: 'completedCount', enabled: false, order: 5, label: '已完成' },
         { id: 'stat-inprogress', type: 'inProgressCount', enabled: false, order: 6, label: '進行中' },
         { id: 'stat-ready', type: 'readyStatus', enabled: false, order: 7, label: '準備就緒' },
-        { id: 'stat-abandoned', type: 'abandonedCount', enabled: false, order: 8, label: '已捨棄' }
+        { id: 'stat-abandoned', type: 'abandonedCount', enabled: false, order: 8, label: '已捨棄' },
+        { id: 'stat-status-onhold', type: 'statusOnHold', enabled: false, order: 9, label: '暫緩' },
+        { id: 'stat-status-longterm', type: 'statusLongTerm', enabled: false, order: 10, label: '長期維護' },
+        { id: 'stat-status-completed', type: 'statusCompleted', enabled: false, order: 11, label: '完成' },
+        { id: 'stat-status-discarded', type: 'statusDiscarded', enabled: false, order: 12, label: '捨棄' },
       ]
     }
   },
@@ -127,6 +148,20 @@ function enrichProjectData(data: ProjectData): ProjectData {
   const filters = [...uiDisplay.filters];
   const statistics = [...uiDisplay.statistics];
 
+  const projects = data.projects.map((project) => {
+    const normalizedCategory = normalizeProjectCategory(project.category);
+    return {
+      ...project,
+      category: normalizedCategory,
+      status: normalizeProjectStatus(project.status, normalizedCategory),
+      visibility: ensureProjectVisibility(project.visibility),
+      imagePreviews: normalizeImagePreviews(project.imagePreviews),
+      imagePreviewMode: project.imagePreviewMode || settings.defaultImagePreviewMode || defaultImagePreviewMode,
+      customInfoSections: normalizeCustomInfoSections(project.customInfoSections),
+      documentMeta: project.documentMeta || null,
+    } as Project;
+  });
+
   if (!filters.some(filter => filter.id === documentCategory)) {
     filters.push({
       id: documentCategory,
@@ -146,17 +181,13 @@ function enrichProjectData(data: ProjectData): ProjectData {
     });
   }
 
-  const projects = data.projects.map(project => ({
-    ...project,
-    documentMeta: project.documentMeta || null,
-    category: project.category === documentCategory ? documentCategory : project.category
-  })) as Project[];
-
   return {
     ...data,
     projects,
     settings: {
       ...settings,
+      defaultStatus: settings.defaultStatus || defaultProjectStatus,
+      defaultImagePreviewMode: settings.defaultImagePreviewMode || defaultImagePreviewMode,
       uiDisplay: {
         filters: filters.map((filter, index) => ({ ...filter, order: index })),
         statistics: statistics.map((stat, index) => ({ ...stat, order: index }))
@@ -256,14 +287,21 @@ async function readExistingDataForComparison(): Promise<ProjectData | null> {
 // 只取公開專案（訪客模式）
 export function getPublicProjects(projects: Project[]): Project[] {
   return projects
-    .filter(project => 
-      project.visibility.description && 
-      project.category !== 'abandoned'
+    .map((project) => ({
+      ...project,
+      visibility: ensureProjectVisibility(project.visibility),
+      imagePreviews: normalizeImagePreviews(project.imagePreviews),
+      customInfoSections: normalizeCustomInfoSections(project.customInfoSections),
+      documentMeta: project.documentMeta || null,
+    }))
+    .filter(project =>
+      project.visibility.description &&
+      project.status !== 'discarded'
     )
     .map(project => ({
       ...project,
-      developerNote: '', // 移除開發者註解
-      passwords: [] as PasswordEntry[] // 移除密碼訊息
+      developerNote: '',
+      passwords: [] as PasswordEntry[],
     }));
 }
 

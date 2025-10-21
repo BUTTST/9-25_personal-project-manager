@@ -1,22 +1,32 @@
 'use client';
 
-import { useState } from 'react';
-import { Project, CategoryDisplayName, ProjectVisibility } from '@/types';
+import { useState, useEffect } from 'react';
+import {
+  Project,
+  ProjectVisibility,
+  categoryDisplayNames,
+  statusDisplayNames,
+  ensureProjectVisibility,
+} from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { EditProjectModal } from '@/components/admin/EditProjectModal';
-import { 
-  GlobeAltIcon, 
-  CodeBracketIcon, 
-  FolderOpenIcon, 
+import {
+  GlobeAltIcon,
+  CodeBracketIcon,
+  FolderOpenIcon,
   ChatBubbleLeftRightIcon,
   StarIcon,
   EyeIcon,
   EyeSlashIcon,
   PencilSquareIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  PhotoIcon,
+  ArrowsPointingOutIcon,
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import { ImagePreviewGallery } from './ImagePreviewGallery';
+import { CustomInfoSectionView } from './CustomInfoSectionView';
 
 const GitHubIcon = () => (
   <svg
@@ -51,21 +61,29 @@ interface ProjectCardProps {
   isAdmin: boolean;
   showToggleControls: boolean;
   onUpdate?: (updatedProject: Project) => void;
+  imageCollapsedOverride?: boolean;
 }
 
-const categoryDisplayNames: CategoryDisplayName = {
-  important: '［重要］',
-  secondary: '［次］',
-  practice: '［子實踐］',
-  completed: '［已完成］',
-  abandoned: '［已捨棄］',
-  'single-doc': '［單檔］'
-};
-
-export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: ProjectCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [localProject, setLocalProject] = useState(project);
+export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, imageCollapsedOverride }: ProjectCardProps) {
+  const [localProject, setLocalProject] = useState({
+    ...project,
+    visibility: ensureProjectVisibility(project.visibility),
+  });
+  const [isGalleryCollapsed, setIsGalleryCollapsed] = useState(imageCollapsedOverride ?? false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  useEffect(() => {
+    setLocalProject({
+      ...project,
+      visibility: ensureProjectVisibility(project.visibility),
+    });
+  }, [project]);
+
+  useEffect(() => {
+    if (typeof imageCollapsedOverride === 'boolean') {
+      setIsGalleryCollapsed(imageCollapsedOverride);
+    }
+  }, [imageCollapsedOverride]);
 
   const handleVisibilityToggle = async (field: keyof ProjectVisibility) => {
     if (!isAdmin) return;
@@ -94,8 +112,8 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
     } catch (error) {
       console.error('Failed to update project visibility:', error);
       // 回滾更改
-      setLocalProject(localProject);
-      onUpdate?.(localProject);
+      setLocalProject(project);
+      onUpdate?.(project);
     }
   };
 
@@ -192,10 +210,25 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
       case 'important': return 'badge-important';
       case 'secondary': return 'badge-secondary';
       case 'practice': return 'badge-practice';
-      case 'completed': return 'badge-completed';
-      case 'abandoned': return 'badge-abandoned';
       case 'single-doc': return 'badge-single-doc';
       default: return 'badge';
+    }
+  };
+
+  const getStatusBadgeClass = (status: Project['status']) => {
+    switch (status) {
+      case 'in-progress':
+        return 'bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300';
+      case 'on-hold':
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300';
+      case 'long-term':
+        return 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300';
+      case 'completed':
+        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300';
+      case 'discarded':
+        return 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300';
+      default:
+        return 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
@@ -272,24 +305,96 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
             </div>
           )}
           
-          {/* 類別 - 管理員總是看得到，訪客依照可見性 */}
+          {/* 類別和狀態 - 管理員總是看得到，訪客依照可見性 */}
           {(isAdmin || localProject.visibility.category) && (
-            <div className="flex items-center justify-between gap-3">
-              <span className={`${getCategoryBadgeClass(localProject.category)} text-xs font-semibold px-3 py-1.5 ${
-                !localProject.visibility.category && isAdmin ? 'opacity-40 line-through' : ''
-              }`}>
-                {categoryDisplayNames[localProject.category]}
-              </span>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {(isAdmin || localProject.visibility.category) && (
+                  <span
+                    className={`${getCategoryBadgeClass(localProject.category)} text-xs font-semibold px-3 py-1.5 ${
+                      !localProject.visibility.category && isAdmin ? 'opacity-40 line-through' : ''
+                    }`}
+                  >
+                    {categoryDisplayNames[localProject.category]}
+                  </span>
+                )}
+                {(isAdmin || localProject.visibility.status) && (
+                  <span
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
+                      getStatusBadgeClass(localProject.status)
+                    } ${
+                      !localProject.visibility.status && isAdmin ? 'opacity-40 line-through' : ''
+                    }`}
+                  >
+                    {statusDisplayNames[localProject.status] || localProject.status}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {localProject.imagePreviews.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsGalleryCollapsed(!isGalleryCollapsed)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-primary-400 hover:text-primary-500"
+                  >
+                    {isGalleryCollapsed ? (
+                      <PhotoIcon className="h-4 w-4" />
+                    ) : (
+                      <ArrowsPointingOutIcon className="h-4 w-4" />
+                    )}
+                    <span>{isGalleryCollapsed ? '展開圖片' : '收折圖片'}</span>
+                  </button>
+                )}
+                {isAdmin && showToggleControls && (
+                  <div className="flex items-center gap-2">
+                    {(isAdmin || localProject.visibility.category) && (
+                      <ToggleControl
+                        checked={localProject.visibility.category}
+                        onChange={() => handleVisibilityToggle('category')}
+                        size="sm"
+                      />
+                    )}
+                    {(isAdmin || localProject.visibility.status) && (
+                      <ToggleControl
+                        checked={localProject.visibility.status}
+                        onChange={() => handleVisibilityToggle('status')}
+                        size="sm"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 圖片預覽 */}
+        {(isAdmin || localProject.visibility.imagePreviews) && (
+          <div
+            className={`rounded-xl border border-border/60 bg-muted/20 p-4 transition-opacity ${
+              !localProject.visibility.imagePreviews && isAdmin ? 'opacity-40' : ''
+            }`}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <PhotoIcon className="h-4 w-4" />
+                圖片預覽
+              </div>
               {isAdmin && showToggleControls && (
                 <ToggleControl
-                  checked={localProject.visibility.category}
-                  onChange={() => handleVisibilityToggle('category')}
+                  checked={localProject.visibility.imagePreviews}
+                  onChange={() => handleVisibilityToggle('imagePreviews')}
                   size="sm"
                 />
               )}
             </div>
-          )}
-        </div>
+            <ImagePreviewGallery
+              images={localProject.imagePreviews}
+              mode={localProject.imagePreviewMode}
+              collapsed={isGalleryCollapsed || !localProject.visibility.imagePreviews}
+            />
+          </div>
+        )}
 
         {/* 說明區塊 */}
         {(isAdmin || localProject.visibility.description) && (
@@ -469,6 +574,29 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
           </div>
         )}
 
+        {/* 自訂資訊區塊 */}
+        {(isAdmin || localProject.visibility.customInfoSections) && localProject.customInfoSections.length > 0 && (
+          <div
+            className={`rounded-lg border border-primary-200/60 bg-primary-50/40 p-4 dark:border-primary-500/30 dark:bg-primary-500/10 ${
+              !localProject.visibility.customInfoSections && isAdmin ? 'opacity-40' : ''
+            }`}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary-700 dark:text-primary-300">
+                自訂資訊
+              </span>
+              {isAdmin && showToggleControls && (
+                <ToggleControl
+                  checked={localProject.visibility.customInfoSections}
+                  onChange={() => handleVisibilityToggle('customInfoSections')}
+                  size="sm"
+                />
+              )}
+            </div>
+            <CustomInfoSectionView sections={localProject.customInfoSections} />
+          </div>
+        )}
+
         {/* 開發者註解區塊（僅管理員可見） */}
         {isAdmin && (isAdmin || localProject.visibility.developerNote) && localProject.developerNote && (
           <div className={`bg-gradient-to-br from-orange-50 to-red-50/50 dark:from-orange-500/10 dark:to-red-500/5 rounded-lg p-4 border-2 border-orange-300/50 dark:border-orange-500/30 shadow-sm ${
@@ -544,7 +672,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
               <div className="flex items-center gap-1.5 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full">
                 <EyeIcon className="h-3 w-3" />
                 <span className="font-medium">
-                  {Object.values(localProject.visibility).filter(Boolean).length}/
+                  {Object.entries(localProject.visibility).filter(([, value]) => value).length}/
                   {Object.keys(localProject.visibility).length}
                 </span>
               </div>
