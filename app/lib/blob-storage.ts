@@ -71,11 +71,16 @@ export const defaultProjectData: ProjectData = {
         { id: 'secondary', enabled: true, order: 2, label: '次要' },
         { id: 'practice', enabled: true, order: 3, label: '實踐' },
         { id: 'single-doc', enabled: true, order: 4, label: '單檔專案' },
-        { id: 'status-in-progress', enabled: true, order: 5, label: '進行中' },
-        { id: 'status-on-hold', enabled: true, order: 6, label: '暫緩' },
-        { id: 'status-long-term', enabled: false, order: 7, label: '長期維護' },
-        { id: 'status-completed', enabled: true, order: 8, label: '已完成' },
-        { id: 'status-discarded', enabled: true, order: 9, label: '捨棄' },
+        { id: 'completed', enabled: true, order: 5, label: '完成' },
+        { id: 'abandoned', enabled: true, order: 6, label: '捨棄' },
+        { id: 'status-in-progress', enabled: true, order: 7, label: '進行中' },
+        { id: 'status-on-hold', enabled: false, order: 8, label: '暫緩' },
+        { id: 'status-long-term', enabled: false, order: 9, label: '長期維護' },
+        { id: 'status-completed', enabled: false, order: 10, label: '已完成' },
+        { id: 'status-discarded', enabled: false, order: 11, label: '已捨棄' },
+        { id: 'hot', enabled: false, order: 12, label: '熱門' },
+        { id: 'paused', enabled: false, order: 13, label: '暫停' },
+        { id: 'draft', enabled: false, order: 14, label: '草稿' }
       ],
       statistics: [
         { id: 'stat-total', type: 'totalProjects', enabled: true, order: 0, label: '總專案數' },
@@ -89,8 +94,7 @@ export const defaultProjectData: ProjectData = {
         { id: 'stat-abandoned', type: 'abandonedCount', enabled: false, order: 8, label: '已捨棄' },
         { id: 'stat-status-onhold', type: 'statusOnHold', enabled: false, order: 9, label: '暫緩' },
         { id: 'stat-status-longterm', type: 'statusLongTerm', enabled: false, order: 10, label: '長期維護' },
-        { id: 'stat-status-completed', type: 'statusCompleted', enabled: false, order: 11, label: '完成' },
-        { id: 'stat-status-discarded', type: 'statusDiscarded', enabled: false, order: 12, label: '捨棄' },
+        { id: 'stat-status-discarded', type: 'statusDiscarded', enabled: false, order: 11, label: '捨棄' }
       ]
     }
   },
