@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { Project, PasswordEntry } from '@/types';
+import { 
+  Project, 
+  PasswordEntry, 
+  defaultProjectStatus,
+  defaultImagePreviewMode,
+  ensureProjectVisibility,
+  migrateLegacyCategoryToStatus
+} from '@/types';
 import { generateId } from '@/lib/auth';
 import { useToast } from '@/components/ui/ToastProvider';
 import { 
@@ -192,33 +199,44 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
     setLoading(true);
     try {
       // 轉換專案數據
-      const projects: Project[] = previewProjects.map((proj: ParsedProject) => ({
-        id: generateId(),
-        dateAndFileName: proj.dateAndFileName,
-        description: proj.description,
-        category: getCategoryFromDescription(proj.description),
-        github: proj.github || undefined,
-        vercel: proj.vercel || undefined,
-        path: proj.path || undefined,
-        statusNote: proj.statusNote || undefined,
-        publicNote: '', // 預設空值
-        developerNote: '', // 預設空值
-        visibility: {
-          dateAndFileName: true,
-          description: true,
-          category: true,
-          github: !!proj.github,
-          vercel: !!proj.vercel,
-          path: !!proj.path,
-          statusNote: !!proj.statusNote,
-          publicNote: true,
-          developerNote: false
-        },
-        featured: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        sortOrder: Date.now() // 使用當前時間戳作為預設排序值
-      }));
+      const projects: Project[] = previewProjects.map((proj: ParsedProject) => {
+        const category = getCategoryFromDescription(proj.description);
+        return {
+          id: generateId(),
+          dateAndFileName: proj.dateAndFileName,
+          description: proj.description,
+          category: category,
+          status: migrateLegacyCategoryToStatus(category),
+          github: proj.github || undefined,
+          vercel: proj.vercel || undefined,
+          path: proj.path || undefined,
+          statusNote: proj.statusNote || undefined,
+          publicNote: '', // 預設空值
+          developerNote: '', // 預設空值
+          documentMeta: null,
+          imagePreviews: [],
+          imagePreviewMode: defaultImagePreviewMode,
+          customInfoSections: [],
+          visibility: ensureProjectVisibility({
+            dateAndFileName: true,
+            description: true,
+            category: true,
+            status: true,
+            github: !!proj.github,
+            vercel: !!proj.vercel,
+            path: !!proj.path,
+            statusNote: !!proj.statusNote,
+            publicNote: true,
+            developerNote: false,
+            imagePreviews: false,
+            customInfoSections: false,
+          }),
+          featured: false,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          sortOrder: Date.now() // 使用當前時間戳作為預設排序值
+        };
+      });
 
       onImportComplete(projects);
       
