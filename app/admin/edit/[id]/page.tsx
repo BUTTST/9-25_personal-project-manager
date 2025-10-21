@@ -5,8 +5,15 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/ToastProvider';
 import { ToggleControl } from '@/components/ui/ToggleControl';
-import { Project, ProjectFormData } from '@/types';
-import { ArrowLeftIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import {
+  Project,
+  ProjectFormData,
+  ProjectStatus,
+  defaultProjectStatus,
+  defaultImagePreviewMode,
+  ensureProjectVisibility,
+} from '@/types';
+import { ArrowLeftIcon, EyeIcon } from '@heroicons/react/24/outline';
 
 export default function EditProjectPage() {
   const [project, setProject] = useState<Project | null>(null);
@@ -14,24 +21,19 @@ export default function EditProjectPage() {
     dateAndFileName: '',
     description: '',
     category: 'secondary',
+    status: defaultProjectStatus,
     github: '',
     vercel: '',
     path: '',
     statusNote: '',
     publicNote: '',
-    developerNote: ''
+    developerNote: '',
+    imagePreviews: [],
+    imagePreviewMode: defaultImagePreviewMode,
+    customInfoSections: [],
+    documentMeta: null,
   });
-  const [visibility, setVisibility] = useState<Project['visibility']>({
-    dateAndFileName: true,
-    description: true,
-    category: true,
-    github: true,
-    vercel: true,
-    path: false,
-    statusNote: true,
-    publicNote: true,
-    developerNote: false
-  });
+  const [visibility, setVisibility] = useState<Project['visibility']>(ensureProjectVisibility());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -71,14 +73,19 @@ export default function EditProjectPage() {
         dateAndFileName: projectData.dateAndFileName,
         description: projectData.description,
         category: projectData.category,
+        status: projectData.status,
         github: projectData.github || '',
         vercel: projectData.vercel || '',
         path: projectData.path || '',
         statusNote: projectData.statusNote || '',
         publicNote: projectData.publicNote || '',
-        developerNote: projectData.developerNote || ''
+        developerNote: projectData.developerNote || '',
+        imagePreviews: projectData.imagePreviews || [],
+        imagePreviewMode: projectData.imagePreviewMode || defaultImagePreviewMode,
+        customInfoSections: projectData.customInfoSections || [],
+        documentMeta: projectData.documentMeta ?? null,
       });
-      setVisibility(projectData.visibility);
+      setVisibility(ensureProjectVisibility(projectData.visibility));
     } catch (error) {
       showToast('error', '載入失敗', error instanceof Error ? error.message : '未知錯誤');
       router.push('/admin');
@@ -106,7 +113,7 @@ export default function EditProjectPage() {
         },
         body: JSON.stringify({
           ...formData,
-          visibility
+          visibility,
         })
       });
 
@@ -127,6 +134,13 @@ export default function EditProjectPage() {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleStatusChange = (status: ProjectStatus) => {
+    setFormData(prev => ({
+      ...prev,
+      status,
     }));
   };
 

@@ -19,15 +19,18 @@ export async function GET(request: NextRequest) {
     
     const data = await readProjectData();
 
-    const migratedProjects = data.projects.map((project) => ({
-      ...project,
-      status: project.status || migrateLegacyCategoryToStatus(project.category),
-      visibility: ensureProjectVisibility(project.visibility),
-      imagePreviews: project.imagePreviews ?? [],
-      imagePreviewMode: project.imagePreviewMode || defaultImagePreviewMode,
-      customInfoSections: project.customInfoSections ?? [],
-      documentMeta: project.documentMeta ?? null,
-    }));
+    const migratedProjects = data.projects.map((project) => {
+      const normalizedProject: Project = {
+        ...project,
+        status: project.status || migrateLegacyCategoryToStatus(project.category),
+        visibility: ensureProjectVisibility(project.visibility),
+        imagePreviews: project.imagePreviews ?? [],
+        imagePreviewMode: project.imagePreviewMode || defaultImagePreviewMode,
+        customInfoSections: project.customInfoSections ?? [],
+        documentMeta: project.documentMeta ?? null,
+      };
+      return normalizedProject;
+    });
 
     const enrichedData = {
       ...data,
@@ -76,15 +79,18 @@ export async function POST(request: NextRequest) {
     
     const data = await readProjectData();
 
-    const migratedProjects = data.projects.map((project) => ({
-      ...project,
-      status: project.status || migrateLegacyCategoryToStatus(project.category),
-      visibility: ensureProjectVisibility(project.visibility),
-      imagePreviews: project.imagePreviews ?? [],
-      imagePreviewMode: project.imagePreviewMode || defaultImagePreviewMode,
-      customInfoSections: project.customInfoSections ?? [],
-      documentMeta: project.documentMeta ?? null,
-    }));
+    const migratedProjects: Project[] = data.projects.map((project) => {
+      const normalizedProject: Project = {
+        ...project,
+        status: project.status || migrateLegacyCategoryToStatus(project.category),
+        visibility: ensureProjectVisibility(project.visibility),
+        imagePreviews: project.imagePreviews ?? [],
+        imagePreviewMode: project.imagePreviewMode || defaultImagePreviewMode,
+        customInfoSections: project.customInfoSections ?? [],
+        documentMeta: project.documentMeta ?? null,
+      };
+      return normalizedProject;
+    });
 
     const nextData = {
       ...data,

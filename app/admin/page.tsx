@@ -149,7 +149,7 @@ export default function AdminPage() {
   const stats = {
     total: projectData.projects.length,
     important: projectData.projects.filter((p) => p.category === 'important').length,
-    completed: projectData.projects.filter((p) => p.category === 'completed').length,
+    completed: projectData.projects.filter((p) => p.status === 'completed').length,
     public: projectData.projects.filter((p) => p.visibility.description).length,
   };
 
