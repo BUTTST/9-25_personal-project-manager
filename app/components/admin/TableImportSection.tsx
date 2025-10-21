@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 interface TableImportSectionProps {
-  onImportComplete: (projects: Project[], passwords: PasswordEntry[]) => void;
+  onImportComplete: (projects: Project[]) => void;
 }
 
 interface ParsedProject {
@@ -220,17 +220,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
         sortOrder: Date.now() // 使用當前時間戳作為預設排序值
       }));
 
-      // 轉換密碼數據
-      const passwords: PasswordEntry[] = previewPasswords.map((pwd: ParsedPassword) => ({
-        id: generateId(),
-        platform: pwd.platform,
-        account: pwd.account,
-        password: pwd.password,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      }));
-
-      onImportComplete(projects, passwords);
+      onImportComplete(projects);
       
       // 清除表單
       setTableText('');
@@ -238,7 +228,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
       setPreviewProjects([]);
       setPreviewPasswords([]);
       
-      showToast('success', '導入成功', `已導入 ${projects.length} 個專案和 ${passwords.length} 個密碼`);
+      showToast('success', '導入成功', `已導入 ${projects.length} 個專案`);
     } catch (error) {
       showToast('error', '導入失敗', error instanceof Error ? error.message : '未知錯誤');
     } finally {

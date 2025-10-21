@@ -40,14 +40,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         ...enrichedData,
         projects: getPublicProjects(enrichedData.projects),
-        passwords: [],
       });
     }
   } catch (error) {
     console.error('Failed to read projects:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: '無法載入專案資料' },
-      { status: 500 }
+      {
+        error: '無法載入專案資料',
+        details: message,
+        translatedMessage: `⚠️ 無法載入專案資料：${message}`,
+      },
+      { status: 503 }
     );
   }
 }
@@ -134,8 +138,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newProject, { status: 201 });
   } catch (error) {
     console.error('Failed to create project:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: '新增專案失敗' },
+      {
+        error: '新增專案失敗',
+        details: message,
+        translatedMessage: `⚠️ 新增專案失敗：${message}`,
+      },
       { status: 500 }
     );
   }

@@ -3,24 +3,19 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ProjectData, Project, PasswordEntry } from '@/types';
+import { ProjectData, Project } from '@/types';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/ToastProvider';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ProjectTable } from '@/components/admin/ProjectTable';
-import { PasswordSection } from '@/components/admin/PasswordSection';
 import { SettingsSection } from '@/components/admin/SettingsSection';
 import { TableImportSection } from '@/components/admin/TableImportSection';
-import { 
-  PlusIcon, 
-  CogIcon, 
+import {
+  PlusIcon,
+  CogIcon,
   ChartBarIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  UserIcon,
-  PencilIcon,
   SparklesIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { HeaderThemeToggle } from '@/components/ui/HeaderThemeToggle';
@@ -29,8 +24,7 @@ import { DiagnosticsPanel } from '@/components/admin/DiagnosticsPanel';
 export default function AdminPage() {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'projects' | 'passwords' | 'import' | 'settings' | 'diagnostics'>('projects');
-  const [showPasswords, setShowPasswords] = useState(false);
+  const [activeTab, setActiveTab] = useState<'projects' | 'import' | 'settings' | 'diagnostics'>('projects');
   
   const { isAdmin } = useAuth();
   const { showToast } = useToast();
@@ -87,15 +81,6 @@ export default function AdminPage() {
     });
   };
 
-  const handlePasswordUpdate = (updatedPasswords: PasswordEntry[]) => {
-    if (!projectData) return;
-    
-    setProjectData({
-      ...projectData,
-      passwords: updatedPasswords
-    });
-  };
-
   const handleSettingsUpdate = (updatedSettings: ProjectData['settings']) => {
     if (!projectData) return;
     
@@ -106,33 +91,30 @@ export default function AdminPage() {
   };
 
 
-  const handleImportComplete = async (newProjects: Project[], newPasswords: PasswordEntry[]) => {
+  const handleImportComplete = async (newProjects: Project[]) => {
     if (!projectData) return;
 
     const updatedData = {
       ...projectData,
-      projects: [...projectData.projects, ...newProjects],
-      passwords: [...projectData.passwords, ...newPasswords]
+      projects: [...projectData.projects, ...newProjects]
     };
 
     setProjectData(updatedData);
     
-    // 同步到伺服器
     try {
       const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
-      
-      // 批量新增專案
+
       for (const project of newProjects) {
         await fetch('/api/projects', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-admin-password': adminPassword
+            'x-admin-password': adminPassword,
           },
-          body: JSON.stringify(project)
+          body: JSON.stringify(project),
         });
       }
-      
+
       showToast('success', '數據同步完成', '所有資料已保存到雲端');
     } catch (error) {
       showToast('warning', '部分同步失敗', '請檢查網路連線');
@@ -166,10 +148,9 @@ export default function AdminPage() {
 
   const stats = {
     total: projectData.projects.length,
-    important: projectData.projects.filter(p => p.category === 'important').length,
-    completed: projectData.projects.filter(p => p.category === 'completed').length,
-    public: projectData.projects.filter(p => p.visibility.description).length,
-    passwords: projectData.passwords.length
+    important: projectData.projects.filter((p) => p.category === 'important').length,
+    completed: projectData.projects.filter((p) => p.category === 'completed').length,
+    public: projectData.projects.filter((p) => p.visibility.description).length,
   };
 
   return (
@@ -210,7 +191,7 @@ export default function AdminPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* 統計卡片 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
             {/* 總專案數 */}
             <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -255,23 +236,10 @@ export default function AdminPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-3">
-                  <EyeIcon className="h-8 w-8 text-white/90" />
+                  <CheckCircleIcon className="h-8 w-8 text-white/90" />
                   <div className="text-4xl font-black text-white drop-shadow-lg">{stats.public}</div>
                 </div>
                 <div className="text-sm font-semibold text-white/90 uppercase tracking-wide">公開專案</div>
-              </div>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-            </div>
-
-            {/* 存儲密碼 */}
-            <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <UserIcon className="h-8 w-8 text-white/90" />
-                  <div className="text-4xl font-black text-white drop-shadow-lg">{stats.passwords}</div>
-                </div>
-                <div className="text-sm font-semibold text-white/90 uppercase tracking-wide">儲存密碼</div>
               </div>
               <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
             </div>
@@ -284,14 +252,19 @@ export default function AdminPage() {
             <div className="relative bg-card/50 backdrop-blur-sm rounded-2xl p-2 border border-border/50 shadow-lg">
               <div className="flex space-x-2 relative">
                 {/* 滑動指示器 */}
-                <div 
+                <div
                   className="absolute bottom-0 h-1 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-300 ease-out"
                   style={{
-                    left: activeTab === 'projects' ? '0%' : 
-                          activeTab === 'passwords' ? '20%' :
-                          activeTab === 'import' ? '40%' :
-                          activeTab === 'settings' ? '60%' : '80%',
-                    width: '20%'
+                    left:
+                      activeTab === 'projects'
+                        ? '0%'
+                        : activeTab === 'import'
+                          ? '33.33%'
+                          : activeTab === 'settings'
+                            ? '66.66%'
+                            : '100%',
+                    width: '33.33%',
+                    transform: activeTab === 'diagnostics' ? 'translateX(-66.66%)' : 'translateX(0)',
                   }}
                 />
                 
@@ -305,28 +278,6 @@ export default function AdminPage() {
                   }`}
                 >
                   專案管理
-                </button>
-                
-                <button
-                  onClick={() => setActiveTab('passwords')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
-                    activeTab === 'passwords'
-                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  }`}
-                >
-                  <span>密碼管理</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowPasswords(!showPasswords);
-                    }}
-                    className={`p-1 rounded-md transition-colors ${
-                      activeTab === 'passwords' ? 'hover:bg-white/20' : 'hover:bg-muted'
-                    }`}
-                  >
-                    {showPasswords ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                  </button>
                 </button>
                 
                 <button
@@ -373,14 +324,6 @@ export default function AdminPage() {
                 showToggleControls={projectData.settings.showToggleControls}
                 onUpdate={handleProjectUpdate}
                 onDelete={handleProjectDelete}
-              />
-            )}
-            
-            {activeTab === 'passwords' && (
-              <PasswordSection
-                passwords={projectData.passwords}
-                showPasswords={showPasswords}
-                onUpdate={handlePasswordUpdate}
               />
             )}
             

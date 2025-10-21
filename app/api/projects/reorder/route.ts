@@ -54,6 +54,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Reorder successful' });
   } catch (error) {
     console.error('Failed to reorder projects:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json(
+      {
+        error: '專案排序失敗',
+        details: message,
+        translatedMessage: `⚠️ 專案排序失敗：${message}`,
+      },
+      { status: 503 }
+    );
   }
 }

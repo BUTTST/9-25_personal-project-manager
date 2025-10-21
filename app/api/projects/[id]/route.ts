@@ -45,9 +45,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(migratedProject);
   } catch (error) {
     console.error('Failed to get project:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: '無法獲取專案資料' },
-      { status: 500 }
+      {
+        error: '無法獲取專案資料',
+        details: message,
+        translatedMessage: `⚠️ 無法獲取專案資料：${message}`,
+      },
+      { status: 503 }
     );
   }
 }
@@ -107,8 +112,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(migratedProjects[projectIndex]);
   } catch (error) {
     console.error('Failed to update project:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: '更新專案失敗' },
+      {
+        error: '更新專案失敗',
+        details: message,
+        translatedMessage: `⚠️ 更新專案失敗：${message}`,
+      },
       { status: 500 }
     );
   }
@@ -167,8 +177,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
   } catch (error) {
     console.error('Failed to delete project:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: '刪除專案失敗' },
+      {
+        error: '刪除專案失敗',
+        details: message,
+        translatedMessage: `⚠️ 刪除專案失敗：${message}`,
+      },
       { status: 500 }
     );
   }

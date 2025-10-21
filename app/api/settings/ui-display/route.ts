@@ -41,8 +41,13 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     console.error('儲存 UI 設定失敗:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: '儲存失敗，請稍後再試' },
+      {
+        error: '儲存失敗，請稍後再試',
+        details: message,
+        translatedMessage: `⚠️ 儲存 UI 設定失敗：${message}`,
+      },
       { status: 500 }
     );
   }
@@ -60,9 +65,14 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('讀取 UI 設定失敗:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: '讀取失敗' },
-      { status: 500 }
+      {
+        error: '讀取失敗',
+        details: message,
+        translatedMessage: `⚠️ 讀取 UI 設定失敗：${message}`,
+      },
+      { status: 503 }
     );
   }
 }
