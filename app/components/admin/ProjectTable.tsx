@@ -2,7 +2,7 @@
 
 import { useState, useEffect, DragEvent } from 'react';
 import Link from 'next/link';
-import { Project, categoryDisplayNames, statusDisplayNames, normalizeProjectStatus, normalizeProjectCategory } from '@/types';
+import { Project, ProjectStatus, categoryDisplayNames, statusDisplayNames, normalizeProjectStatus, normalizeProjectCategory } from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { useToast } from '@/components/ui/ToastProvider';
 import {
@@ -192,8 +192,17 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
       case 'important': return 'badge-important';
       case 'secondary': return 'badge-secondary';
       case 'practice': return 'badge-practice';
+      default: return 'badge';
+    }
+  };
+
+  const getStatusBadgeClass = (status: ProjectStatus) => {
+    switch (status) {
+      case 'in-progress': return 'badge-important';
+      case 'on-hold': return 'badge-secondary';
+      case 'long-term': return 'badge-practice';
       case 'completed': return 'badge-completed';
-      case 'abandoned': return 'badge-abandoned';
+      case 'discarded': return 'badge-abandoned';
       default: return 'badge';
     }
   };
@@ -315,7 +324,7 @@ export function ProjectTable({ projects, showToggleControls, onUpdate, onDelete 
                       <span className={getCategoryBadgeClass(project.category)}>
                         {categoryDisplayNames[project.category]}
                       </span>
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className={`${getStatusBadgeClass(project.status)} text-xs font-medium`}>
                         {statusDisplayNames[project.status] || project.status}
                       </span>
                     </div>

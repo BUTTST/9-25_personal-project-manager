@@ -2,7 +2,9 @@ export type ProjectCategory =
   | 'important'
   | 'secondary'
   | 'practice'
-  | 'single-doc';
+  | 'single-doc'
+  | 'completed'
+  | 'abandoned';
 
 export type ProjectStatus =
   | 'in-progress'
@@ -123,6 +125,8 @@ export type CategoryDisplayName = {
   secondary: '［次要］';
   practice: '［子實踐］';
   'single-doc': '［單檔］';
+  completed: '［已完成］';
+  abandoned: '［已捨棄］';
 };
 
 export const categoryDisplayNames: CategoryDisplayName = {
@@ -130,6 +134,8 @@ export const categoryDisplayNames: CategoryDisplayName = {
   secondary: '［次要］',
   practice: '［子實踐］',
   'single-doc': '［單檔］',
+  completed: '［已完成］',
+  abandoned: '［已捨棄］',
 };
 
 export type StatusDisplayName = {
@@ -297,6 +303,11 @@ export function normalizeProjectCategory(category?: string): ProjectCategory {
     case 'secondary':
     case '次要項目':
     case '次要':
+      return 'secondary';
+    case 'completed':
+      return 'completed';
+    case 'abandoned':
+      return 'abandoned';
     case 'completed':
     case 'abandoned':
     default:
