@@ -1,6 +1,9 @@
 import { put, head, PutBlobResult, list } from '@vercel/blob';
 import { ProjectData, Project, PasswordEntry, AppSettings } from '@/types';
 import { isEmptyData, validateDataIntegrity, createBackupData } from './data-safety';
+import localBackup from './local-backup.json';
+
+const USE_LOCAL_BACKUP = process.env.NEXT_PUBLIC_USE_LOCAL_BACKUP === 'true';
 
 const BLOB_FILENAME = 'project-data.json';
 
@@ -29,22 +32,24 @@ export const defaultProjectData: ProjectData = {
         { id: 'important', enabled: true, order: 1, label: '重要' },
         { id: 'secondary', enabled: true, order: 2, label: '次要' },
         { id: 'practice', enabled: true, order: 3, label: '實踐' },
-        { id: 'completed', enabled: true, order: 4, label: '完成' },
-        { id: 'abandoned', enabled: true, order: 5, label: '捨棄' },
-        { id: 'hot', enabled: false, order: 6, label: '熱門' },
-        { id: 'paused', enabled: false, order: 7, label: '暫停' },
-        { id: 'in-progress', enabled: false, order: 8, label: '進行中' },
-        { id: 'draft', enabled: false, order: 9, label: '草稿' }
+        { id: 'single-doc', enabled: true, order: 4, label: '單檔專案' },
+        { id: 'completed', enabled: true, order: 5, label: '完成' },
+        { id: 'abandoned', enabled: true, order: 6, label: '捨棄' },
+        { id: 'hot', enabled: false, order: 7, label: '熱門' },
+        { id: 'paused', enabled: false, order: 8, label: '暫停' },
+        { id: 'in-progress', enabled: false, order: 9, label: '進行中' },
+        { id: 'draft', enabled: false, order: 10, label: '草稿' }
       ],
       statistics: [
         { id: 'stat-total', type: 'totalProjects', enabled: true, order: 0, label: '總專案數' },
         { id: 'stat-display', type: 'displayedCount', enabled: true, order: 1, label: '顯示中' },
-        { id: 'stat-public', type: 'publicProjects', enabled: false, order: 2, label: '公開專案' },
-        { id: 'stat-important', type: 'importantCount', enabled: false, order: 3, label: '重要專案' },
-        { id: 'stat-completed', type: 'completedCount', enabled: false, order: 4, label: '已完成' },
-        { id: 'stat-inprogress', type: 'inProgressCount', enabled: false, order: 5, label: '進行中' },
-        { id: 'stat-ready', type: 'readyStatus', enabled: false, order: 6, label: '準備就緒' },
-        { id: 'stat-abandoned', type: 'abandonedCount', enabled: false, order: 7, label: '已捨棄' }
+        { id: 'stat-single-doc', type: 'singleDocCount', enabled: true, order: 2, label: '單檔文件' },
+        { id: 'stat-public', type: 'publicProjects', enabled: false, order: 3, label: '公開專案' },
+        { id: 'stat-important', type: 'importantCount', enabled: false, order: 4, label: '重要專案' },
+        { id: 'stat-completed', type: 'completedCount', enabled: false, order: 5, label: '已完成' },
+        { id: 'stat-inprogress', type: 'inProgressCount', enabled: false, order: 6, label: '進行中' },
+        { id: 'stat-ready', type: 'readyStatus', enabled: false, order: 7, label: '準備就緒' },
+        { id: 'stat-abandoned', type: 'abandonedCount', enabled: false, order: 8, label: '已捨棄' }
       ]
     }
   },
@@ -58,6 +63,16 @@ export const defaultProjectData: ProjectData = {
 
 // 從Blob讀取資料 - 直接使用SDK避免循環依賴
 export async function readProjectData(): Promise<ProjectData> {
+  if (USE_LOCAL_BACKUP) {
+    console.log('📦 使用本地備份資料 (local-backup.json)');
+    const data = localBackup as ProjectData;
+    if (!validateProjectData(data)) {
+      console.error('❌ 本地備份資料格式錯誤，回退至預設資料');
+      return enrichProjectData(defaultProjectData);
+    }
+    return enrichProjectData(data);
+  }
+
   try {
     console.log('🔍 嘗試讀取Blob數據...');
     
@@ -70,7 +85,7 @@ export async function readProjectData(): Promise<ProjectData> {
     
     if (!dataBlob) {
       console.log('📄 未找到project-data.json，使用默認數據');
-      return defaultProjectData;
+      return enrichProjectData(defaultProjectData);
     }
 
     console.log('✅ 找到數據文件，正在讀取:', dataBlob.url);
@@ -80,7 +95,7 @@ export async function readProjectData(): Promise<ProjectData> {
     
     if (!response.ok) {
       console.error('❌ Blob讀取失敗:', response.status, response.statusText);
-      return defaultProjectData;
+      return enrichProjectData(defaultProjectData);
     }
 
     const data = await response.json();
@@ -88,7 +103,7 @@ export async function readProjectData(): Promise<ProjectData> {
     // 驗證數據完整性
     if (!validateProjectData(data)) {
       console.error('❌ 數據格式驗證失敗');
-      return defaultProjectData;
+      return enrichProjectData(defaultProjectData);
     }
     
     console.log('🎉 成功讀取數據:', {
@@ -97,12 +112,57 @@ export async function readProjectData(): Promise<ProjectData> {
       lastUpdated: new Date(data.metadata.lastUpdated).toLocaleString()
     });
     
-    return data;
+    return enrichProjectData(data);
   } catch (error) {
     console.error('💥 讀取Blob數據時發生錯誤:', error);
     console.log('🔄 使用默認數據作為備用方案');
-    return defaultProjectData;
+    return enrichProjectData(defaultProjectData);
   }
+}
+
+function enrichProjectData(data: ProjectData): ProjectData {
+  const documentCategory = 'single-doc';
+  const settings = data.settings || ({} as AppSettings);
+  const uiDisplay = settings.uiDisplay || { filters: [], statistics: [] };
+  const filters = [...uiDisplay.filters];
+  const statistics = [...uiDisplay.statistics];
+
+  if (!filters.some(filter => filter.id === documentCategory)) {
+    filters.push({
+      id: documentCategory,
+      enabled: true,
+      order: filters.length,
+      label: '單檔專案'
+    });
+  }
+
+  if (!statistics.some(stat => stat.type === 'singleDocCount')) {
+    statistics.push({
+      id: 'stat-single-doc',
+      type: 'singleDocCount',
+      enabled: true,
+      order: statistics.length,
+      label: '單檔文件'
+    });
+  }
+
+  const projects = data.projects.map(project => ({
+    ...project,
+    documentMeta: project.documentMeta || null,
+    category: project.category === documentCategory ? documentCategory : project.category
+  })) as Project[];
+
+  return {
+    ...data,
+    projects,
+    settings: {
+      ...settings,
+      uiDisplay: {
+        filters: filters.map((filter, index) => ({ ...filter, order: index })),
+        statistics: statistics.map((stat, index) => ({ ...stat, order: index }))
+      }
+    }
+  };
 }
 
 // 安全的數據寫入 - 多層保護防止數據丟失

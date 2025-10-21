@@ -52,6 +52,10 @@ export function calculateStatistic(
       return (isAdmin && !isPreviewMode) 
         ? allProjects.filter(p => p.category === 'abandoned').length 
         : 0;
+    case 'singleDocCount':
+      return (isAdmin && !isPreviewMode)
+        ? allProjects.filter(p => p.category === 'single-doc').length
+        : visibleProjects.filter(p => p.category === 'single-doc').length;
     
     default:
       return 0;
@@ -112,6 +116,11 @@ export function getStatisticColor(type: StatisticType): {
       gradient: 'from-gray-50 to-gray-100/50 dark:from-gray-500/10 dark:to-gray-500/5', 
       border: 'border-gray-200/50 dark:border-gray-500/30', 
       icon: 'text-gray-600 dark:text-gray-400' 
+    },
+    singleDocCount: {
+      gradient: 'from-purple-50 to-purple-100/50 dark:from-purple-500/10 dark:to-purple-500/5',
+      border: 'border-purple-200/50 dark:border-purple-500/30',
+      icon: 'text-purple-600 dark:text-purple-400'
     }
   };
 
@@ -132,7 +141,8 @@ export function getStatisticIconType(type: StatisticType): string {
     completedCount: 'check-circle',
     inProgressCount: 'clock',
     readyStatus: 'check',
-    abandonedCount: 'archive-box'
+    abandonedCount: 'archive-box',
+    singleDocCount: 'document-text'
   };
   
   return iconMap[type] || 'chart-bar';

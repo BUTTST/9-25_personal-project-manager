@@ -28,6 +28,7 @@ const filterIcons: Record<string, any> = {
   'practice': BeakerIcon,
   'completed': CheckCircleIcon,
   'abandoned': ArchiveBoxIcon,
+  'single-doc': DocumentTextIcon,
   'hot': FireIcon,
   'paused': PauseCircleIcon,
   'in-progress': PlayCircleIcon,
@@ -69,6 +70,11 @@ const filterColors: Record<string, {
     color: 'text-gray-600 dark:text-gray-400', 
     bgColor: 'bg-gray-100 dark:bg-gray-600/20',
     borderColor: 'border-gray-300 dark:border-gray-500/50'
+  },
+  'single-doc': {
+    color: 'text-purple-700 dark:text-purple-300',
+    bgColor: 'bg-purple-100 dark:bg-purple-500/20',
+    borderColor: 'border-purple-300 dark:border-purple-500/50'
   },
   'hot': { 
     color: 'text-orange-700 dark:text-orange-300', 

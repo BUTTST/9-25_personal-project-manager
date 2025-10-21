@@ -59,7 +59,7 @@ export default function HomePage() {
       if (!response.ok) {
         throw new Error('無法載入專案資料');
       }
-      const data = await response.json();
+      const data: ProjectData = await response.json();
       setProjectData(data);
       
       // 載入 UI 設定

@@ -13,7 +13,8 @@ import {
   StarIcon,
   EyeIcon,
   EyeSlashIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
@@ -57,7 +58,8 @@ const categoryDisplayNames: CategoryDisplayName = {
   secondary: '［次］',
   practice: '［子實踐］',
   completed: '［已完成］',
-  abandoned: '［已捨棄］'
+  abandoned: '［已捨棄］',
+  'single-doc': '［單檔］'
 };
 
 export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: ProjectCardProps) {
@@ -192,6 +194,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
       case 'practice': return 'badge-practice';
       case 'completed': return 'badge-completed';
       case 'abandoned': return 'badge-abandoned';
+      case 'single-doc': return 'badge-single-doc';
       default: return 'badge';
     }
   };
@@ -314,8 +317,9 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
         {/* 連結區域 - 管理員或有可見連結時顯示 */}
         {(isAdmin || (localProject.visibility.github && localProject.github) || 
           (localProject.visibility.vercel && localProject.vercel) || 
-          (localProject.visibility.path && localProject.path)) && 
-          (localProject.github || localProject.vercel || localProject.path) && (
+          (localProject.visibility.path && localProject.path) ||
+          (localProject.visibility.vercel && localProject.documentMeta?.filePath)) && 
+          (localProject.github || localProject.vercel || localProject.path || localProject.documentMeta?.filePath) && (
           <div className="bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-500/5 dark:to-purple-500/5 rounded-lg p-4 border border-blue-200/30 dark:border-blue-500/20 space-y-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -348,7 +352,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
               </div>
             )}
             
-            {(isAdmin || localProject.visibility.vercel) && localProject.vercel && (
+            {(isAdmin || localProject.visibility.vercel) && (localProject.vercel || localProject.documentMeta?.filePath) && (
               <div className={`flex items-center justify-between gap-3 ${
                 !localProject.visibility.vercel && isAdmin ? 'opacity-40' : ''
               }`}>
@@ -359,7 +363,18 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
                   <div className={`min-w-0 flex-1 ${
                     !localProject.visibility.vercel && isAdmin ? 'line-through' : ''
                   }`}>
-                    {renderEditableLink('vercel', localProject.vercel)}
+                    {localProject.documentMeta?.filePath && !localProject.vercel ? (
+                      <a 
+                        href={localProject.documentMeta.filePath} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline truncate block transition-colors"
+                      >
+                        {localProject.documentMeta.title || '查看文件'}
+                      </a>
+                    ) : (
+                      renderEditableLink('vercel', localProject.vercel || '')
+                    )}
                   </div>
                 </div>
                 {isAdmin && showToggleControls && (
@@ -484,6 +499,37 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate }: 
             }`}>
               {localProject.developerNote}
             </p>
+          </div>
+        )}
+
+        {/* 單檔文件資訊 */}
+        {localProject.documentMeta && (
+          <div className="bg-primary-50/50 dark:bg-primary-500/10 rounded-lg p-4 border border-primary-200/50 dark:border-primary-500/30">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wider flex items-center gap-1.5">
+                <DocumentTextIcon className="h-3.5 w-3.5" />
+                單檔文件資訊
+              </span>
+              {localProject.documentMeta.fileSize && (
+                <span className="text-[11px] text-primary-600 dark:text-primary-300 bg-white/60 dark:bg-gray-800/60 px-2 py-0.5 rounded-full border border-primary-200/50 dark:border-primary-500/30">
+                  {localProject.documentMeta.fileSize}
+                </span>
+              )}
+            </div>
+            {localProject.documentMeta.description && (
+              <p className="text-sm text-primary-800 dark:text-primary-200 mb-2">
+                {localProject.documentMeta.description}
+              </p>
+            )}
+            {localProject.documentMeta.tags && localProject.documentMeta.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {localProject.documentMeta.tags.map(tag => (
+                  <span key={tag} className="text-xs font-medium text-primary-600 dark:text-primary-300 bg-primary-100/80 dark:bg-primary-500/20 px-2 py-1 rounded-full">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

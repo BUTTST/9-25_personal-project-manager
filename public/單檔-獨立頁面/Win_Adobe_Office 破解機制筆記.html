@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>各大主流破解機制筆記</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #2d2d2d;
+            --bg-card: #252525;
+            --bg-card-hover: #2f2f2f;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-muted: #808080;
+            --border-color: #404040;
+            --accent-color: #61dafb;
+            --accent-hover: #4fc3e0;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f9f9f9;
+            --text-primary: #212121;
+            --text-secondary: #424242;
+            --text-muted: #757575;
+            --border-color: #e0e0e0;
+            --accent-color: #2196f3;
+            --accent-hover: #1976d2;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft JhengHei', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px 40px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-color);
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .section-header:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .section-header.active {
+            border-color: var(--accent-color);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .icon {
+            font-size: 1.8rem;
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+            color: var(--text-secondary);
+        }
+
+        .section-header.active .arrow {
+            transform: rotate(180deg);
+        }
+
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            background: var(--bg-secondary);
+            border-radius: 0 0 12px 12px;
+            margin-top: -10px;
+            padding: 0 25px;
+        }
+
+        .section-content.active {
+            max-height: 5000px;
+            padding: 25px;
+            border: 2px solid var(--border-color);
+            border-top: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .method-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .method-card:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transform: translateY(-5px);
+        }
+
+        .method-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .method-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge-primary {
+            background: var(--accent-color);
+            color: #000;
+        }
+
+        .badge-success {
+            background: var(--success-color);
+            color: #fff;
+        }
+
+        .badge-warning {
+            background: var(--warning-color);
+            color: #fff;
+        }
+
+        .method-details {
+            display: block;
+        }
+
+        .detail-section {
+            margin-bottom: 15px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+
+        .detail-content {
+            color: var(--text-secondary);
+            padding-left: 15px;
+            line-height: 1.8;
+        }
+
+        .detail-content ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .detail-content li {
+            padding: 5px 0;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .detail-content li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+        }
+
+        .info-box {
+            background: var(--bg-card);
+            border-left: 4px solid var(--accent-color);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .info-box.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .info-box.danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .summary-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .summary-table tr:hover {
+            background: var(--bg-card-hover);
+        }
+
+        code {
+            background: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: var(--accent-color);
+        }
+
+        footer {
+            margin-top: 60px;
+            padding: 30px 0;
+            border-top: 2px solid var(--border-color);
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .full-width {
+            flex: 1 1 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔓 各大主流破解機制筆記</h1>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span id="theme-icon">🌙</span>
+                <span id="theme-text">淺色模式</span>
+            </button>
+        </header>
+
+        <main>
+            <!-- Adobe Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('adobe')">
+                    <div class="section-title">
+                        <span class="icon">🎨</span>
+                        <span>Adobe 系列產品</span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="section-content" id="adobe-content">
+                    <!-- AMT Emulator -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>AMT Emulator（授權模擬器）</span>
+                                <span class="badge badge-primary">⭐ 主流方案</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">模擬 Adobe 的授權管理工具（AMT - Adobe Media Tools），讓軟體認為已經通過正版驗證。</div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 機制</div>
+                                <div class="detail-content">替換或修改 <code>amtlib.dll</code> 檔案（授權驗證模組）。</div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚙️ 運作方式</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li>攔截軟體的授權驗證請求</li>
+                                        <li>回傳假的「已授權」訊號給主程式</li>
+                                        <li>不需要連接 Adobe 伺服器</li>
+                                        <li>繞過線上驗證機制</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">✨ 特點</div>
+                                <div class="detail-content">
+                                    永久啟動、無需定期重新驗證、適用於大多數 Adobe CC 產品（Photoshop、Illustrator、Premiere Pro 等）。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">📊 狀態</div>
+                                <div class="detail-content">目前最常見且最穩定的破解方式，廣泛應用於各種 Adobe 軟體版本。</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GenP -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>GenP（Creative Cloud Patcher）</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">修改 Adobe Creative Cloud 桌面應用程式的授權機制，讓整個 CC 生態系統顯示為已訂閱狀態。</div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 機制</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li>修改軟體的二進制執行檔案</li>
+                                        <li>繞過線上訂閱驗證</li>
+                                        <li>修改本地授權資料庫</li>
+                                        <li>Patch 多個關鍵授權檢查點</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">✨ 特點</div>
+                                <div class="detail-content">
+                                    可以讓 Creative Cloud 顯示「已訂閱」狀態、支援應用程式內更新（部分功能）、相容性較好。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚠️ 注意事項</div>
+                                <div class="detail-content">
+                                    更新軟體後可能需要重新 Patch、某些雲端功能仍無法使用（如 Adobe Fonts、Cloud Libraries）。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hosts File Block -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>Hosts 檔案阻擋</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">透過修改系統的 hosts 檔案，將 Adobe 的驗證伺服器域名重新導向到本地，阻止軟體連接到授權驗證伺服器。</div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 機制</div>
+                                <div class="detail-content">
+                                    修改 <code>C:\Windows\System32\drivers\etc\hosts</code> 檔案，添加類似以下的規則：
+                                    <div style="margin-top: 10px; padding: 10px; background: var(--bg-secondary); border-radius: 4px;">
+                                        <code>127.0.0.1 lm.licenses.adobe.com</code><br>
+                                        <code>127.0.0.1 activate.adobe.com</code>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚙️ 運作方式</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li>將 Adobe 授權伺服器域名解析到 127.0.0.1（本地回環地址）</li>
+                                        <li>阻止軟體發送驗證請求到 Adobe 伺服器</li>
+                                        <li>軟體無法確認授權狀態，通常會繼續運行</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">✨ 特點</div>
+                                <div class="detail-content">
+                                    簡單易行、通常需要配合其他破解方式使用、永久生效（除非 hosts 檔案被修改）。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚠️ 限制</div>
+                                <div class="detail-content">
+                                    單獨使用效果有限，通常作為輔助手段；會阻止所有 Adobe 的線上功能。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Keygen -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>舊版序列號產生器（Keygen）</span>
+                                <span class="badge badge-warning">已過時</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">透過逆向工程分析序列號的生成演算法，製作出能夠產生看起來合法的序列號的工具。</div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 機制</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li>分析軟體的序列號驗證邏輯</li>
+                                        <li>找出序列號的生成規則（通常包含校驗碼演算法）</li>
+                                        <li>根據規則生成符合格式的序列號</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">📊 適用版本</div>
+                                <div class="detail-content">
+                                    主要適用於 Adobe CS6 及更早版本。這些版本的授權驗證主要在本地進行，不強制要求線上驗證。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">❌ 現況</div>
+                                <div class="detail-content">
+                                    <div class="info-box danger">
+                                        <strong>已不適用於新版本：</strong> Adobe CC（Creative Cloud）系列採用線上訂閱制和雲端驗證，即使輸入「正確格式」的序列號，仍需連線到 Adobe 伺服器進行驗證，因此傳統 Keygen 已失效。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Windows Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('windows')">
+                    <div class="section-title">
+                        <span class="icon">🪟</span>
+                        <span>Windows 系統</span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="section-content" id="windows-content">
+                    <!-- KMS Emulator -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>KMS（Key Management Service）模擬器</span>
+                                <span class="badge badge-primary">⭐ 主流方案</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">
+                                    模擬微軟為企業提供的批量授權服務（KMS）伺服器。KMS 是微軟合法的企業授權方案，允許企業在內部網路架設授權伺服器，供公司電腦啟動。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 機制</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li>在本地電腦上架設假的 KMS 伺服器</li>
+                                        <li>將 Windows 系統指向這個本地 KMS 伺服器</li>
+                                        <li>模擬企業授權伺服器的回應</li>
+                                        <li>系統接收到「授權成功」的訊號</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚙️ 運作方式</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li>安裝 KMS 模擬工具</li>
+                                        <li>將 Windows 切換為 Volume License（VL）版本</li>
+                                        <li>啟動 KMS 伺服器，系統自動連接並啟動</li>
+                                        <li>每 180 天自動重新驗證一次（工具會自動處理）</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">✨ 特點</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li><strong>不修改系統檔案：</strong>相對安全，不會損壞系統</li>
+                                        <li><strong>顯示為正版：</strong>啟動後 Windows 顯示「已啟動」</li>
+                                        <li><strong>支援更新：</strong>可以正常接收 Windows Update</li>
+                                        <li><strong>自動續期：</strong>工具會在背景自動處理重新啟動</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚠️ 注意事項</div>
+                                <div class="detail-content">
+                                    需要定期重新啟動（雖然工具會自動處理）；部分防毒軟體會誤報為惡意程式。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Digital License Injection -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>數位授權注入（Digital License Injection）</span>
+                                <span class="badge badge-success">永久啟動</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">
+                                    將數位授權憑證（Digital License）直接注入到系統中。Windows 10/11 支援「數位授權」機制，授權會綁定到硬體 ID（HWID）。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 機制</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li>利用 Windows 的硬體 ID（HWID）綁定機制</li>
+                                        <li>注入合法格式的數位授權票證（Ticket）</li>
+                                        <li>系統將授權資訊儲存到微軟伺服器</li>
+                                        <li>與硬體 ID 綁定，重灌系統後仍然保持啟動</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚙️ 技術細節</div>
+                                <div class="detail-content">
+                                    修改或利用 Windows 的 <code>ClipSVC</code>（客戶端授權服務），將授權票證上傳到微軟伺服器，使系統認為這是合法的數位授權。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">✨ 特點</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li><strong>永久啟動：</strong>不需要定期重新驗證</li>
+                                        <li><strong>硬體綁定：</strong>重灌系統後自動啟動（只要硬體沒換）</li>
+                                        <li><strong>顯示為數位授權：</strong>在設定中顯示「Windows 已使用數位授權啟動」</li>
+                                        <li><strong>完全功能：</strong>所有 Windows 功能都可正常使用</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">📊 狀態</div>
+                                <div class="detail-content">
+                                    目前非常流行的方式，適用於 Windows 10/11，效果最接近正版授權。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MAK Keys -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>MAK 金鑰（多次啟動金鑰）</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">
+                                    使用「真實」但非法取得的 MAK（Multiple Activation Key）金鑰。MAK 是微軟提供給企業的批量授權金鑰，每個金鑰有啟動次數限制。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 來源</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li><strong>外洩的企業授權：</strong>從企業內部流出的批量授權金鑰</li>
+                                        <li><strong>MSDN 訂閱金鑰：</strong>開發者訂閱帳號的金鑰被盜用</li>
+                                        <li><strong>暗網交易：</strong>在黑市購買的企業授權</li>
+                                        <li><strong>盜刷信用卡：</strong>用盜刷的信用卡購買後轉賣</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚙️ 運作方式</div>
+                                <div class="detail-content">
+                                    直接輸入金鑰到 Windows 啟動介面，系統連接到微軟伺服器驗證，如果金鑰有效且未達啟動次數上限，則啟動成功。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">✨ 特點</div>
+                                <div class="detail-content">
+                                    這些是「真實」的金鑰，但被非法使用；啟動過程與正版相同；可以正常接收更新。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚠️ 風險</div>
+                                <div class="detail-content">
+                                    <div class="info-box danger">
+                                        <strong>高風險方案：</strong>
+                                        <ul style="margin-top: 10px;">
+                                            <li>微軟可能會封鎖被大量濫用的金鑰</li>
+                                            <li>啟動後可能突然失效，系統變成未啟動狀態</li>
+                                            <li>購買盜版金鑰可能遭詐騙</li>
+                                            <li>涉及刑事犯罪（盜用、詐欺）</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OEM Activation -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>OEM 啟動（SLP - System Locked Pre-activation）</span>
+                                <span class="badge badge-warning">舊時代方案</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">
+                                    模擬電腦製造商（如 Dell、HP、Lenovo）的預裝授權機制。OEM 版本的 Windows 會讀取 BIOS 中的特定標記來確認是否為「原廠預裝」。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 機制</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li><strong>修改 BIOS：</strong>在 BIOS 中注入 SLIC 表（Software Licensing Description Table）</li>
+                                        <li><strong>注入憑證：</strong>安裝對應品牌的 OEM 憑證</li>
+                                        <li><strong>使用 OEM 金鑰：</strong>輸入通用的 OEM 金鑰</li>
+                                        <li><strong>系統驗證：</strong>Windows 讀取 BIOS 的 SLIC 表，確認為 OEM 預裝，自動啟動</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">📊 適用版本</div>
+                                <div class="detail-content">
+                                    主要適用於 Windows 7 時代，Windows 8 以後的版本改用新的授權機制，OEM 啟動逐漸式微。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚠️ 現況</div>
+                                <div class="detail-content">
+                                    <div class="info-box warning">
+                                        <strong>已較少使用：</strong> Windows 10/11 改用 UEFI 和數位授權，傳統的 SLIC 注入方式已不適用。修改 BIOS 有風險，可能導致系統無法開機。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Office Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('office')">
+                    <div class="section-title">
+                        <span class="icon">📊</span>
+                        <span>Microsoft Office</span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="section-content" id="office-content">
+                    <!-- KMS Activation -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>KMS 啟動</span>
+                                <span class="badge badge-primary">⭐ 最主流</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">
+                                    與 Windows 的 KMS 啟動原理相同，模擬微軟為企業提供的批量授權伺服器，讓 Office 認為已經獲得企業授權。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 機制</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li>將 Office 版本轉換為 Volume License（VL）版本</li>
+                                        <li>安裝 KMS 模擬工具（通常與 Windows KMS 工具相同）</li>
+                                        <li>Office 連接到本地的假 KMS 伺服器</li>
+                                        <li>接收「授權成功」訊號，啟動完成</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚙️ 運作方式</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li>每 180 天需要重新驗證一次</li>
+                                        <li>KMS 工具會自動處理續期</li>
+                                        <li>在背景執行，使用者無感</li>
+                                        <li>支援 Office 2010 至最新的 Office 2021/2024</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">✨ 特點</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li><strong>不修改 Office 檔案：</strong>保持軟體完整性</li>
+                                        <li><strong>支援更新：</strong>可以接收官方更新</li>
+                                        <li><strong>穩定可靠：</strong>最成熟的 Office 破解方案</li>
+                                        <li><strong>同時支援 Windows 和 Office：</strong>一個工具兩用</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">📊 適用版本</div>
+                                <div class="detail-content">
+                                    Office 2010、2013、2016、2019、2021、2024（LTSC 和 Volume License 版本）。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Retail Key -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>Retail 金鑰轉換</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">
+                                    使用外洩、盜用或非法購買的零售版（Retail）或訂閱版（Microsoft 365）金鑰來啟動 Office。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 來源管道</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li><strong>盜刷信用卡購買：</strong>用盜刷的信用卡大量購買 Office 金鑰後轉賣</li>
+                                        <li><strong>批量購買轉賣：</strong>利用地區價差或特殊管道低價購買後高價轉賣（灰色市場）</li>
+                                        <li><strong>學校或企業外洩：</strong>教育版或企業版授權外流</li>
+                                        <li><strong>暗網交易：</strong>黑市購買的金鑰</li>
+                                        <li><strong>共享帳號：</strong>多人共用 Microsoft 365 訂閱（違反服務條款）</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚙️ 運作方式</div>
+                                <div class="detail-content">
+                                    直接在 Office 中輸入金鑰，連接到微軟伺服器驗證。如果金鑰有效且未被封鎖，則啟動成功，與正版使用體驗完全相同。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚠️ 風險</div>
+                                <div class="detail-content">
+                                    <div class="info-box danger">
+                                        <strong>高風險警告：</strong>
+                                        <ul style="margin-top: 10px;">
+                                            <li>金鑰可能隨時被微軟封鎖，導致 Office 失效</li>
+                                            <li>購買盜版金鑰可能遭詐騙，收到已失效的金鑰</li>
+                                            <li>共享帳號隨時可能被原擁有者收回或變更密碼</li>
+                                            <li>涉及信用卡詐欺等刑事犯罪</li>
+                                            <li>教育版金鑰需要定期驗證學生身分，可能突然失效</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- C2R Crack -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>C2R（Click-to-Run）破解</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-content">
+                                    針對 Office 的 Click-to-Run（C2R）安裝架構進行破解。C2R 是微軟推出的新安裝技術，Office 365/Microsoft 365 和近期的 Office 版本都使用這種架構。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔧 機制</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li><strong>修改授權令牌：</strong>修改本地儲存的授權 Token 檔案</li>
+                                        <li><strong>繞過線上驗證：</strong>Patch 授權檢查模組，阻止連線到微軟驗證伺服器</li>
+                                        <li><strong>修改註冊表：</strong>修改 Windows 註冊表中的授權相關項目</li>
+                                        <li><strong>注入假授權資訊：</strong>讓 Office 認為已經獲得 Microsoft 365 訂閱</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚙️ 技術細節</div>
+                                <div class="detail-content">
+                                    C2R 破解工具會修改以下位置：
+                                    <ul style="margin-top: 10px;">
+                                        <li><code>C:\Program Files\Microsoft Office\</code> - 安裝目錄中的授權檔案</li>
+                                        <li><code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Office\</code> - 註冊表項目</li>
+                                        <li>本地授權緩存和 Token 檔案</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">✨ 特點</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li>可以啟動最新版本的 Office</li>
+                                        <li>通常顯示為 Microsoft 365 訂閱</li>
+                                        <li>部分功能可能受限（如 OneDrive 整合）</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚠️ 注意事項</div>
+                                <div class="detail-content">
+                                    <div class="info-box warning">
+                                        更新 Office 後可能失效，需要重新破解；部分雲端功能無法使用；相比 KMS 方式較不穩定。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Table -->
+                    <div class="info-box full-width">
+                        <h3 style="margin-bottom: 15px; color: var(--accent-color);">📋 Office 破解方式比較</h3>
+                        <table class="summary-table">
+                            <thead>
+                                <tr>
+                                    <th>方式</th>
+                                    <th>穩定性</th>
+                                    <th>持久性</th>
+                                    <th>風險</th>
+                                    <th>推薦度</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>KMS 啟動</strong></td>
+                                    <td>⭐⭐⭐⭐⭐</td>
+                                    <td>需定期續期</td>
+                                    <td>低</td>
+                                    <td>最推薦</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Retail 金鑰</strong></td>
+                                    <td>⭐⭐⭐</td>
+                                    <td>可能失效</td>
+                                    <td>高</td>
+                                    <td>不推薦</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>C2R 破解</strong></td>
+                                    <td>⭐⭐⭐</td>
+                                    <td>更新後失效</td>
+                                    <td>中</td>
+                                    <td>備選方案</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Section -->
+            <div class="info-box full-width" style="margin-top: 40px;">
+                <h2 style="margin-bottom: 15px; color: var(--accent-color);">🎯 底層技術機制總結</h2>
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>技術類型</th>
+                            <th>原理</th>
+                            <th>修改檔案</th>
+                            <th>持久性</th>
+                            <th>代表方案</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>DLL 替換/注入</strong></td>
+                            <td>替換授權驗證模組</td>
+                            <td>✅ 是</td>
+                            <td>永久</td>
+                            <td>AMT Emulator</td>
+                        </tr>
+                        <tr>
+                            <td><strong>記憶體 Patch</strong></td>
+                            <td>運行時修改記憶體驗證邏輯</td>
+                            <td>❌ 否</td>
+                            <td>臨時</td>
+                            <td>部分 Patcher</td>
+                        </tr>
+                        <tr>
+                            <td><strong>伺服器模擬</strong></td>
+                            <td>架設假的授權伺服器</td>
+                            <td>❌ 否</td>
+                            <td>需定期重啟</td>
+                            <td>KMS 模擬器</td>
+                        </tr>
+                        <tr>
+                            <td><strong>金鑰盜用</strong></td>
+                            <td>使用外洩的企業授權</td>
+                            <td>❌ 否</td>
+                            <td>直到金鑰被封</td>
+                            <td>MAK 金鑰</td>
+                        </tr>
+                        <tr>
+                            <td><strong>授權注入</strong></td>
+                            <td>直接寫入系統授權資料庫</td>
+                            <td>✅ 是</td>
+                            <td>永久</td>
+                            <td>數位授權注入</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hosts 阻擋</strong></td>
+                            <td>阻止連線到驗證伺服器</td>
+                            <td>✅ 是（hosts）</td>
+                            <td>永久</td>
+                            <td>Hosts 檔案修改</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Warning Box -->
+            <div class="info-box danger full-width" style="margin-top: 30px;">
+                <h3 style="margin-bottom: 15px;">⚠️ 重要提醒</h3>
+                <p><strong>使用盜版軟體的風險：</strong></p>
+                <ul style="margin: 15px 0;">
+                    <li><strong>法律風險：</strong>侵犯著作權，可能面臨民刑事責任</li>
+                    <li><strong>安全風險：</strong>破解工具可能含有惡意軟體、後門程式、挖礦程式</li>
+                    <li><strong>功能限制：</strong>無法使用雲端服務、更新可能導致破解失效</li>
+                    <li><strong>道德問題：</strong>損害軟體開發者的權益和收入</li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>建議使用合法授權：</strong></p>
+                <ul>
+                    <li>學生/教師可申請教育優惠（通常有大幅折扣）</li>
+                    <li>訂閱制相對便宜（Adobe Creative Cloud、Microsoft 365）</li>
+                    <li>使用開源替代方案（GIMP、LibreOffice、DaVinci Resolve、Inkscape）</li>
+                    <li>等待官方促銷活動購買</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer>
+            <p>📚 本文件僅供教育和資訊安全研究用途</p>
+            <p style="margin-top: 10px; font-size: 0.9rem;">了解破解機制有助於理解軟體保護技術，但請務必尊重智慧財產權，支持正版軟體。</p>
+        </footer>
+    </div>
+
+    <script>
+        // Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            if (newTheme === 'light') {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = '深色模式';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = '淺色模式';
+            }
+        }
+
+        // Load saved theme
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            body.setAttribute('data-theme', savedTheme);
+            
+            if (savedTheme === 'light') {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = '深色模式';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = '淺色模式';
+            }
+        });
+
+        // Section Toggle
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId + '-content');
+            const header = content.previousElementSibling;
+            
+            header.classList.toggle('active');
+            content.classList.toggle('active');
+        }
+
+        // Smooth scroll for long content
+        document.querySelectorAll('.section-content').forEach(content => {
+            content.style.scrollBehavior = 'smooth';
+        });
+    </script>
+</body>
+</html>
+

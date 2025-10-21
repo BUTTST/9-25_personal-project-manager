@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GitHub 常見開源授權指南（互動＋挑選器）</title>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#0e1530; --panel2:#111a35; --muted:#98a7ca; --text:#e8eeff; --accent:#7bb0ff;
+    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --chip:#1a2447; --border:#223056; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0b1020,#0e1530);color:var(--text);font:16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Noto Sans TC, PingFang TC, Microsoft JhengHei, sans-serif}
+  .wrap{max-width:1280px;margin:auto;padding:28px}
+  h1{font-size:clamp(26px,4vw,38px);letter-spacing:.5px;margin:0 0 6px}
+  .subtitle{color:var(--muted);margin:0 0 16px}
+  /* Tabs */
+  .tabs{display:flex;gap:8px;margin:10px 0 16px}
+  .tab{padding:8px 14px;border:1px solid var(--border);background:var(--panel2);border-radius:12px;color:var(--text);cursor:pointer;user-select:none}
+  .tab.active{outline:2px solid var(--accent)}
+  /* Toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 16px}
+  .pill{padding:8px 12px;border:1px solid var(--border);background:var(--panel2);border-radius:999px;cursor:pointer;user-select:none}
+  .pill.active{background:#17305f;outline:1px solid var(--accent)}
+  .search{flex:1;min-width:220px;display:flex;gap:8px}
+  .search input{flex:1;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:#0b1430;color:var(--text)}
+  .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:#0e1838;color:var(--text);cursor:pointer}
+  .count{font-size:13px;color:var(--muted)}
+  /* Grid & Cards */
+  .grid{display:grid;gap:18px}
+  .grid.big{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .grid.small{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .card{background:linear-gradient(180deg,#121a36,#0f1832);border:1px solid var(--border);border-radius:18px;padding:18px;position:relative;overflow:hidden}
+  .card .tag{position:absolute;top:12px;right:-40px;transform:rotate(35deg);background:var(--chip);color:var(--muted);padding:6px 56px;border:1px solid var(--border);font-size:12px;letter-spacing:.5px}
+  .title{font-weight:700;font-size:20px;margin:2px 0}
+  .aka{color:var(--muted);font-size:13px;margin:0 8px 8px 0}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .badge{border:1px solid var(--border);background:var(--chip);padding:4px 8px;border-radius:999px;font-size:12px}
+  .badge.ok{border-color:#214c34;background:#0f2a1a;color:#b7f7c9}
+  .badge.warn{border-color:#4a3a17;background:#261e0b;color:#ffe6b3}
+  .badge.bad{border-color:#5b1f26;background:#2a0e11;color:#ffc4c9}
+  .highlight{background:#17305f;border-color:var(--accent);color:var(--accent)}
+  .kvs{display:grid;gap:6px;margin-top:8px}
+  .kv{display:flex;gap:8px;align-items:flex-start}
+  .kv b{min-width:86px;color:#cfe0ff;font-weight:600}
+  .kv span{color:#e5eaff}
+  .note{color:#cbd5ff;background:#0c1430;border:1px dashed var(--border);padding:12px;border-radius:12px;margin:10px 0}
+  hr{border:0;border-top:1px solid var(--border);margin:24px 0}
+  .section-title{font-size:22px;margin:8px 0 12px;display:flex;align-items:center;gap:10px}
+  a{color:var(--accent);text-decoration:none}
+  .footer{font-size:12px;color:var(--muted);margin-top:18px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 14px}
+  /* Example pop */
+  .example-box{position:absolute;bottom:12px;right:12px;display:flex;align-items:center;gap:6px}
+  .example-pill{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--border);background:#0b1430;border-radius:8px;width:56px;height:44px;cursor:default;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .example-pill small{line-height:1;font-size:11px;color:#cfe0ff}
+  .example-pill small:first-child{margin-bottom:2px}
+  .example-icon{width:14px;height:14px;border:1px solid #32456f;border-radius:3px;background:#162246;opacity:.7}
+  .example-pop{position:absolute;right:0;bottom:56px;width:min(520px,84vw);max-height:60vh;overflow:auto;background:#0b1430;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:12px;display:none;z-index:3}
+  .example-pop pre{margin:0;background:#0a1230;padding:10px;border-radius:8px;border:1px solid #1f2d58;overflow:auto}
+  .example-box:hover .example-pop{display:block}
+  /* Picker choices */
+  .picker{display:none}
+  .picker.active{display:block}
+  .picker-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .choice{border:1px solid var(--border);background:var(--panel2);padding:12px;border-radius:14px;display:flex;gap:10px;align-items:flex-start}
+  .choice input{margin-top:4px}
+  .result{margin-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GitHub 常見開源授權指南</h1>
+  <p class="subtitle">互動篩選＋授權挑選器：保持一致的視覺布局，並在結果卡片高亮顯示符合條件。</p>
+  <!-- Tabs -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="overview" role="tab" aria-selected="true">授權概覽</button>
+    <button class="tab" data-tab="picker" role="tab" aria-selected="false">挑選合適授權</button>
+  </div>
+  <!-- Overview toolbar (filters & search) -->
+  <div id="overview-tools" class="toolbar">
+    <span class="pill active" data-filter="all">全部</span>
+    <span class="pill" data-filter="permissive">寬鬆式</span>
+    <span class="pill" data-filter="weak">弱互惠</span>
+    <span class="pill" data-filter="strong">強互惠</span>
+    <span class="pill" data-filter="patent">企業友善（含專利）</span>
+    <span class="pill" data-filter="public">公領域/資料</span>
+    <span class="pill" data-filter="restricted">⚠️ 特別注意</span>
+    <div class="search">
+      <input id="searchBox" placeholder="搜尋授權名稱或關鍵字（如：專利、SaaS、Copyleft）" />
+      <button class="btn" id="clearAll">清除篩選</button>
+    </div>
+    <span id="count" class="count"></span>
+  </div>
+  <!-- Overview section -->
+  <section id="overview">
+    <div class="legend">
+      <span class="badge ok">可商用</span>
+      <span class="badge">需保留版權/授權聲明</span>
+      <span class="badge warn">可能觸發開源義務</span>
+      <span class="badge bad">非 OSI 開源／限制商用</span>
+      <span class="badge">含專利條款</span>
+    </div>
+    <h2 class="section-title">最常見（主流、建議先從這裡挑）</h2>
+    <div class="grid big" id="mainGrid">
+      <!-- licence cards will be injected by JS -->
+    </div>
+    <hr />
+    <h2 class="section-title">特別注意（較小版面，字少但重要）</h2>
+    <p class="note">以下多半<strong>不是</strong>傳統的「開源（OSI 批准）」授權，或是具有較強限制。拿來做商用或與專有產品混搭時，請格外小心。</p>
+    <div class="grid small" id="extraGrid"></div>
+    <hr />
+    <h2 class="section-title">快速選擇建議</h2>
+    <div class="grid small" id="quickGrid"></div>
+    <div class="note" style="margin-top:16px">
+      <b>常見迷思更正：</b>
+      <ul>
+        <li>「NIT」通常是誤打，<b>你多半指的是 MIT License</b>。</li>
+        <li>把程式碼放上 GitHub <b>不等於</b>自動開源；<b>一定要</b>加上 LICENSE 檔。</li>
+        <li>Creative Commons（CC）系列多設計給內容/資料，<b>不建議用於程式碼</b>（除 CC0）。</li>
+      </ul>
+    </div>
+  </section>
+  <!-- Picker section -->
+  <section id="picker" class="picker" aria-hidden="true">
+    <h2 class="section-title">挑選合適授權（多選條件，即時推薦）</h2>
+    <div class="toolbar" style="margin-top:-6px">
+      <button class="btn" id="pickerReset">重設條件</button>
+    </div>
+    <div class="picker-grid" id="conditionGrid"></div>
+    <div class="result">
+      <h3 class="section-title" style="margin-top:6px">推薦結果</h3>
+      <div class="grid big" id="resultGrid"></div>
+    </div>
+  </section>
+  <p class="footer">※ 本頁僅供一般資訊參考，非法律意見。實際情況請諮詢合格法律顧問。</p>
+</div>
+<script>
+(function(){
+  const $ = (s,root=document)=>root.querySelector(s);
+  const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
+  /* ----------------- 基礎資料 ----------------- */
+  const licenses=[
+    {id:'mit',name:'MIT License',tag:'最常見',type:'permissive',strength:'none',patent:'no',badges:['可商用','保留版權與授權聲明'],desc:['可做什麼','幾乎任意使用、再散布、修改、二次授權','義務','散布時保留版權與授權全文','風險點','無專利授權，若涉及專利需另行處理'],example:`Copyright (c) 2025 Your Name\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\n...`},
+    {id:'apache-2.0',name:'Apache License 2.0',tag:'企業友善',type:'permissive',strength:'none',patent:'yes',badges:['可商用','保留版權/NOTICE','含專利授權&終止'],desc:['優勢','明確專利授權與終止條款，對公司法務友善','義務','保留 LICENSE、NOTICE；修改需說明','相容性','相容多數寬鬆授權與 GPLv3'],example:`Licensed under the Apache License, Version 2.0 (the "License");\nYou may not use this file except in compliance with the License...`},
+    {id:'gpl-3.0',name:'GNU GPLv3',tag:'強互惠',type:'copyleft',strength:'strong',patent:'yes',badges:['可商用','改作公開原始碼','反 Tivoization／含專利條款'],desc:['核心','散布含 GPL 程式的改作或連結作品時，須以 GPL 同步開源','注意','與專有程式連結可能觸發開源義務'],example:`This program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License...`},
+    {id:'bsd-3-clause',name:'BSD 3-Clause',tag:'',type:'permissive',strength:'none',patent:'no',badges:['可商用','保留版權/免責聲明'],desc:['差異','比 MIT 多「不得使用作者姓名背書」條款'],example:`Redistribution and use in source and binary forms...`},
+    {id:'mpl-2.0',name:'Mozilla Public License 2.0',tag:'',type:'copyleft',strength:'weak',patent:'yes',badges:['可商用','修改檔需開源','專利授權'],desc:['範圍','只要求修改檔案公開原始碼，與專有碼並存較易'],example:`This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0...`},
+    {id:'lgpl-3.0',name:'GNU LGPLv3',tag:'',type:'copyleft',strength:'weak',patent:'yes',badges:['可商用','修改庫需開源','允許動態連結'],desc:['適用','常見於函式庫；以連結方式使用通常不觸發整體開源'],example:`This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License...`},
+    {id:'bsl-1.0',name:'Boost Software License 1.0',tag:'',type:'permissive',strength:'none',patent:'no',badges:['可商用','保留授權/免責'],desc:['特色','與 MIT/BSD 類似，常見於 C++ 生態'],example:`Boost Software License - Version 1.0 - August 17th, 2003...`},
+    {id:'cc0-1.0',name:'公領域 / CC0-1.0',tag:'',type:'public',strength:'none',patent:'no',badges:['可商用','無需附帶授權'],desc:['提醒','較少用於程式碼，常見於資料集'],example:`To the extent possible under law, the author has dedicated this work to the public domain...`},
+    // 特別注意
+    {id:'agpl-3.0',name:'AGPLv3（網路互惠）',tag:'',type:'restricted',strength:'strong',patent:'yes',badges:['SaaS 也需釋出原始碼'],desc:['說明','透過網路提供服務也觸發開源義務'],example:`若以 AGPL 元件提供線上服務，須在服務頁提供原始碼取得方式...`},
+    {id:'sspl',name:'SSPL',tag:'',type:'restricted',strength:'',patent:'',badges:['非 OSI 開源'],desc:['說明','要求開放整個服務堆疊，不建議商用混搭']},
+    {id:'busl-1.1',name:'BUSL 1.1',tag:'',type:'restricted',strength:'',patent:'',badges:['來源可見但限用'],desc:['說明','延遲開源條款；期限到才轉寬鬆']},
+    {id:'elastic-2.0',name:'Elastic License 2.0',tag:'',type:'restricted',strength:'',patent:'',badges:['限制商用'],desc:['說明','源碼可讀但有雲端/競品限制']},
+    {id:'commons-clause',name:'Commons Clause',tag:'',type:'restricted',strength:'',patent:'',badges:['禁止銷售'],desc:['說明','附加在寬鬆授權上，已非開源']},
+    {id:'cc-by-nc-nd',name:'CC BY-NC/ND',tag:'',type:'restricted',strength:'',patent:'',badges:['非商用/禁止改作'],desc:['說明','多用於內容/資料，不建議程式碼']},
+    {id:'no-license',name:'未標授權',tag:'',type:'restricted',strength:'',patent:'',badges:['沒有授權'],desc:['說明','無 LICENSE 視為保留所有權利']}
+  ];
+  /* ----------------- 元件模板 ----------------- */
+  function createCard(l){
+    const art=document.createElement('article');
+    art.className=`card lic type-${l.type}`;
+    art.dataset.name=l.id;
+    art.dataset.type=l.type;
+    art.dataset.patent=l.patent;
+    art.dataset.strength=l.strength;
+    if(l.tag) art.innerHTML+=`<div class="tag">${l.tag}</div>`;
+    art.innerHTML+=`<h3 class="title">${l.name}</h3>`;
+    if(l.type!=='restricted') art.innerHTML+=`<p class="aka">類型：<b>${mapType(l)}</b></p>`;
+    const badges=document.createElement('div');
+    badges.className='badges';
+    l.badges.forEach(b=>badges.appendChild(badge(b)));
+    art.appendChild(badges);
+    if(l.desc){
+      const kvs=document.createElement('div');kvs.className='kvs';
+      for(let i=0;i<l.desc.length;i+=2){
+        kvs.innerHTML+=`<div class="kv"><b>${l.desc[i]}</b><span>${l.desc[i+1]}</span></div>`;
+      }
+      art.appendChild(kvs);
+    }
+    addExampleBox(art,l.example||'');
+    return art;
+  }
+  function mapType(l){
+    if(l.type==='permissive') return '寬鬆式（Permissive）';
+    if(l.type==='copyleft'&&l.strength==='weak') return '弱互惠';
+    if(l.type==='copyleft'&&l.strength==='strong') return '強互惠';
+    if(l.type==='public') return '公領域';
+    return '限制/非開源';
+  }
+  function badge(t){const s=document.createElement('span');s.className='badge';s.textContent=t;return s;}
+  function addExampleBox(art,txt){
+    if(!txt) return;
+    const box=document.createElement('div');box.className='example-box';
+    box.innerHTML=`<div class="example-pill" tabindex="0"><small>範例</small><small>演示</small></div><div class="example-icon" aria-hidden="true"></div>`;
+    const pop=document.createElement('div');pop.className='example-pop';pop.innerHTML=`<pre><code>${txt}</code></pre>`;
+    box.appendChild(pop);art.appendChild(box);
+  }
+  /* ----------------- 建立初始畫面 ----------------- */
+  const mainGrid=$('#mainGrid');
+  const extraGrid=$('#extraGrid');
+  licenses.forEach(l=>{
+    (l.type==='restricted'?extraGrid:mainGrid).appendChild(createCard(l));
+  });
+  // Quick tips
+  $('#quickGrid').innerHTML=`<div class="card"><b>想要最大採用與最少義務？</b><br>MIT 或 Apache-2.0（若在意專利風險，優先 Apache-2.0）。</div><div class="card"><b>希望改作也必須回饋開源？</b><br>GPLv3（整體強互惠），或 MPL-2.0 / LGPLv3（較弱互惠）。</div><div class="card"><b>做雲端/SaaS 又想要求對方開源？</b><br>AGPLv3，但要理解其商業影響與社群接受度。</div>`;
+  /* ----------------- 概覽：篩選與搜尋 ----------------- */
+  const pills=$$('.pill');
+  const cards=$$('.lic');
+  const searchBox=$('#searchBox');
+  const count=$('#count');
+  const clearAll=$('#clearAll');
+  let activeFilter='all';
+  function applyFilters(){
+    const kw=(searchBox.value||'').trim().toLowerCase();let visible=0;
+    cards.forEach(c=>{
+      let ok=true;
+      const {type,strength,patent}=c.dataset;
+      switch(activeFilter){
+        case 'permissive':ok=type==='permissive';break;
+        case 'weak':ok=strength==='weak';break;
+        case 'strong':ok=strength==='strong';break;
+        case 'patent':ok=patent==='yes';break;
+        case 'public':ok=type==='public';break;
+        case 'restricted':ok=type==='restricted';break;
+        default:ok=true;
+      }
+      if(ok&&kw){ok=c.innerText.toLowerCase().includes(kw);}
+      c.style.display=ok?'block':'none';
+      if(ok) visible++;
+    });
+    count.textContent=`顯示 ${visible} / ${cards.length} 項`;
+  }
+  pills.forEach(p=>p.addEventListener('click',()=>{pills.forEach(x=>x.classList.remove('active'));p.classList.add('active');activeFilter=p.dataset.filter;applyFilters();}));
+  searchBox.addEventListener('input',applyFilters);
+  clearAll.addEventListener('click',()=>{searchBox.value='';activeFilter='all';pills.forEach(x=>x.classList.toggle('active',x.dataset.filter==='all'));applyFilters();});
+  applyFilters();
+  /* ----------------- Tabs ----------------- */
+  const tabs=$$('.tab');const overviewSec=$('#overview');const pickerSec=$('#picker');const overviewTools=$('#overview-tools');
+  tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');const isPicker=t.dataset.tab==='picker';overviewSec.style.display=isPicker?'none':'block';overviewTools.style.display=isPicker?'none':'flex';pickerSec.classList.toggle('active',isPicker);pickerSec.setAttribute('aria-hidden',(!isPicker).toString());}));
+  /* ----------------- Picker 條件 ----------------- */
+  const needList=[
+    {key:'commercial',label:'可商用'},
+    {key:'low-obligations',label:'最低義務'},
+    {key:'patent',label:'含專利授權'},
+    {key:'easy-mix',label:'易與專有混合'},
+    {key:'weak-copyleft',label:'弱互惠'},
+    {key:'strong-copyleft',label:'強互惠'},
+    {key:'saas-copyleft',label:'SaaS 互惠'},
+    {key:'public-domain',label:'公領域'},
+    {key:'avoid-restricted',label:'避免限制授權'}
+  ];
+  const conditionGrid=$('#conditionGrid');
+  needList.forEach(n=>conditionGrid.innerHTML+=`<label class="choice"><input type="checkbox" data-key="${n.key}"> <div><b>${n.label}</b></div></label>`);
+  const checks=$$('input[data-key]');
+  const resultGrid=$('#resultGrid');
+  const pickerReset=$('#pickerReset');
+  function needFuncs(){
+    return {
+      commercial:l=>l.type!=='restricted',
+      'low-obligations':l=>l.type==='permissive'&&l.strength==='none',
+      patent:l=>l.patent==='yes',
+      'easy-mix':l=>(l.type==='permissive')||(l.strength==='weak'),
+      'weak-copyleft':l=>l.strength==='weak',
+      'strong-copyleft':l=>l.strength==='strong',
+      'saas-copyleft':l=>l.id==='agpl-3.0',
+      'public-domain':l=>l.id==='cc0-1.0',
+      'avoid-restricted':l=>l.type!=='restricted'
+    };
+  }
+  const funcs=needFuncs();
+  function renderResults(){
+    const activeKeys=checks.filter(ch=>ch.checked).map(ch=>ch.dataset.key);
+    resultGrid.innerHTML='';
+    const list=licenses.filter(l=>{
+      // 避免限制授權獨立處理
+      if(activeKeys.includes('avoid-restricted')&&l.type==='restricted') return false;
+      return true;
+    }).map(l=>({l,matches:activeKeys.filter(k=>funcs[k]&&funcs[k](l))})).filter(o=>activeKeys.length?o.matches.length===activeKeys.filter(k=>k!=='avoid-restricted').length:true);
+    if(!list.length){resultGrid.innerHTML='<span class="muted">尚無結果，嘗試放寬或調整條件。</span>';return;}
+    list.forEach(({l,matches})=>{
+      const card=createCard(l);
+      // highlight matched
+      matches.forEach(k=>{
+        const pill=document.createElement('span');pill.className='badge highlight';pill.textContent=needList.find(n=>n.key===k).label;card.querySelector('.badges').appendChild(pill);
+      });
+      resultGrid.appendChild(card);
+    });
+  }
+  checks.forEach(ch=>ch.addEventListener('change',renderResults));
+  pickerReset.addEventListener('click',()=>{checks.forEach(ch=>ch.checked=false);renderResults();});
+  renderResults();
+})();
+</script>
+</body>
+</html>

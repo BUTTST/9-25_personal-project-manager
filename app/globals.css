@@ -106,6 +106,10 @@
   .badge-abandoned {
     @apply badge bg-gray-100 text-gray-600 dark:bg-muted dark:text-muted-foreground;
   }
+
+  .badge-single-doc {
+    @apply badge bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-200;
+  }
   
   .section-title {
     @apply text-xl font-semibold text-foreground mb-4 border-b border-border pb-2;

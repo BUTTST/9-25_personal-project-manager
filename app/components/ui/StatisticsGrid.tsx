@@ -10,7 +10,8 @@ import {
   CheckCircleIcon,
   ClockIcon,
   CheckIcon,
-  ArchiveBoxIcon
+  ArchiveBoxIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 interface StatisticsGridProps {
@@ -29,7 +30,8 @@ const iconMap = {
   'check-circle': CheckCircleIcon,
   'clock': ClockIcon,
   'check': CheckIcon,
-  'archive-box': ArchiveBoxIcon
+  'archive-box': ArchiveBoxIcon,
+  'document-text': DocumentTextIcon
 };
 
 function getIconComponent(type: string) {

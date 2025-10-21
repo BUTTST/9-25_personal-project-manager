@@ -1,14 +1,32 @@
+export type ProjectCategory =
+  | 'important'
+  | 'secondary'
+  | 'practice'
+  | 'completed'
+  | 'abandoned'
+  | 'single-doc';
+
+export interface DocumentMeta {
+  filePath: string;
+  title: string;
+  description?: string;
+  fileSize?: string;
+  openBehavior?: 'current-tab' | 'new-tab' | 'modal';
+  tags?: string[];
+}
+
 export interface Project {
   id: string;
   dateAndFileName: string; // 日期＋檔案名稱
   description: string; // 說明
-  category: 'important' | 'secondary' | 'practice' | 'completed' | 'abandoned'; // ［重要］［次］［子實踐］［已完成］［已捨棄］
+  category: ProjectCategory; // ［重要］［次］［子實踐］［已完成］［已捨棄］或單檔
   github?: string; // GitHub 連結
   vercel?: string; // Vercel 連結
   path?: string; // 路徑
   statusNote?: string; // 狀態備註
   publicNote?: string; // 一般註解（訪客可見）
   developerNote?: string; // 開發者註解（僅管理員可見）
+  documentMeta?: DocumentMeta | null; // 單檔專案專屬資訊
   visibility: {
     dateAndFileName: boolean;
     description: boolean;
@@ -74,6 +92,7 @@ export type CategoryDisplayName = {
   practice: '［子實踐］';
   completed: '［已完成］';
   abandoned: '［已捨棄］';
+  'single-doc': '［單檔］';
 };
 
 export interface ProjectFormData {
@@ -86,6 +105,7 @@ export interface ProjectFormData {
   statusNote?: string;
   publicNote?: string;
   developerNote?: string;
+  documentMeta?: DocumentMeta | null;
   sortOrder?: number; // 新增排序欄位
 }
 
@@ -124,4 +144,5 @@ export type StatisticType =
   | 'completedCount'   // 已完成
   | 'inProgressCount'  // 進行中（important + secondary + practice）
   | 'readyStatus'      // 準備就緒
-  | 'abandonedCount';  // 已捨棄
+  | 'abandonedCount'   // 已捨棄
+  | 'singleDocCount';  // 單檔專案數
