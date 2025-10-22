@@ -105,29 +105,91 @@ npm run dev
 - **API 路由**：Next.js API Routes (Serverless)
   - 公開讀取不需驗證；寫入須在標頭附上 `x-admin-password`
 
-### 檔案結構（節選）
+### 檔案結構
 ```
 9-25_personal-project-manager/
-├── app/
-│   ├── api/
-│   │   ├── projects/           # 列表、CRUD、reorder
-│   │   ├── auth/login          # 登入驗證
-│   │   ├── settings/
-│   │   │   ├── ui-display      # GET/PUT UI 設定
-│   │   │   └── reset-ui        # POST 重置 UI 設定
-│   │   ├── admin/              # diagnose、force-init、init-data
-│   │   └── initialize          # 已停用自動初始化（僅提示）
-│   ├── components/             # auth, admin, project, ui, layout
-│   ├── lib/                    # blob-storage, data-safety, sample-data, auth, statistics
-│   └── types/
-├── public/
-│   └── 前端截圖/              # 專案截圖存放目錄
-├── scripts/
-│   ├── generate-icons.js      # 圖標生成
-│   └── generate-image-gallery.js  # 圖片掃描與配置生成（自動化）
+├── app/                         # Next.js App Router 核心
+│   ├── api/                     # API 路由（Serverless Functions）
+│   │   ├── projects/            # 專案 CRUD、列表、排序
+│   │   │   ├── [id]/route.ts    # 單一專案操作（GET/PATCH/DELETE）
+│   │   │   ├── reorder/route.ts # 專案排序（POST）
+│   │   │   └── route.ts         # 列表與新增（GET/POST）
+│   │   ├── auth/
+│   │   │   └── login/route.ts   # 管理員登入驗證
+│   │   ├── settings/            # UI 自訂設定
+│   │   │   ├── ui-display/route.ts   # 取得/更新設定（GET/PUT）
+│   │   │   └── reset-ui/route.ts     # 重置為預設（POST）
+│   │   ├── admin/               # 管理員工具
+│   │   │   ├── diagnose/route.ts     # 系統診斷
+│   │   │   ├── init-data/route.ts    # 安全初始化
+│   │   │   └── force-init/route.ts   # 強制初始化（謹慎）
+│   │   └── initialize/route.ts  # ⚠️ 已停用自動初始化
+│   ├── components/              # React 元件庫
+│   │   ├── admin/               # 管理後台（6 個元件）
+│   │   ├── auth/                # 驗證相關（2 個元件）
+│   │   ├── project/             # 專案展示（4 個元件）
+│   │   ├── ui/                  # 通用 UI（11 個元件）
+│   │   └── layout/              # 版面配置（1 個元件）
+│   ├── lib/                     # 核心函式庫
+│   │   ├── blob-storage.ts      # Vercel Blob 操作與安全機制
+│   │   ├── data-safety.ts       # 多層資料安全驗證
+│   │   ├── auth.ts              # 密碼驗證與記憶
+│   │   ├── statistics.ts        # 統計資料計算
+│   │   └── sample-data.ts       # 範例資料（初始化用）
+│   ├── types/
+│   │   └── index.ts             # TypeScript 型別定義
+│   ├── admin/                   # 管理後台頁面
+│   │   ├── page.tsx             # 後台主頁
+│   │   ├── new/page.tsx         # 新增專案
+│   │   └── edit/[id]/page.tsx   # 編輯專案
+│   ├── page.tsx                 # 首頁（專案展示）
+│   ├── layout.tsx               # 根布局
+│   └── globals.css              # 全局樣式
+│
+├── docs/                        # 📚 完整文件資料夾
+│   ├── 快速指南/                # ⚡ 日常操作手冊（2 篇）
+│   │   ├── 新增圖片_快速指南.md
+│   │   └── 新增單檔專案_快速指南.md
+│   └── 開發者內容/              # 🔧 技術文件（4 篇）
+│       ├── 本地開發指南.md
+│       ├── 資料安全規則說明.md
+│       ├── 資料庫安全性迭代.md
+│       └── 除錯歷程筆記.md
+│
+├── public/                      # 靜態資源
+│   ├── icons/                   # 應用圖標
+│   ├── 前端截圖/                # 專案截圖（12 張圖片）
+│   └── 單檔-獨立頁面/           # HTML 單檔專案（7 個檔案）
+│
+├── scripts/                     # 自動化腳本
+│   ├── generate-icons.js        # 圖標生成工具
+│   └── generate-image-gallery.js # 圖片目錄掃描器
+│
 ├── config/
-│   └── image-gallery.ts       # 圖片配置（自動生成，請勿手動編輯）
-└── .cursor/rules/              # 規範文件
+│   └── image-gallery.ts         # 圖片配置（⚠️ 自動生成，勿手動編輯）
+│
+├── .cursor/
+│   └── rules/                   # Cursor AI 開發規範（9 個檔案）
+│       ├── API路由指南.mdc
+│       ├── TypeScript指南.mdc
+│       ├── 元件模式.mdc
+│       ├── 最佳實踐與慣例.mdc
+│       ├── 樣式指南.mdc
+│       ├── 專案結構.mdc
+│       ├── 資料安全與防護.mdc
+│       ├── 資料管理指南.mdc
+│       └── 驗證與授權.mdc
+│
+├── 手動備份/                    # 🔒 手動資料備份（不追蹤）
+├── 本地備份/                    # 🔒 本地備份副本（不追蹤）
+│
+├── README.md                    # 📖 專案總覽與使用說明
+├── DEPLOYMENT_GUIDE.md          # 🚀 Vercel 部署指南
+├── package.json                 # 📦 專案依賴與腳本
+├── next.config.js               # ⚙️ Next.js 配置
+├── tailwind.config.js           # 🎨 Tailwind CSS 配置
+├── tsconfig.json                # 📘 TypeScript 配置
+└── .gitignore                   # 🚫 Git 忽略規則
 ```
 
 ## 📝 使用指南
@@ -367,9 +429,11 @@ Headers: x-admin-password: <your-password>
 
 本專案採用 MIT 許可證。詳細資訊請參閱 [LICENSE](./LICENSE) 文件。
 
-## 🎨 UI/UX 介面與使用者體驗 大幅強化 (v1.1)  2025/10/11
+## 📋 版本更新紀錄
 
-### 已完成的重大改進
+### v1.1 - UI/UX 全面升級 (2025-10-11)
+
+#### 已完成的重大改進
 - [x] **全新視覺設計系統**：現代化的漸變、陰影和動畫效果
 - [x] **專案卡片重新設計**：
   - 明確的視覺區塊分隔（標題區、描述區、連結區、註解區）
@@ -387,30 +451,58 @@ Headers: x-admin-password: <your-password>
 - [x] **全局動畫系統**：淡入、滑動、縮放等豐富動畫
 - [x] **響應式優化**：更好的手機和平板體驗
 
-### 新增組件
+#### 新增組件
 - [x] **Tooltip 組件**：智能定位，支援四個方向
 - [x] **改善的 EmptyState**：更吸引人的空狀態顯示
 - [x] **LoadingSpinner**：更精美的載入動畫
 
+---
 
-## 📸 圖片預覽、HTML整合與功能迭代 (v1.2)  2025/10/21
+### v1.2 - 圖片預覽與單檔專案整合 (2025-10-21)
 
-### 核心功能新增
-- [x] **圖片存儲方案決策**：經過評估 GitHub 硬編碼、Vercel Blob 資料庫 方案抉擇後，採用 【 GitHub 硬編碼 】來儲存圖片
+#### 核心功能新增
+- [x] **圖片存儲方案決策**：經過評估 GitHub 硬編碼、Vercel Blob 資料庫方案抉擇後，採用 GitHub 硬編碼來儲存圖片
 - [x] **圖片預覽功能**：
   - 前端實現圖片顯示和相冊預覽
   - 新增顯隱控制按鈕，訪客可直接預覽項目成品效果
   - 支援多圖片預覽庫
-- [x] **單檔HTML整合**：
+- [x] **單檔 HTML 整合**：
   - 新增 HTML 單檔專案導入功能
   - 實現不同專案類型的適配邏輯
   - 擴大平台對多種專案形式的兼容性
 
-### 已知待改善項目
+#### 已知待改善項目
 - [ ] **前端 UI 問題**：
   - 原列表選單內容部分消失
   - 因功能移除導致 UI 響應異常
-  - 顯示版面需調整對齐
+  - 顯示版面需調整對齊
+
+---
+
+### v1.3 - 專案架構重整與文件系統優化 (2025-10-22)
+
+#### 架構優化
+- [x] **文件系統重整**：
+  - 建立 `docs/` 集中管理所有開發文件
+  - 分類為「快速指南」與「開發者內容」兩大區塊
+  - 根目錄保持簡潔，提升專案可維護性
+- [x] **規範文件更新**：
+  - 更新 `.cursor/rules/` 下 9 個規範檔案
+  - 同步實際 API 端點、驗證流程、資料安全機制
+  - 補齊 TypeScript 型別定義與元件模式說明
+- [x] **Git 追蹤優化**：
+  - 完善 `.gitignore` 備份資料夾規則
+  - 明確標註保留與忽略的目錄
+  - 避免臨時檔案與備份資料污染版本庫
+
+#### 文件改進
+- [x] **README 重寫**：
+  - 更新檔案結構圖，反映真實目錄架構
+  - 重整版本更新紀錄，依時間順序排列
+  - 補充完整的 API 端點說明與範例
+- [x] **開發指南完善**：
+  - 快速指南：新增圖片、單檔專案操作手冊
+  - 開發者內容：本地開發、資料安全、除錯紀錄
 
 <div align="center">
   <p>由 ❤️ 精心製作的個人專案展示平台</p>
