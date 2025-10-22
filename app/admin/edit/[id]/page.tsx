@@ -490,7 +490,7 @@ export default function EditProjectPage() {
                 <textarea
                   value={formData.developerNote || ''}
                   onChange={(e) => handleInputChange('developerNote', e.target.value)}
-                  className="textarea bg-orange-50 border-orange-200"
+                  className="textarea bg-orange-50 border-orange-200 dark:bg-orange-500/10 dark:border-orange-500/30"
                   rows={2}
                 />
               </div>

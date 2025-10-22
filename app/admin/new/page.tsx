@@ -171,21 +171,21 @@ export default function NewProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary-50/30 dark:to-primary-500/5">
       {/* 標題列 */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-card/80 backdrop-blur-lg shadow-lg border-b border-border/50 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.back()}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+                className="p-2 text-muted-foreground hover:text-foreground rounded-md hover:bg-muted"
               >
                 <ArrowLeftIcon className="h-5 w-5" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">新增專案</h1>
-                <p className="text-gray-600">建立一個新的專案項目</p>
+                <h1 className="text-2xl font-bold text-foreground">新增專案</h1>
+                <p className="text-sm text-muted-foreground">建立一個新的專案項目</p>
               </div>
             </div>
           </div>
@@ -193,13 +193,13 @@ export default function NewProjectPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-card rounded-lg shadow-sm border border-border p-6 space-y-6">
           {/* 基本資訊 */}
           <div className="space-y-4">
-            <h2 className="text-lg font-medium text-gray-900">基本資訊</h2>
+            <h2 className="text-lg font-medium text-foreground">基本資訊</h2>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 日期和檔名 <span className="text-red-500">*</span>
               </label>
               <input
@@ -213,7 +213,7 @@ export default function NewProjectPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 說明 <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -227,7 +227,7 @@ export default function NewProjectPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">類別</label>
+              <label className="block text-sm font-medium text-foreground mb-2">類別</label>
               <select
                 value={formData.category}
                 onChange={(e) => handleInputChange('category', e.target.value)}
@@ -241,7 +241,7 @@ export default function NewProjectPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">狀態</label>
+              <label className="block text-sm font-medium text-foreground mb-2">狀態</label>
               <select
                 value={formData.status}
                 onChange={(e) => handleStatusChange(e.target.value as ProjectStatus)}
@@ -257,11 +257,11 @@ export default function NewProjectPage() {
           </div>
 
           {/* 圖片預覽 */}
-          <div className="space-y-4 border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-medium text-gray-900">圖片預覽</h2>
+          <div className="space-y-4 border-t border-border pt-6">
+            <h2 className="text-lg font-medium text-foreground">圖片預覽</h2>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">已選擇 {formData.imagePreviews.length} 張圖片</span>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">已選擇 {formData.imagePreviews.length} 張圖片</span>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <label className="inline-flex items-center gap-2">
                   <input
                     type="radio"
@@ -283,7 +283,7 @@ export default function NewProjectPage() {
               </div>
             </div>
 
-            <p className="text-xs text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <p className="text-xs text-muted-foreground bg-muted rounded-lg p-3 border border-border">
               💡 <strong>選擇模式說明：</strong>「單張切換」會顯示單張圖片，訪客可點擊或使用按鈕切換；「多張並列」會同時展開所有選中的圖片。
             </p>
 
@@ -302,7 +302,7 @@ export default function NewProjectPage() {
                     }`}
                   >
                     {/* 圖片縮圖 */}
-                    <div className="relative w-full aspect-video overflow-hidden bg-gray-100">
+                    <div className="relative w-full aspect-video overflow-hidden bg-muted">
                       <img
                         src={image.src}
                         alt={image.title}
@@ -313,12 +313,12 @@ export default function NewProjectPage() {
                     </div>
 
                     {/* 文字信息區 */}
-                    <div className="p-2 bg-white dark:bg-gray-800">
-                      <div className="text-xs font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                    <div className="p-2 bg-card">
+                      <div className="text-xs font-medium text-foreground line-clamp-2">
                         {image.title}
                       </div>
                       {image.description && (
-                        <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1 mt-0.5">
+                        <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
                           {image.description}
                         </div>
                       )}
@@ -348,8 +348,8 @@ export default function NewProjectPage() {
           </div>
 
           {/* 連結資訊 */}
-          <div className="space-y-4 border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-medium text-gray-900">連結資訊</h2>
+          <div className="space-y-4 border-t border-border pt-6">
+            <h2 className="text-lg font-medium text-foreground">連結資訊</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -364,7 +364,7 @@ export default function NewProjectPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Vercel 連結</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Vercel 連結</label>
                 <input
                   type="url"
                   value={formData.vercel || ''}
@@ -376,7 +376,7 @@ export default function NewProjectPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">本地路徑</label>
+              <label className="block text-sm font-medium text-foreground mb-2">本地路徑</label>
               <input
                 type="text"
                 value={formData.path || ''}
@@ -389,20 +389,20 @@ export default function NewProjectPage() {
 
           {/* 單檔文件資訊 - 只在選擇 single-doc 時顯示 */}
           {formData.category === 'single-doc' && (
-            <div className="space-y-4 border-t border-gray-200 pt-6">
+            <div className="space-y-4 border-t border-border pt-6">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-medium text-gray-900">📄 單檔文件資訊</h2>
-                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">單檔項目專用</span>
+                <h2 className="text-lg font-medium text-foreground">📄 單檔文件資訊</h2>
+                <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-200 px-2 py-1 rounded-full">單檔項目專用</span>
               </div>
               
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <p className="text-sm text-purple-800">
+              <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 rounded-lg p-4">
+                <p className="text-sm text-purple-800 dark:text-purple-200">
                   💡 <strong>提示：</strong>單檔項目需要指定 HTML 檔案的路徑。請確保檔案已放入 <code className="bg-purple-200 px-1 rounded">public/單檔-獨立頁面/</code> 資料夾。
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   檔案路徑 <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -423,13 +423,13 @@ export default function NewProjectPage() {
                   placeholder="/單檔-獨立頁面/檔名.html"
                   required={formData.category === 'single-doc'}
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   範例：/單檔-獨立頁面/React學習筆記.html
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   顯示標題 <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -453,7 +453,7 @@ export default function NewProjectPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">說明文字</label>
+                <label className="block text-sm font-medium text-foreground mb-2">說明文字</label>
                 <textarea
                   value={formData.documentMeta?.description || ''}
                   onChange={(e) => setFormData(prev => ({
@@ -475,7 +475,7 @@ export default function NewProjectPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">開啟方式</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">開啟方式</label>
                   <select
                     value={formData.documentMeta?.openBehavior || 'new-tab'}
                     onChange={(e) => setFormData(prev => ({
@@ -498,7 +498,7 @@ export default function NewProjectPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">檔案大小（選填）</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">檔案大小（選填）</label>
                   <input
                     type="text"
                     value={formData.documentMeta?.fileSize || ''}
@@ -521,7 +521,7 @@ export default function NewProjectPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">標籤</label>
+                <label className="block text-sm font-medium text-foreground mb-2">標籤</label>
                 <input
                   type="text"
                   value={formData.documentMeta?.tags?.join(', ') || ''}
@@ -542,7 +542,7 @@ export default function NewProjectPage() {
                   className="input"
                   placeholder="標籤1, 標籤2, 標籤3"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   用逗號分隔多個標籤
                 </p>
               </div>
@@ -550,11 +550,11 @@ export default function NewProjectPage() {
           )}
 
           {/* 註解資訊 */}
-          <div className="space-y-4 border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-medium text-gray-900">註解資訊</h2>
+          <div className="space-y-4 border-t border-border pt-6">
+            <h2 className="text-lg font-medium text-foreground">註解資訊</h2>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">狀態備註</label>
+              <label className="block text-sm font-medium text-foreground mb-2">狀態備註</label>
               <textarea
                 value={formData.statusNote || ''}
                 onChange={(e) => handleInputChange('statusNote', e.target.value)}
@@ -565,9 +565,9 @@ export default function NewProjectPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 一般註解
-                <span className="text-sm text-gray-500 ml-2">(訪客可見)</span>
+                <span className="text-sm text-muted-foreground ml-2">(訪客可見)</span>
               </label>
               <textarea
                 value={formData.publicNote || ''}
@@ -586,7 +586,7 @@ export default function NewProjectPage() {
               <textarea
                 value={formData.developerNote || ''}
                 onChange={(e) => handleInputChange('developerNote', e.target.value)}
-                className="textarea bg-orange-50 border-orange-200 focus:ring-orange-500 focus:border-orange-500"
+                className="textarea bg-orange-50 border-orange-200 focus:ring-orange-500 focus:border-orange-500 dark:bg-orange-500/10 dark:border-orange-500/30"
                 placeholder="開發相關的內部註解..."
                 rows={2}
               />
@@ -594,14 +594,14 @@ export default function NewProjectPage() {
           </div>
 
           {/* 自訂資訊區塊 */}
-          <div className="space-y-4 border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-medium text-gray-900">自訂資訊區塊</h2>
+          <div className="space-y-4 border-t border-border pt-6">
+            <h2 className="text-lg font-medium text-foreground">自訂資訊區塊</h2>
 
             <div className="space-y-3">
               {formData.customInfoSections.map((section, index) => (
-                <div key={section.id} className="rounded-lg border border-gray-200 p-4">
+                <div key={section.id} className="rounded-lg border border-border p-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-gray-800">區塊 {index + 1}</h4>
+                    <h4 className="text-sm font-semibold text-foreground">區塊 {index + 1}</h4>
                     <div className="flex items-center gap-2">
                       <ToggleControl
                         checked={section.visible}
@@ -611,7 +611,7 @@ export default function NewProjectPage() {
                       <button
                         type="button"
                         onClick={() => handleRemoveSection(index)}
-                        className="text-gray-400 hover:text-red-500"
+                        className="text-muted-foreground hover:text-red-500"
                         title="移除區塊"
                       >
                         <TrashIcon className="h-4 w-4" />
@@ -620,7 +620,7 @@ export default function NewProjectPage() {
                   </div>
                   <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-medium text-gray-600">標題</label>
+                      <label className="block text-xs font-medium text-muted-foreground">標題</label>
                       <input
                         type="text"
                         value={section.title}
@@ -629,7 +629,7 @@ export default function NewProjectPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600">類型</label>
+                      <label className="block text-xs font-medium text-muted-foreground">類型</label>
                       <select
                         value={section.type}
                         onChange={(e) => handleSectionChange(index, 'type', e.target.value)}
@@ -641,7 +641,7 @@ export default function NewProjectPage() {
                     </div>
                   </div>
                   <div className="mt-3">
-                    <label className="block text-xs font-medium text-gray-600">內容</label>
+                    <label className="block text-xs font-medium text-muted-foreground">內容</label>
                     <textarea
                       value={section.content}
                       onChange={(e) => handleSectionChange(index, 'content', e.target.value)}
@@ -653,11 +653,11 @@ export default function NewProjectPage() {
               ))}
             </div>
 
-            <div className="rounded-lg border border-dashed border-gray-300 p-4">
-              <h4 className="text-sm font-semibold text-gray-800">新增區塊</h4>
+            <div className="rounded-lg border border-dashed border-border p-4">
+              <h4 className="text-sm font-semibold text-foreground">新增區塊</h4>
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600">標題</label>
+                  <label className="block text-xs font-medium text-muted-foreground">標題</label>
                   <input
                     type="text"
                     value={newSectionTitle}
@@ -666,7 +666,7 @@ export default function NewProjectPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600">類型</label>
+                  <label className="block text-xs font-medium text-muted-foreground">類型</label>
                   <select
                     value={newSectionType}
                     onChange={(e) => setNewSectionType(e.target.value as 'text' | 'url')}
@@ -678,7 +678,7 @@ export default function NewProjectPage() {
                 </div>
               </div>
               <div className="mt-3">
-                <label className="block text-xs font-medium text-gray-600">內容</label>
+                <label className="block text-xs font-medium text-muted-foreground">內容</label>
                 <textarea
                   value={newSectionContent}
                   onChange={(e) => setNewSectionContent(e.target.value)}
@@ -698,12 +698,12 @@ export default function NewProjectPage() {
           </div>
 
           {/* 訪客可見設定 */}
-          <div className="space-y-4 border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-medium text-gray-900">訪客可見設定</h2>
+          <div className="space-y-4 border-t border-border pt-6">
+            <h2 className="text-lg font-medium text-foreground">訪客可見設定</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {Object.entries(formData.visibility).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                  <div className="text-sm font-medium text-gray-700">
+                <div key={key} className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <div className="text-sm font-medium text-foreground">
                     {key}
                   </div>
                   <ToggleControl
@@ -717,7 +717,7 @@ export default function NewProjectPage() {
           </div>
 
           {/* 提交按鈕 */}
-          <div className="flex justify-end space-x-4 pt-6 border-t">
+          <div className="flex justify-end space-x-4 pt-6 border-t border-border">
             <button
               type="button"
               onClick={() => router.push('/admin')}

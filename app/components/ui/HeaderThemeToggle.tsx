@@ -1,49 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { useTheme } from '@/components/ui/ThemeProvider';
 
 export function HeaderThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { theme, systemTheme, setTheme } = useTheme();
 
-  useEffect(() => {
-    // 檢查本地存儲的主題設定
-    const saved = localStorage.getItem('theme');
-    if (saved === 'dark' || saved === 'light') {
-      setTheme(saved);
-      applyTheme(saved);
-    } else {
-      // 檢查系統偏好
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const defaultTheme = prefersDark ? 'dark' : 'light';
-      setTheme(defaultTheme);
-      applyTheme(defaultTheme);
-    }
-  }, []);
-
-  const applyTheme = (newTheme: 'light' | 'dark') => {
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
+  const applied = useMemo(() => (theme === 'system' ? systemTheme : theme), [theme, systemTheme]);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    applyTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    setTheme(applied === 'dark' ? 'light' : 'dark');
   };
 
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-      title={theme === 'light' ? '切換到深色模式' : '切換到淺色模式'}
+      className="p-2 rounded-lg hover:bg-muted transition-colors"
+      title={applied === 'light' ? '切換到深色模式' : '切換到淺色模式'}
     >
-      {theme === 'light' ? (
-        <MoonIcon className="h-5 w-5 text-gray-600" />
+      {applied === 'light' ? (
+        <MoonIcon className="h-5 w-5 text-muted-foreground" />
       ) : (
         <SunIcon className="h-5 w-5 text-yellow-500" />
       )}
