@@ -233,6 +233,7 @@ export default function EditProjectPage() {
                   <option value="important">［重要］</option>
                   <option value="secondary">［次］</option>
                   <option value="practice">［子實踐］</option>
+                  <option value="single-doc">［單檔］</option>
                   <option value="completed">［已完成］</option>
                   <option value="abandoned">［已捨棄］</option>
                 </select>
@@ -281,6 +282,171 @@ export default function EditProjectPage() {
               </div>
             </div>
           </div>
+
+          {/* 單檔文件資訊卡片 - 只在選擇 single-doc 時顯示 */}
+          {formData.category === 'single-doc' && (
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-200/50 p-7 animate-slide-up" style={{ animationDelay: '150ms' }}>
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-1 h-6 bg-purple-500 rounded-full"></div>
+                <h2 className="text-xl font-bold text-foreground">📄 單檔文件資訊</h2>
+                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">單檔專案專用</span>
+              </div>
+              
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-5">
+                <p className="text-sm text-purple-800">
+                  💡 <strong>提示：</strong>單檔專案需要指定 HTML 檔案的路徑。請確保檔案已放入 <code className="bg-purple-200 px-1 rounded">public/單檔-獨立頁面/</code> 資料夾。
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    檔案路徑 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.documentMeta?.filePath || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      documentMeta: {
+                        ...prev.documentMeta,
+                        filePath: e.target.value,
+                        title: prev.documentMeta?.title || '',
+                        description: prev.documentMeta?.description || '',
+                        openBehavior: prev.documentMeta?.openBehavior || 'new-tab',
+                        tags: prev.documentMeta?.tags || []
+                      }
+                    }))}
+                    className="input"
+                    placeholder="/單檔-獨立頁面/檔名.html"
+                    required={formData.category === 'single-doc'}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    範例：/單檔-獨立頁面/React學習筆記.html
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    顯示標題 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.documentMeta?.title || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      documentMeta: {
+                        ...prev.documentMeta,
+                        filePath: prev.documentMeta?.filePath || '',
+                        title: e.target.value,
+                        description: prev.documentMeta?.description || '',
+                        openBehavior: prev.documentMeta?.openBehavior || 'new-tab',
+                        tags: prev.documentMeta?.tags || []
+                      }
+                    }))}
+                    className="input"
+                    placeholder="會顯示在專案卡片上的標題"
+                    required={formData.category === 'single-doc'}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">說明文字</label>
+                  <textarea
+                    value={formData.documentMeta?.description || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      documentMeta: {
+                        ...prev.documentMeta,
+                        filePath: prev.documentMeta?.filePath || '',
+                        title: prev.documentMeta?.title || '',
+                        description: e.target.value,
+                        openBehavior: prev.documentMeta?.openBehavior || 'new-tab',
+                        tags: prev.documentMeta?.tags || []
+                      }
+                    }))}
+                    className="textarea"
+                    placeholder="簡短描述文件內容..."
+                    rows={2}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">開啟方式</label>
+                    <select
+                      value={formData.documentMeta?.openBehavior || 'new-tab'}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        documentMeta: {
+                          ...prev.documentMeta,
+                          filePath: prev.documentMeta?.filePath || '',
+                          title: prev.documentMeta?.title || '',
+                          description: prev.documentMeta?.description || '',
+                          openBehavior: e.target.value as 'current-tab' | 'new-tab' | 'modal',
+                          tags: prev.documentMeta?.tags || []
+                        }
+                      }))}
+                      className="input"
+                    >
+                      <option value="new-tab">新分頁開啟</option>
+                      <option value="current-tab">當前分頁開啟</option>
+                      <option value="modal">彈窗模式（未實作）</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">檔案大小（選填）</label>
+                    <input
+                      type="text"
+                      value={formData.documentMeta?.fileSize || ''}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        documentMeta: {
+                          ...prev.documentMeta,
+                          filePath: prev.documentMeta?.filePath || '',
+                          title: prev.documentMeta?.title || '',
+                          description: prev.documentMeta?.description || '',
+                          openBehavior: prev.documentMeta?.openBehavior || 'new-tab',
+                          fileSize: e.target.value,
+                          tags: prev.documentMeta?.tags || []
+                        }
+                      }))}
+                      className="input"
+                      placeholder="例：54 KB"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">標籤</label>
+                  <input
+                    type="text"
+                    value={formData.documentMeta?.tags?.join(', ') || ''}
+                    onChange={(e) => {
+                      const tags = e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+                      setFormData(prev => ({
+                        ...prev,
+                        documentMeta: {
+                          ...prev.documentMeta,
+                          filePath: prev.documentMeta?.filePath || '',
+                          title: prev.documentMeta?.title || '',
+                          description: prev.documentMeta?.description || '',
+                          openBehavior: prev.documentMeta?.openBehavior || 'new-tab',
+                          tags
+                        }
+                      }));
+                    }}
+                    className="input"
+                    placeholder="標籤1, 標籤2, 標籤3"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    用逗號分隔多個標籤
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 註解資訊卡片 */}
           <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-lg border border-border/50 p-7 animate-slide-up" style={{ animationDelay: '200ms' }}>
