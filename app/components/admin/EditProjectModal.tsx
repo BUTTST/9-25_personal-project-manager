@@ -326,10 +326,10 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
                       onChange={(e) => handleInputChange('category', e.target.value)}
                       className="input"
                     >
-                      <option value="important">［重要］</option>
-                      <option value="secondary">［次］</option>
-                      <option value="practice">［子實踐］</option>
-                      <option value="single-doc">［單檔專案］</option>
+                      <option value="important">{categoryDisplayNames.important}</option>
+                      <option value="secondary">{categoryDisplayNames.secondary}</option>
+                      <option value="practice">{categoryDisplayNames.practice}</option>
+                      <option value="single-doc">{categoryDisplayNames['single-doc']}</option>
                     </select>
                   </div>
                   <div className="flex flex-col items-center gap-1 pt-8">

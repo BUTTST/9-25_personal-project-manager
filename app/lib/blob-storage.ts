@@ -70,7 +70,7 @@ export const defaultProjectData: ProjectData = {
         { id: 'important', enabled: true, order: 1, label: '重要' },
         { id: 'secondary', enabled: true, order: 2, label: '次要' },
         { id: 'practice', enabled: true, order: 3, label: '實踐' },
-        { id: 'single-doc', enabled: true, order: 4, label: '單檔專案' },
+        { id: 'single-doc', enabled: true, order: 4, label: '［單檔項目］' },
         { id: 'completed', enabled: true, order: 5, label: '完成' },
         { id: 'abandoned', enabled: true, order: 6, label: '捨棄' },
         { id: 'status-in-progress', enabled: true, order: 7, label: '進行中' },
@@ -200,7 +200,7 @@ function enrichProjectData(data: ProjectData): ProjectData {
       id: documentCategory,
       enabled: true,
       order: filters.length,
-      label: '單檔專案'
+      label: '［單檔項目］'
     });
   }
 

@@ -9,6 +9,9 @@ import {
   Project,
   ProjectFormData,
   ProjectStatus,
+  categoryDisplayNames,
+  statusDisplayNames,
+  projectStatusOrder,
   defaultProjectStatus,
   defaultImagePreviewMode,
   ensureProjectVisibility,
@@ -230,12 +233,12 @@ export default function EditProjectPage() {
                   onChange={(e) => handleInputChange('category', e.target.value)}
                   className="input"
                 >
-                  <option value="important">［重要］</option>
-                  <option value="secondary">［次］</option>
-                  <option value="practice">［子實踐］</option>
-                  <option value="single-doc">［單檔］</option>
-                  <option value="completed">［已完成］</option>
-                  <option value="abandoned">［已捨棄］</option>
+                  <option value="important">{categoryDisplayNames.important}</option>
+                  <option value="secondary">{categoryDisplayNames.secondary}</option>
+                  <option value="practice">{categoryDisplayNames.practice}</option>
+                  <option value="single-doc">{categoryDisplayNames['single-doc']}</option>
+                  <option value="completed">{categoryDisplayNames.completed}</option>
+                  <option value="abandoned">{categoryDisplayNames.abandoned}</option>
                 </select>
               </div>
             </div>
@@ -289,12 +292,12 @@ export default function EditProjectPage() {
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-1 h-6 bg-purple-500 rounded-full"></div>
                 <h2 className="text-xl font-bold text-foreground">📄 單檔文件資訊</h2>
-                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">單檔專案專用</span>
+                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">單檔項目專用</span>
               </div>
               
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-5">
                 <p className="text-sm text-purple-800">
-                  💡 <strong>提示：</strong>單檔專案需要指定 HTML 檔案的路徑。請確保檔案已放入 <code className="bg-purple-200 px-1 rounded">public/單檔-獨立頁面/</code> 資料夾。
+                  💡 <strong>提示：</strong>單檔項目需要指定 HTML 檔案的路徑。請確保檔案已放入 <code className="bg-purple-200 px-1 rounded">public/單檔-獨立頁面/</code> 資料夾。
                 </p>
               </div>
 

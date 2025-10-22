@@ -392,12 +392,12 @@ export default function NewProjectPage() {
             <div className="space-y-4 border-t border-gray-200 pt-6">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-medium text-gray-900">📄 單檔文件資訊</h2>
-                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">單檔專案專用</span>
+                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">單檔項目專用</span>
               </div>
               
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                 <p className="text-sm text-purple-800">
-                  💡 <strong>提示：</strong>單檔專案需要指定 HTML 檔案的路徑。請確保檔案已放入 <code className="bg-purple-200 px-1 rounded">public/單檔-獨立頁面/</code> 資料夾。
+                  💡 <strong>提示：</strong>單檔項目需要指定 HTML 檔案的路徑。請確保檔案已放入 <code className="bg-purple-200 px-1 rounded">public/單檔-獨立頁面/</code> 資料夾。
                 </p>
               </div>
 

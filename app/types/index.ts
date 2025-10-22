@@ -124,7 +124,7 @@ export type CategoryDisplayName = {
   important: '［重要］';
   secondary: '［次要］';
   practice: '［子實踐］';
-  'single-doc': '［單檔］';
+  'single-doc': '［單檔項目］';
   completed: '［已完成］';
   abandoned: '［已捨棄］';
 };
@@ -133,7 +133,7 @@ export const categoryDisplayNames: CategoryDisplayName = {
   important: '［重要］',
   secondary: '［次要］',
   practice: '［子實踐］',
-  'single-doc': '［單檔］',
+  'single-doc': '［單檔項目］',
   completed: '［已完成］',
   abandoned: '［已捨棄］',
 };
