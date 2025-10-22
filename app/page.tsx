@@ -155,7 +155,7 @@ export default function HomePage() {
         return a.featured ? -1 : 1;
       }
       // 然後依照類別重要性
-      const categoryOrder = ['important', 'secondary', 'practice', 'completed', 'abandoned'];
+      const categoryOrder = ['important', 'secondary', 'practice', 'single-doc', 'completed', 'abandoned'];
       const aIndex = categoryOrder.indexOf(a.category);
       const bIndex = categoryOrder.indexOf(b.category);
       if (aIndex !== bIndex) {
