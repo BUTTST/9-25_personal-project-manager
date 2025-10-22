@@ -67,33 +67,28 @@ if (!data || data.projects.length === 0) {
 }
 ```
 
-✅ **正確模式**：
+✅ **正確模式（本專案實作）**：
 ```typescript
-// 正確：區分「不存在」和「讀取失敗」
-async function readProjectData(): Promise<ProjectData> {
+// app/lib/blob-storage.ts 摘要：
+export async function readProjectData(): Promise<ProjectData> {
+  if (process.env.NEXT_PUBLIC_USE_LOCAL_BACKUP === 'true') {
+    // 本地備份模式：阻擋遠端讀取，避免以本機覆蓋雲端
+    throw new ProjectDataError('LOCAL_BACKUP_MODE_ENABLED', '...');
+  }
   try {
     const { blobs } = await list();
-    const dataBlob = blobs.find(blob => blob.pathname === BLOB_FILENAME);
-    
-    if (!dataBlob) {
-      // 檔案確實不存在
-      console.log('📄 檔案不存在，返回預設空資料');
-      return defaultProjectData;
-    }
+    const dataBlob = blobs.find((b) => b.pathname === 'project-data.json');
+    if (!dataBlob) return enrichProjectData(defaultProjectData); // 首次：安全預設
 
     const response = await fetch(dataBlob.url);
-    if (!response.ok) {
-      // 讀取失敗，拋出錯誤
-      throw new Error(`Blob 讀取失敗: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data;
-    
+    if (!response.ok) throw new ProjectDataError('BLOB_FETCH_FAILED', '...');
+    const data = (await response.json()) as ProjectData;
+    if (!validateProjectData(data)) throw new ProjectDataError('BLOB_SCHEMA_INVALID', '...');
+    return enrichProjectData(data);
   } catch (error) {
-    // 記錄詳細錯誤，但不自動初始化
-    console.error('💥 讀取資料時發生錯誤:', error);
-    throw error; // 向上拋出，不要靜默處理
+    // 本地開發或連線失敗時，優雅降級為預設資料（僅記憶體使用，不寫回）
+    console.warn('⚠️ 無法連接 Vercel Blob，使用預設空數據 (dev fallback)');
+    return enrichProjectData(defaultProjectData);
   }
 }
 ```
@@ -177,9 +172,9 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-### 規範 3：初始化端點必須明確授權
+### 規範 3：初始化端點必須明確授權（且禁用自動初始化）
 ```typescript
-// ✅ 正確的初始化端點
+// ✅ 正確的初始化端點（手動、明確授權）
 export async function POST(request: NextRequest) {
   // 1. 驗證管理員
   const password = request.headers.get('x-admin-password');
@@ -212,6 +207,9 @@ export async function POST(request: NextRequest) {
   
   return NextResponse.json({ success: true });
 }
+
+// ⛔ 自動初始化端點已停用：/api/initialize
+// 僅回傳提示訊息，避免任何讀取失敗時誤觸初始化
 ```
 
 ## 🛡️ Vercel Blob 特定注意事項
@@ -252,13 +250,13 @@ if (!dataBlob) {
 // 沒有事務保護，一旦寫入就無法回滾
 // 因此寫入前的驗證至關重要
 
-// ✅ 建議：在寫入前創建備份標記
+// ✅ 建議：在寫入前創建備份標記（本專案以 metadata 記錄）
 const updatedData = {
   ...data,
   metadata: {
     ...data.metadata,
-    previousVersion: existingData.metadata.version,
-    previousUpdateTime: existingData.metadata.lastUpdated
+    writeTimestamp: Date.now(),
+    safetyCheck: forceWrite ? 'FORCED' : 'VERIFIED'
   }
 };
 ```

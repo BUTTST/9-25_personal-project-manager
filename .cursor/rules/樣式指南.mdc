@@ -44,42 +44,13 @@ className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 
 請務必為分類徽章使用這些類別。
 
-### 元件模式
-
-#### 卡片
-對互動式卡片使用 `card-hover` 類別：
-```tsx
-<div className="card-hover group">
-  {/* 卡片內容 */}
-</div>
-```
-
-特色：
-- 懸停時的高度提升
-- 平滑的過渡效果
-- 群組懸停效果
-- 邊框動畫
-
-#### 按鈕
-在 globals.css 中定義的按鈕變體：
-- `btn` - 基本按鈕
-- `btn-primary` - 主要操作
-- `btn-secondary` - 次要操作
-- `btn-ghost` - 細微操作
-- 尺寸變體：`btn-sm`, `btn-md`, `btn-lg`
-
-#### 表單控制項
-- 使用一致的間距 (垂直 space-y-4，水平 space-x-2)
-- 表單輸入透過 CSS 基礎層共享樣式
-- 為無障礙性使用焦點環
+### 按鈕與卡片
+- 按鈕變體：`btn`, `btn-primary`, `btn-secondary`, `btn-ghost`
+- 尺寸：`btn-sm`, `btn-md`, `btn-lg`
+- 卡片互動：`card-hover`（升起、邊框與過渡效果）
 
 ### 動畫
-在 Tailwind 設定中定義的自訂動畫：
-- `fade-in` - 淡入動畫
-- `slide-in` - 從底部滑入
-- `slide-down` - 向下滑動
-- `pulse-slow` - 慢速脈衝動畫
-- `spin-slow` - 慢速旋轉動畫
+使用 Tailwind config 中的動畫工具：`animate-fade-in`、`animate-slide-in`、`animate-slide-down`、`animate-pulse-slow`、`animate-spin-slow`
 
 用法：
 ```tsx

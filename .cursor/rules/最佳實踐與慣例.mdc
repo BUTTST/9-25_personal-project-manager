@@ -87,6 +87,19 @@ try {
 - 📁 - 檔案操作
 - 🔒 - 驗證
 
+### 快速參考（常用管理任務）
+- 更新 UI 設定：`PUT /api/settings/ui-display`（需 x-admin-password）
+- 讀取 UI 設定：`GET /api/settings/ui-display`（公開）
+- 重置 UI 設定：`POST /api/settings/reset-ui`（需 x-admin-password）
+- 系統診斷：`GET /api/admin/diagnose`（需 x-admin-password）
+- 初始化範例資料：`POST /api/admin/init-data`（需 x-admin-password）
+- 強制初始化：`POST /api/admin/force-init`（需 x-admin-password，謹慎）
+
+### 環境變數
+Vercel 中需要的變數：
+- `ADMIN_PASSWORD` - 管理員驗證
+- `BLOB_READ_WRITE_TOKEN` - 由 Vercel 自動生成
+
 ## UI/UX 模式
 
 ### 載入狀態
@@ -151,11 +164,6 @@ try {
 - 測試生產 URL
 - 驗證環境變數已載入
 - 檢查管理員密碼是否有效
-
-### 環境變數
-Vercel 中需要的變數：
-- `ADMIN_PASSWORD` - 管理員驗證
-- `BLOB_READ_WRITE_TOKEN` - 由 Vercel 自動生成
 
 ## Git 工作流程
 

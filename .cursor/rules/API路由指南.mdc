@@ -12,20 +12,12 @@ globs: "app/api/**/*.ts"
 ## 驗證
 需要管理員權限的 API 路由必須驗證密碼：
 ```typescript
-import { verifyAdminPassword } from '@/lib/auth';
-
 export async function POST(request: NextRequest) {
   // 從標頭驗證管理員密碼
   const password = request.headers.get('x-admin-password');
-  const isValid = await verifyAdminPassword(password);
-  
-  if (!isValid) {
-    return NextResponse.json(
-      { error: '未授權' },
-      { status: 401 }
-    );
+  if (!password || password !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: '未授權' }, { status: 401 });
   }
-  
   // 繼續執行管理員操作
 }
 ```
@@ -80,8 +72,9 @@ try {
 ## API 端點
 ### 公開端點
 - `GET /api/projects` - 獲取公開專案 (無需驗證)
-- `GET /api/initialize` - 初始應用設定
+- `GET /api/settings/ui-display` - 獲取 UI 設定 (公開讀取)
 - `POST /api/auth/login` - 登入驗證
+- `GET /api/initialize` - 已停用（為避免自動覆寫資料，僅回傳提示）
 
 ### 管理員端點 (需要 x-admin-password 標頭)
 - `GET /api/projects?admin=true` - 獲取所有專案
@@ -89,8 +82,8 @@ try {
 - `PATCH /api/projects/[id]` - 更新專案
 - `DELETE /api/projects/[id]` - 刪除專案
 - `POST /api/projects/reorder` - 重新排序專案
-- `GET /api/settings/ui-display` - 獲取 UI 設定
-- `POST /api/settings/ui-display` - 更新 UI 設定
+- `PUT /api/settings/ui-display` - 更新 UI 設定
+- `POST /api/settings/reset-ui` - 重置 UI 設定為預設
 
 ### 管理員管理
 - `GET /api/admin/diagnose` - 系統診斷

@@ -32,12 +32,12 @@ globs: "app/lib/**/*.ts,app/api/**/*.ts"
 import { readProjectData } from '@/lib/blob-storage';
 
 const data = await readProjectData();
-// 如果 blob 不存在，則回傳預設資料
+// 若 blob 不存在，或本地開發無法連線，將以預設資料進行優雅降級（不會寫回）
 ```
 
 特色：
-- 自動回退到預設資料
-- 回傳前進行資料驗證
+- 自動回退到預設資料（僅在 dev 或檔案不存在時）
+- 回傳前進行資料驗證與標準化（分類、狀態、可見性、圖片/自訂段落）
 - 用於偵錯的主控台記錄
 - 具備優雅降級的錯誤處理
 
@@ -147,7 +147,7 @@ import { getPublicProjects } from '@/lib/blob-storage';
 const publicProjects = getPublicProjects(allProjects);
 // 回傳的專案具備：
 // - visibility.description === true
-// - category !== 'abandoned'
+// - status !== 'discarded'
 // - developerNote 已移除
 ```
 
@@ -174,13 +174,10 @@ const visibleProjects = projects.filter(project => {
 - 自訂指標
 
 ## UI 設定管理
-UI 自訂 (篩選器、統計) 儲存在 `settings.uiDisplay` 中：
-```typescript
-interface UIDisplaySettings {
-  filters: FilterConfig[];      // 啟用/停用的篩選器及其順序
-  statistics: StatisticConfig[]; // 啟用/停用的統計資料及其順序
-}
-```
+UI 自訂 (篩選器、統計) 儲存在 `settings.uiDisplay` 中，端點：
+- `GET /api/settings/ui-display`（公開）
+- `PUT /api/settings/ui-display`（管理員）
+- `POST /api/settings/reset-ui`（管理員，重置為預設）
 
 透過 `/api/settings/ui-display` 端點更新。
 

@@ -54,18 +54,13 @@ interface AuthSession {
 ## 伺服器端驗證
 
 ### API 路由保護
-用密碼驗證保護管理員 API 路由：
+用密碼驗證保護管理員 API 路由（直接比對環境變數）：
 ```typescript
-import { verifyAdminPassword } from '@/lib/auth';
-
 export async function POST(request: NextRequest) {
   const password = request.headers.get('x-admin-password');
-  const isValid = await verifyAdminPassword(password);
-  
-  if (!isValid) {
+  if (!password || password !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: '未授權' }, { status: 401 });
   }
-  
   // 管理員操作
 }
 ```
@@ -113,11 +108,16 @@ const response = await fetch('/api/projects', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-admin-password': getStoredPassword() // 從 localStorage 獲取
+    'x-admin-password': getRememberedPassword() || '' // 從 localStorage 獲取
   },
   body: JSON.stringify(data)
 });
 ```
+
+### 端點與方法要點
+- `/api/settings/ui-display`：`GET` 公開讀取；`PUT` 僅管理員更新
+- `/api/admin/*`：皆需 `x-admin-password`
+- `/api/initialize`：已停用自動初始化，只回傳提示訊息
 
 ## 安全考量
 

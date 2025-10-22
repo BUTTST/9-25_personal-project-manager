@@ -24,14 +24,24 @@ globs: "*.ts,*.tsx"
 ### 分類
 專案分類是嚴格類型化的：
 ```typescript
-'important' | 'secondary' | 'practice' | 'completed' | 'abandoned'
+'important' | 'secondary' | 'practice' | 'single-doc' | 'completed' | 'abandoned'
 ```
 
 ### 統計類型
 統計資料的類型定義為：
 ```typescript
-'totalProjects' | 'publicProjects' | 'displayedCount' | 'importantCount' | 
-'completedCount' | 'inProgressCount' | 'readyStatus' | 'abandonedCount'
+'totalProjects' | 'publicProjects' | 'displayedCount' | 'importantCount' |
+'completedCount' | 'inProgressCount' | 'readyStatus' | 'abandonedCount' |
+'singleDocCount' | 'statusOnHold' | 'statusLongTerm' | 'statusCompleted' | 'statusDiscarded'
+```
+
+### UI 自訂型別
+`UIDisplaySettings`：
+```typescript
+interface UIDisplaySettings {
+  filters: FilterConfig[];      // 篩選器配置
+  statistics: StatisticConfig[]; // 統計區塊配置
+}
 ```
 
 ## Props 類型定義

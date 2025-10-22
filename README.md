@@ -74,20 +74,18 @@
 
 ```bash
 # 複製專案
-git clone <your-repo-url>
-cd project-showcase-platform
+git clone https://github.com/BUTTST/9-25_personal-project-manager.git
+cd 9-25_personal-project-manager
 
 # 安裝依賴
 npm install
 
-# 生成專案圖標
-npm run generate-icons
 
 # 啟動開發伺服器
 npm run dev
 ```
 
-網站將在 [http://localhost:3000](http://localhost:3000) 啟動。
+網站將在 [http://localhost:3000](http://localhost:3000) 啟動。若需完整管理功能，請設定環境變數 `ADMIN_PASSWORD`（可於 Vercel 或本地 `.env` 設定）。
 
 ### 線上部署
 
@@ -105,19 +103,26 @@ npm run dev
 - **部署平台**：[Vercel](https://vercel.com/)
 - **資料儲存**：[Vercel Blob](https://vercel.com/docs/storage/vercel-blob)
 - **API 路由**：Next.js API Routes (Serverless)
+  - 公開讀取不需驗證；寫入須在標頭附上 `x-admin-password`
 
-### 檔案結構
+### 檔案結構（節選）
 ```
-project-showcase-platform/
-├── app/                    # Next.js App Router
-│   ├── api/                # API 路由
-│   ├── components/         # React 組件
-│   ├── lib/                # 工具函數
-│   └── types/              # TypeScript 類型定義
-├── public/                # 靜態資源
-│   └── icons/              # 應用圖標
-├── scripts/               # 建置腳本
-└── docs/                  # 文檔
+9-25_personal-project-manager/
+├── app/
+│   ├── api/
+│   │   ├── projects/           # 列表、CRUD、reorder
+│   │   ├── auth/login          # 登入驗證
+│   │   ├── settings/
+│   │   │   ├── ui-display      # GET/PUT UI 設定
+│   │   │   └── reset-ui        # POST 重置 UI 設定
+│   │   ├── admin/              # diagnose、force-init、init-data
+│   │   └── initialize          # 已停用自動初始化（僅提示）
+│   ├── components/             # auth, admin, project, ui, layout
+│   ├── lib/                    # blob-storage, data-safety, sample-data, auth, statistics
+│   └── types/
+├── public/
+├── scripts/
+└── .cursor/rules/              # 規範文件
 ```
 
 ## 📝 使用指南
@@ -212,9 +217,9 @@ project-showcase-platform/
 ## 🔒 安全特性
 
 ### 身份驗證
-- 簡單的密碼驗證系統
-- 本地安全儲存（可選）
-- 工作階段過期管理
+- 簡單的密碼驗證系統（`POST /api/auth/login`）
+- 本地安全儲存（可選，記住密碼會保存在瀏覽器）
+- 工作階段過期管理（預設 24 小時）
 
 ### 權限控制
 - 訪客與管理員完全分離
@@ -222,14 +227,14 @@ project-showcase-platform/
 - 敏感資訊隱藏保護
 
 ### 資料保護
-- 環境變數加密
+- 環境變數保護（Vercel）
 - HTTPS 強制傳輸
-- 密碼區域完全隱藏
-- **多層資料安全機制**：防止資料意外覆寫（詳見 [資料安全規則說明](./資料安全規則說明.md)）
-  - 三層驗證保護
-  - 空資料覆寫防護
-  - 強制寫入安全鎖
-  - 完整的操作日誌
+- 密碼區域僅管理員可見
+- **多層資料安全機制**：防止資料意外覆寫（詳見 `app/lib/blob-storage.ts` 與 `.cursor/rules/資料安全與防護.mdc`）
+  - 資料完整性驗證
+  - 空資料覆寫保護
+  - 安全標記（`safetyCheck`、`writeTimestamp`）
+  - 明確授權的強制寫入
 
 ## 📝 API 文檔
 
@@ -237,6 +242,9 @@ project-showcase-platform/
 ```http
 GET /api/projects
 # 獲取公開專案列表
+
+GET /api/settings/ui-display
+# 取得 UI 顯示設定（篩選器、統計）；公開讀取
 ```
 
 ### 管理員 API
@@ -255,6 +263,35 @@ Headers: x-admin-password: <your-password>
 
 # 刪除專案
 DELETE /api/projects/:id
+Headers: x-admin-password: <your-password>
+
+# 重新排序
+POST /api/projects/reorder
+Headers: x-admin-password: <your-password>
+Body: [{ id: string, sortOrder: number }] 
+
+# 更新 UI 設定
+PUT /api/settings/ui-display
+Headers: x-admin-password: <your-password>
+Body: {
+  filters: Array<{ id: string; enabled: boolean; order: number; label?: string }>,
+  statistics: Array<{ id: string; type: string; enabled: boolean; order: number; label?: string }>
+}
+
+# 重置 UI 設定
+POST /api/settings/reset-ui
+Headers: x-admin-password: <your-password>
+
+# 系統診斷
+GET /api/admin/diagnose
+Headers: x-admin-password: <your-password>
+
+# 初始化（安全）
+POST /api/admin/init-data
+Headers: x-admin-password: <your-password>
+
+# 強制初始化（謹慎）
+POST /api/admin/force-init
 Headers: x-admin-password: <your-password>
 ```
 
@@ -297,6 +334,25 @@ Headers: x-admin-password: <your-password>
 - [x] **改善的 EmptyState**：更吸引人的空狀態顯示
 - [x] **LoadingSpinner**：更精美的載入動畫
 
+
+## 📸 圖片預覽、HTML整合與功能迭代 (v1.2)  2025/10/21
+
+### 核心功能新增
+- [x] **圖片存儲方案決策**：經過評估 GitHub 硬編碼、Vercel Blob 資料庫 方案抉擇後，採用 【 GitHub 硬編碼 】來儲存圖片
+- [x] **圖片預覽功能**：
+  - 前端實現圖片顯示和相冊預覽
+  - 新增顯隱控制按鈕，訪客可直接預覽項目成品效果
+  - 支援多圖片預覽庫
+- [x] **單檔HTML整合**：
+  - 新增 HTML 單檔專案導入功能
+  - 實現不同專案類型的適配邏輯
+  - 擴大平台對多種專案形式的兼容性
+
+### 已知待改善項目
+- [ ] **前端 UI 問題**：
+  - 原列表選單內容部分消失
+  - 因功能移除導致 UI 響應異常
+  - 顯示版面需調整對齐
 
 <div align="center">
   <p>由 ❤️ 精心製作的個人專案展示平台</p>

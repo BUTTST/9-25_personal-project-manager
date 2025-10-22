@@ -63,10 +63,11 @@ export function ComponentName({ prop1, prop2 }: ComponentProps) {
 
 ## 管理員 vs 訪客邏輯
 許多元件同時處理管理員和訪客模式：
-- 當相關時，總是接受 `isAdmin: boolean` prop
+- 當相關時，總是接受 `isAdmin: boolean` prop（或從 `useAuth()` 讀取）
 - 根據 `isAdmin` 顯示/隱藏功能
-- 對於專案，尊重訪客的 `visibility` 設定
-- 管理員總是能看到所有欄位 (若對訪客隱藏則會變暗)
+- 對於專案，尊重訪客的 `visibility` 設定（`developerNote` 僅管理員）
+- 管理員總是能看到所有欄位（若對訪客隱藏則以弱化樣式顯示）
+- 參考 `app/components/auth/AuthProvider.tsx` 取得登入狀態
 
 來自 [ProjectCard.tsx](mdc:app/components/project/ProjectCard.tsx) 的範例模式：
 ```typescript
