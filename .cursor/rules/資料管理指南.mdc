@@ -188,6 +188,52 @@ UI 自訂 (篩選器、統計) 儲存在 `settings.uiDisplay` 中，端點：
 3. 使用 `/api/admin/init-data` 載入範例資料
 4. 透過 Vercel 儀表板 > Blob Storage 手動恢復
 
+## 圖片管理（自動化）
+
+### 圖片存儲架構
+- **圖片文件**：存放在 `public/前端截圖/` 目錄
+- **圖片配置**：自動生成於 `config/image-gallery.ts`
+- **圖片引用**：項目的 `imagePreviews` 陣列（存儲於 Blob）
+
+### 新增圖片流程
+```bash
+# 1. 將圖片放入目錄
+public/前端截圖/新專案截圖.png
+
+# 2. 執行自動掃描（開發時自動執行）
+npm run generate-gallery
+
+# 3. 腳本自動生成配置文件
+config/image-gallery.ts  # ← 自動更新
+
+# 4. 提交並推送
+git add .
+git commit -m "新增圖片"
+git push
+```
+
+### 圖片命名建議
+- **描述性名稱**：標題會從文件名自動提取
+- **日期前綴**：可選，例如 `10-15-專案名稱.png`
+- **避免特殊字符**：使用英文、數字、中文和常見符號
+
+### 重要事項
+⚠️ **圖片配置文件是自動生成的**
+- `config/image-gallery.ts` 由 `scripts/generate-image-gallery.js` 生成
+- **請勿手動編輯** `config/image-gallery.ts`
+- 如需調整生成邏輯，編輯 `scripts/generate-image-gallery.js`
+
+✅ **圖片管理的安全性**
+- 圖片配置是**代碼文件**，不涉及 Blob 寫入
+- Git 提供版本控制和回滾能力
+- 不會影響項目數據的安全性
+
+### 圖片選取流程
+1. 管理員在編輯界面看到 `imageGallery` 列表
+2. 勾選所需圖片
+3. 選定的圖片引用存儲到項目的 `imagePreviews` 陣列
+4. 前端讀取 `imagePreviews` 並顯示相應圖片
+
 ## 最佳實踐
 1. 寫入時務必更新 `metadata.lastUpdated`
 2. 更新相關的元資料計數 (`totalProjects`, `publicProjects`)
@@ -197,3 +243,5 @@ UI 自訂 (篩選器、統計) 儲存在 `settings.uiDisplay` 中，端點：
 6. 部署前在開發環境中測試資料操作
 7. 在所有操作中保持一致的資料結構
 8. 為偵錯記錄重要的資料操作
+9. 新增圖片後記得執行 `npm run generate-gallery`（或 `npm run dev` 會自動執行）
+10. 圖片文件名應具描述性，因為標題會從中提取

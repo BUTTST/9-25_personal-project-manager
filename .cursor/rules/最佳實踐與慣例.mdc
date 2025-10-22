@@ -100,6 +100,27 @@ Vercel 中需要的變數：
 - `ADMIN_PASSWORD` - 管理員驗證
 - `BLOB_READ_WRITE_TOKEN` - 由 Vercel 自動生成
 
+### 圖片管理
+圖片使用自動化掃描和生成流程：
+
+**新增圖片的步驟：**
+1. 將圖片放入 `public/前端截圖/` 目錄
+2. 執行 `npm run generate-gallery`（或 `npm run dev` 會自動執行）
+3. 檢查自動生成的 `config/image-gallery.ts`
+4. 提交並推送到 Git
+
+**圖片命名建議：**
+- 使用描述性名稱（標題會從文件名自動提取）
+- 可包含日期前綴（例如：`10-15-專案名稱.png`）
+- 避免特殊字符，使用英文、數字、中文和常見符號
+- 範例：`9-24-icon-auto-creator(選擇圖標尺寸預設).png`
+
+**重要提醒：**
+- ⚠️ **請勿手動編輯** `config/image-gallery.ts`（自動生成文件）
+- ✅ 圖片配置是代碼層，不涉及 Blob 數據庫
+- ✅ Git 提供完整版本控制，安全無虞
+- ✅ 開發和構建時自動執行掃描腳本
+
 ## UI/UX 模式
 
 ### 載入狀態
