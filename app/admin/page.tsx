@@ -262,14 +262,13 @@ export default function AdminPage() {
                   style={{
                     left:
                       activeTab === 'projects'
-                        ? '0%'
+                        ? 'calc(0.5rem)'
                         : activeTab === 'import'
-                          ? '33.33%'
+                          ? 'calc(25% + 0.375rem)'
                           : activeTab === 'settings'
-                            ? '66.66%'
-                            : '100%',
-                    width: '33.33%',
-                    transform: activeTab === 'diagnostics' ? 'translateX(-66.66%)' : 'translateX(0)',
+                            ? 'calc(50% + 0.25rem)'
+                            : 'calc(75% + 0.125rem)',
+                    width: 'calc(25% - 0.75rem)',
                   }}
                 />
                 

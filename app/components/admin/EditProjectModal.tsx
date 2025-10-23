@@ -456,6 +456,30 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
                   </div>
                 </div>
 
+                {/* 部署平台 */}
+                <div className="flex items-start gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-foreground mb-2">部署平台</label>
+                    <input
+                      type="url"
+                      value={formData.deployment || ''}
+                      onChange={(e) => handleInputChange('deployment', e.target.value)}
+                      className="input"
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div className="flex flex-col items-center gap-1 pt-8">
+                    <ToggleControl
+                      checked={visibility.deployment}
+                      onChange={(checked) => handleVisibilityChange('deployment', checked)}
+                      size="sm"
+                    />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {visibility.deployment ? '可見' : '隱藏'}
+                    </span>
+                  </div>
+                </div>
+
                 {/* 本地路徑 */}
                 <div className="flex items-start gap-4">
                   <div className="flex-1">
@@ -638,29 +662,6 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
               </h3>
               
               <div className="space-y-4">
-                {/* 狀態備註 */}
-                <div className="flex items-start gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-foreground mb-2">狀態備註</label>
-                    <textarea
-                      value={formData.statusNote || ''}
-                      onChange={(e) => handleInputChange('statusNote', e.target.value)}
-                      className="textarea"
-                      rows={2}
-                    />
-                  </div>
-                  <div className="flex flex-col items-center gap-1 pt-8">
-                    <ToggleControl
-                      checked={visibility.statusNote}
-                      onChange={(checked) => handleVisibilityChange('statusNote', checked)}
-                      size="sm"
-                    />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {visibility.statusNote ? '可見' : '隱藏'}
-                    </span>
-                  </div>
-                </div>
-
                 {/* 一般註解 */}
                 <div className="flex items-start gap-4">
                   <div className="flex-1">
@@ -682,6 +683,29 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
                     />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
                       {visibility.publicNote ? '可見' : '隱藏'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 狀態備註 */}
+                <div className="flex items-start gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-foreground mb-2">狀態備註</label>
+                    <textarea
+                      value={formData.statusNote || ''}
+                      onChange={(e) => handleInputChange('statusNote', e.target.value)}
+                      className="textarea"
+                      rows={2}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center gap-1 pt-8">
+                    <ToggleControl
+                      checked={visibility.statusNote}
+                      onChange={(checked) => handleVisibilityChange('statusNote', checked)}
+                      size="sm"
+                    />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {visibility.statusNote ? '可見' : '隱藏'}
                     </span>
                   </div>
                 </div>

@@ -48,6 +48,7 @@ export interface Project {
   status: ProjectStatus;
   github?: string;
   vercel?: string;
+  deployment?: string;
   path?: string;
   statusNote?: string;
   publicNote?: string;
@@ -60,6 +61,7 @@ export interface Project {
     status: boolean;
     github: boolean;
     vercel: boolean;
+    deployment: boolean;
     path: boolean;
     statusNote: boolean;
     publicNote: boolean;
@@ -169,6 +171,7 @@ export interface ProjectFormData {
   status: Project['status'];
   github?: string;
   vercel?: string;
+  deployment?: string;
   path?: string;
   statusNote?: string;
   publicNote?: string;

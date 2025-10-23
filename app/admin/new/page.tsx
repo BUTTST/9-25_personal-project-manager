@@ -44,6 +44,7 @@ export default function NewProjectPage() {
     }
     return 'all';
   });
+  const [visibility, setVisibility] = useState(formData.visibility);
   
   const { isAdmin } = useAuth();
   const { showToast } = useToast();
@@ -225,61 +226,109 @@ export default function NewProjectPage() {
           <div className="space-y-4">
             <h2 className="text-lg font-medium text-foreground">基本資訊</h2>
             
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                日期和檔名 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.dateAndFileName}
-                onChange={(e) => handleInputChange('dateAndFileName', e.target.value)}
-                className="input"
-                placeholder="例：7-30 V6_確認vercel授權-9"
-                required
-              />
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  日期和檔名 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.dateAndFileName}
+                  onChange={(e) => handleInputChange('dateAndFileName', e.target.value)}
+                  className="input"
+                  placeholder="例：7-30 V6_確認vercel授權-9"
+                  required
+                />
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.dateAndFileName}
+                  onChange={(checked) => handleVisibilityChange('dateAndFileName', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.dateAndFileName ? '可見' : '隱藏'}
+                </span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                說明 <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                className="textarea"
-                placeholder="專案的詳細描述..."
-                required
-                rows={3}
-              />
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  說明 <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  className="textarea"
+                  placeholder="專案的詳細描述..."
+                  required
+                  rows={3}
+                />
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.description}
+                  onChange={(checked) => handleVisibilityChange('description', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.description ? '可見' : '隱藏'}
+                </span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">類別</label>
-              <select
-                value={formData.category}
-                onChange={(e) => handleInputChange('category', e.target.value)}
-                className="input"
-              >
-                <option value="important">{categoryDisplayNames.important}</option>
-                <option value="secondary">{categoryDisplayNames.secondary}</option>
-                <option value="practice">{categoryDisplayNames.practice}</option>
-                <option value="single-doc">{categoryDisplayNames['single-doc']}</option>
-              </select>
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-foreground mb-2">類別</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => handleInputChange('category', e.target.value)}
+                  className="input"
+                >
+                  <option value="important">{categoryDisplayNames.important}</option>
+                  <option value="secondary">{categoryDisplayNames.secondary}</option>
+                  <option value="practice">{categoryDisplayNames.practice}</option>
+                  <option value="single-doc">{categoryDisplayNames['single-doc']}</option>
+                </select>
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.category}
+                  onChange={(checked) => handleVisibilityChange('category', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.category ? '可見' : '隱藏'}
+                </span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">狀態</label>
-              <select
-                value={formData.status}
-                onChange={(e) => handleStatusChange(e.target.value as ProjectStatus)}
-                className="input"
-              >
-                {projectStatusOrder.map((statusKey) => (
-                  <option key={statusKey} value={statusKey}>
-                    {statusDisplayNames[statusKey]}
-                  </option>
-                ))}
-              </select>
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-foreground mb-2">狀態</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => handleStatusChange(e.target.value as ProjectStatus)}
+                  className="input"
+                >
+                  {projectStatusOrder.map((statusKey) => (
+                    <option key={statusKey} value={statusKey}>
+                      {statusDisplayNames[statusKey]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.status}
+                  onChange={(checked) => handleVisibilityChange('status', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.status ? '可見' : '隱藏'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -424,9 +473,9 @@ export default function NewProjectPage() {
           <div className="space-y-4 border-t border-border pt-6">
             <h2 className="text-lg font-medium text-foreground">連結資訊</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">GitHub 連結</label>
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-foreground mb-2">GitHub 連結</label>
                 <input
                   type="url"
                   value={formData.github || ''}
@@ -435,8 +484,20 @@ export default function NewProjectPage() {
                   placeholder="https://github.com/..."
                 />
               </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.github}
+                  onChange={(checked) => handleVisibilityChange('github', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.github ? '可見' : '隱藏'}
+                </span>
+              </div>
+            </div>
 
-              <div>
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
                 <label className="block text-sm font-medium text-foreground mb-2">Vercel 連結</label>
                 <input
                   type="url"
@@ -446,17 +507,62 @@ export default function NewProjectPage() {
                   placeholder="https://vercel.com/..."
                 />
               </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.vercel}
+                  onChange={(checked) => handleVisibilityChange('vercel', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.vercel ? '可見' : '隱藏'}
+                </span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">本地路徑</label>
-              <input
-                type="text"
-                value={formData.path || ''}
-                onChange={(e) => handleInputChange('path', e.target.value)}
-                className="input"
-                placeholder="E:\\個人項目"
-              />
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-foreground mb-2">部署平台</label>
+                <input
+                  type="url"
+                  value={formData.deployment || ''}
+                  onChange={(e) => handleInputChange('deployment', e.target.value)}
+                  className="input"
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.deployment}
+                  onChange={(checked) => handleVisibilityChange('deployment', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.deployment ? '可見' : '隱藏'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-foreground mb-2">本地路徑</label>
+                <input
+                  type="text"
+                  value={formData.path || ''}
+                  onChange={(e) => handleInputChange('path', e.target.value)}
+                  className="input"
+                  placeholder="E:\\個人項目"
+                />
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.path}
+                  onChange={(checked) => handleVisibilityChange('path', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.path ? '可見' : '隱藏'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -626,43 +732,79 @@ export default function NewProjectPage() {
           <div className="space-y-4 border-t border-border pt-6">
             <h2 className="text-lg font-medium text-foreground">註解資訊</h2>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">狀態備註</label>
-              <textarea
-                value={formData.statusNote || ''}
-                onChange={(e) => handleInputChange('statusNote', e.target.value)}
-                className="textarea"
-                placeholder="專案的當前狀態..."
-                rows={2}
-              />
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  一般註解
+                  <span className="text-sm text-muted-foreground ml-2">(訪客可見)</span>
+                </label>
+                <textarea
+                  value={formData.publicNote || ''}
+                  onChange={(e) => handleInputChange('publicNote', e.target.value)}
+                  className="textarea"
+                  placeholder="對訪客展示的註解..."
+                  rows={2}
+                />
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.publicNote}
+                  onChange={(checked) => handleVisibilityChange('publicNote', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.publicNote ? '可見' : '隱藏'}
+                </span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                一般註解
-                <span className="text-sm text-muted-foreground ml-2">(訪客可見)</span>
-              </label>
-              <textarea
-                value={formData.publicNote || ''}
-                onChange={(e) => handleInputChange('publicNote', e.target.value)}
-                className="textarea"
-                placeholder="對訪客展示的註解..."
-                rows={2}
-              />
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-foreground mb-2">狀態備註</label>
+                <textarea
+                  value={formData.statusNote || ''}
+                  onChange={(e) => handleInputChange('statusNote', e.target.value)}
+                  className="textarea"
+                  placeholder="專案的當前狀態..."
+                  rows={2}
+                />
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.statusNote}
+                  onChange={(checked) => handleVisibilityChange('statusNote', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.statusNote ? '可見' : '隱藏'}
+                </span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-orange-600 mb-2">
-                開發者註解
-                <span className="text-sm text-orange-500 ml-2">(僅管理員可見)</span>
-              </label>
-              <textarea
-                value={formData.developerNote || ''}
-                onChange={(e) => handleInputChange('developerNote', e.target.value)}
-                className="textarea bg-orange-50 border-orange-200 focus:ring-orange-500 focus:border-orange-500 dark:bg-orange-500/10 dark:border-orange-500/30"
-                placeholder="開發相關的內部註解..."
-                rows={2}
-              />
+            <div className="flex items-start gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-orange-600 mb-2">
+                  開發者註解
+                  <span className="text-sm text-orange-500 ml-2">(僅管理員可見)</span>
+                </label>
+                <textarea
+                  value={formData.developerNote || ''}
+                  onChange={(e) => handleInputChange('developerNote', e.target.value)}
+                  className="textarea bg-orange-50 border-orange-200 focus:ring-orange-500 focus:border-orange-500 dark:bg-orange-500/10 dark:border-orange-500/30"
+                  placeholder="開發相關的內部註解..."
+                  rows={2}
+                />
+              </div>
+              <div className="flex flex-col items-center gap-1 pt-8">
+                <ToggleControl
+                  checked={visibility.developerNote}
+                  onChange={(checked) => handleVisibilityChange('developerNote', checked)}
+                  size="sm"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {visibility.developerNote ? '可見' : '隱藏'}
+                </span>
+              </div>
             </div>
           </div>
 
