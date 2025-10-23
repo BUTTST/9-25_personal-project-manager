@@ -67,6 +67,23 @@ export default function NewProjectPage() {
 
     setLoading(true);
     try {
+      // 自動將沒有內容的欄位設為隱藏
+      const autoVisibility = {
+        ...visibility,
+        github: !!formData.github?.trim() && visibility.github,
+        vercel: !!formData.vercel?.trim() && visibility.vercel,
+        deployment: !!formData.deployment?.trim() && visibility.deployment,
+        path: !!formData.path?.trim() && visibility.path,
+        statusNote: !!formData.statusNote?.trim() && visibility.statusNote,
+        publicNote: !!formData.publicNote?.trim() && visibility.publicNote,
+        developerNote: !!formData.developerNote?.trim() && visibility.developerNote,
+      };
+
+      const submitData = {
+        ...formData,
+        visibility: autoVisibility,
+      };
+
       const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
       const response = await fetch('/api/projects', {
         method: 'POST',
@@ -74,7 +91,7 @@ export default function NewProjectPage() {
           'Content-Type': 'application/json',
           'x-admin-password': adminPassword
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submitData)
       });
 
       if (!response.ok) {
@@ -105,6 +122,10 @@ export default function NewProjectPage() {
   };
 
   const handleVisibilityChange = (field: keyof ProjectFormData['visibility'], value: boolean) => {
+    setVisibility((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
     setFormData((prev) => ({
       ...prev,
       visibility: {
@@ -912,22 +933,115 @@ export default function NewProjectPage() {
             </div>
           </div>
 
-          {/* 訪客可見設定 */}
+          {/* 顯示控制設定 */}
           <div className="space-y-4 border-t border-border pt-6">
-            <h2 className="text-lg font-medium text-foreground">訪客可見設定</h2>
+            <h2 className="text-lg font-medium text-foreground">顯示控制設定</h2>
+            <p className="text-sm text-muted-foreground">控制各欄位在訪客頁面的顯示狀態（沒有內容的欄位在新增時會自動隱藏）</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {Object.entries(formData.visibility).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between rounded-lg border border-border p-3">
-                  <div className="text-sm font-medium text-foreground">
-                    {key}
-                  </div>
-                  <ToggleControl
-                    checked={value}
-                    onChange={(checked) => handleVisibilityChange(key as keyof ProjectFormData['visibility'], checked)}
-                    size="sm"
-                  />
-                </div>
-              ))}
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">日期和檔名</div>
+                <ToggleControl
+                  checked={visibility.dateAndFileName}
+                  onChange={(checked) => handleVisibilityChange('dateAndFileName', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">說明</div>
+                <ToggleControl
+                  checked={visibility.description}
+                  onChange={(checked) => handleVisibilityChange('description', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">類別</div>
+                <ToggleControl
+                  checked={visibility.category}
+                  onChange={(checked) => handleVisibilityChange('category', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">狀態</div>
+                <ToggleControl
+                  checked={visibility.status}
+                  onChange={(checked) => handleVisibilityChange('status', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">GitHub 連結</div>
+                <ToggleControl
+                  checked={visibility.github}
+                  onChange={(checked) => handleVisibilityChange('github', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">Vercel 連結</div>
+                <ToggleControl
+                  checked={visibility.vercel}
+                  onChange={(checked) => handleVisibilityChange('vercel', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">部署平台</div>
+                <ToggleControl
+                  checked={visibility.deployment}
+                  onChange={(checked) => handleVisibilityChange('deployment', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">本地路徑</div>
+                <ToggleControl
+                  checked={visibility.path}
+                  onChange={(checked) => handleVisibilityChange('path', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">狀態備註</div>
+                <ToggleControl
+                  checked={visibility.statusNote}
+                  onChange={(checked) => handleVisibilityChange('statusNote', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">一般註解</div>
+                <ToggleControl
+                  checked={visibility.publicNote}
+                  onChange={(checked) => handleVisibilityChange('publicNote', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">開發者註解</div>
+                <ToggleControl
+                  checked={visibility.developerNote}
+                  onChange={(checked) => handleVisibilityChange('developerNote', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">圖片預覽</div>
+                <ToggleControl
+                  checked={visibility.imagePreviews}
+                  onChange={(checked) => handleVisibilityChange('imagePreviews', checked)}
+                  size="sm"
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="text-sm font-medium text-foreground">自訂資訊區塊</div>
+                <ToggleControl
+                  checked={visibility.customInfoSections}
+                  onChange={(checked) => handleVisibilityChange('customInfoSections', checked)}
+                  size="sm"
+                />
+              </div>
             </div>
           </div>
 
