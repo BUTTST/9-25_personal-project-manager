@@ -67,7 +67,7 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
               {currentImage.title || '專案圖片'}
             </div>
             {currentImage.description && (
-              <div className="text-xs text-white/80 line-clamp-1">
+              <div className="text-xs text-white/80 line-clamp-1 whitespace-pre-wrap">
                 {currentImage.description}
               </div>
             )}
@@ -141,7 +141,7 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
                 {image.title || '專案圖片'}
               </div>
               {image.description && (
-                <div className="text-xs text-white/80 line-clamp-2">
+                <div className="text-xs text-white/80 line-clamp-2 whitespace-pre-wrap">
                   {image.description}
                 </div>
               )}

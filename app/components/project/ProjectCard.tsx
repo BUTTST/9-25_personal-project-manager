@@ -411,7 +411,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
                 />
               )}
             </div>
-            <p className={`text-sm leading-relaxed ${
+            <p className={`text-sm leading-relaxed whitespace-pre-wrap ${
               !localProject.visibility.description && isAdmin ? 'text-muted-foreground/50 line-through' : 'text-foreground/80'
             }`}>
               {localProject.description}
@@ -536,7 +536,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
                 />
               )}
             </div>
-            <p className={`text-sm leading-relaxed ${
+            <p className={`text-sm leading-relaxed whitespace-pre-wrap ${
               !localProject.visibility.statusNote && isAdmin 
                 ? 'text-amber-900/40 dark:text-amber-100/40 line-through' 
                 : 'text-amber-900/80 dark:text-amber-100/80'
@@ -564,7 +564,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
                 />
               )}
             </div>
-            <p className={`text-sm leading-relaxed ${
+            <p className={`text-sm leading-relaxed whitespace-pre-wrap ${
               !localProject.visibility.publicNote && isAdmin 
                 ? 'text-green-900/40 dark:text-green-100/40 line-through' 
                 : 'text-green-900/80 dark:text-green-100/80'
@@ -620,7 +620,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
                 />
               )}
             </div>
-            <p className={`text-sm leading-relaxed font-medium ${
+            <p className={`text-sm leading-relaxed font-medium whitespace-pre-wrap ${
               !localProject.visibility.developerNote && isAdmin 
                 ? 'text-orange-900/40 dark:text-orange-100/40 line-through' 
                 : 'text-orange-900 dark:text-orange-100'
@@ -645,7 +645,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
               )}
             </div>
             {localProject.documentMeta.description && (
-              <p className="text-sm text-primary-800 dark:text-primary-200 mb-2">
+              <p className="text-sm text-primary-800 dark:text-primary-200 mb-2 whitespace-pre-wrap">
                 {localProject.documentMeta.description}
               </p>
             )}
