@@ -202,7 +202,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     handleFieldChange('visibility', updatedVisibility);
   };
 
-  const handleLinkEdit = (field: 'github' | 'vercel', newUrl: string) => {
+  const handleLinkEdit = (field: 'github' | 'vercel' | 'deployment', newUrl: string) => {
     if (!isAdmin) return;
     handleFieldChange(field, newUrl);
   };
@@ -212,7 +212,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     onUpdate?.(updatedProject);
   };
 
-  const renderEditableLink = (field: 'github' | 'vercel', url: string | undefined) => {
+  const renderEditableLink = (field: 'github' | 'vercel' | 'deployment', url: string | undefined) => {
     if (!url) return null;
     
     // 截取網址用於顯示
@@ -461,9 +461,10 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
         {/* 連結區域 - 管理員或有可見連結時顯示 */}
         {(isAdmin || (localProject.visibility.github && localProject.github) || 
           (localProject.visibility.vercel && localProject.vercel) || 
+          (localProject.visibility.deployment && localProject.deployment) ||
           (localProject.visibility.path && localProject.path) ||
           (localProject.visibility.vercel && localProject.documentMeta?.filePath)) && 
-          (localProject.github || localProject.vercel || localProject.path || localProject.documentMeta?.filePath) && (
+          (localProject.github || localProject.vercel || localProject.deployment || localProject.path || localProject.documentMeta?.filePath) && (
           <div className="bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-500/5 dark:to-purple-500/5 rounded-lg p-4 border border-blue-200/30 dark:border-blue-500/20 space-y-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -525,6 +526,30 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
                   <ToggleControl
                     checked={localProject.visibility.vercel}
                     onChange={() => handleVisibilityToggle('vercel')}
+                    size="sm"
+                  />
+                )}
+              </div>
+            )}
+            
+            {(isAdmin || localProject.visibility.deployment) && localProject.deployment && (
+              <div className={`flex items-center justify-between gap-3 ${
+                !localProject.visibility.deployment && isAdmin ? 'opacity-40' : ''
+              }`}>
+                <div className="flex items-center space-x-2.5 text-sm min-w-0 flex-1">
+                  <div className="flex-shrink-0">
+                    <GlobeAltIcon className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <div className={`min-w-0 flex-1 ${
+                    !localProject.visibility.deployment && isAdmin ? 'line-through' : ''
+                  }`}>
+                    {renderEditableLink('deployment', localProject.deployment)}
+                  </div>
+                </div>
+                {isAdmin && showToggleControls && (
+                  <ToggleControl
+                    checked={localProject.visibility.deployment}
+                    onChange={() => handleVisibilityToggle('deployment')}
                     size="sm"
                   />
                 )}
