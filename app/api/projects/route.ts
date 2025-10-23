@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
       status: formData.status || migrateLegacyCategoryToStatus(formData.category || 'secondary'),
       github: formData.github?.trim(),
       vercel: formData.vercel?.trim(),
+      deployment: formData.deployment?.trim(),
       path: formData.path?.trim(),
       statusNote: formData.statusNote?.trim(),
       publicNote: formData.publicNote?.trim(),
@@ -116,6 +117,7 @@ export async function POST(request: NextRequest) {
       visibility: ensureProjectVisibility({
         github: !!formData.github?.trim(),
         vercel: !!formData.vercel?.trim(),
+        deployment: !!formData.deployment?.trim(),
         path: !!formData.path?.trim(),
         statusNote: !!formData.statusNote?.trim(),
         publicNote: !!formData.publicNote?.trim(),
