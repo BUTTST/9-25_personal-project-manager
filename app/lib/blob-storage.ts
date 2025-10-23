@@ -140,7 +140,16 @@ export async function readProjectData(): Promise<ProjectData> {
 
   let response;
   try {
-    response = await fetch(dataBlob.url);
+    // 🔒 安全改進：添加緩存破壞參數確保讀取最新數據
+    // 這防止了「寫入成功但讀取到舊數據」的一致性問題
+    response = await fetch(`${dataBlob.url}?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   } catch (error) {
     throw new ProjectDataError('BLOB_FETCH_FAILED', 'Failed to fetch blob content from Vercel Blob storage.', { cause: error });
   }

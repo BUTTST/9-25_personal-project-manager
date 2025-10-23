@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readProjectData, writeProjectData, defaultProjectData } from '@/lib/blob-storage';
 
+// 禁用 Next.js 緩存，確保每次請求都獲取最新數據
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   const password = request.headers.get('x-admin-password');
 

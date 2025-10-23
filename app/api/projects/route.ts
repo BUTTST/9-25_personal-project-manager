@@ -3,6 +3,10 @@ import { readProjectData, writeProjectData, getPublicProjects, validateProjectDa
 import { generateId } from '@/lib/auth';
 import { Project, ProjectFormData, defaultProjectStatus, defaultImagePreviewMode, ensureProjectVisibility, migrateLegacyCategoryToStatus } from '@/types';
 
+// 禁用 Next.js 緩存，確保每次請求都獲取最新數據
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
 // 獲取專案列表
 export async function GET(request: NextRequest) {
   try {
