@@ -38,6 +38,12 @@ export default function NewProjectPage() {
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [newSectionContent, setNewSectionContent] = useState('');
   const [newSectionType, setNewSectionType] = useState<'text' | 'url'>('text');
+  const [imageFilter, setImageFilter] = useState<'all' | 'selected' | 'unselected'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('imageFilter') as 'all' | 'selected' | 'unselected') || 'all';
+    }
+    return 'all';
+  });
   
   const { isAdmin } = useAuth();
   const { showToast } = useToast();
@@ -123,6 +129,27 @@ export default function NewProjectPage() {
         imagePreviews: [...prev.imagePreviews, { ...galleryImage }],
       };
     });
+  };
+
+  const handleImageFilterChange = (filter: 'all' | 'selected' | 'unselected') => {
+    setImageFilter(filter);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('imageFilter', filter);
+    }
+  };
+
+  const getFilteredImages = () => {
+    return imageGallery.filter((image) => {
+      const selected = formData.imagePreviews.some((img) => img.id === image.id);
+      if (imageFilter === 'selected') return selected;
+      if (imageFilter === 'unselected') return !selected;
+      return true;
+    });
+  };
+
+  const getImageOrder = (imageId: string): number => {
+    const index = formData.imagePreviews.findIndex((img) => img.id === imageId);
+    return index !== -1 ? index + 1 : 0;
   };
 
   const handleAddSection = () => {
@@ -287,8 +314,47 @@ export default function NewProjectPage() {
               💡 <strong>選擇模式說明：</strong>「單張切換」會顯示單張圖片，訪客可點擊或使用按鈕切換；「多張並列」會同時展開所有選中的圖片。
             </p>
 
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium text-foreground">選擇圖片</h4>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleImageFilterChange('all')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    imageFilter === 'all'
+                      ? 'bg-primary-500 text-white shadow-sm'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  全部 ({imageGallery.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleImageFilterChange('selected')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    imageFilter === 'selected'
+                      ? 'bg-green-500 text-white shadow-sm'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  已勾選 ({formData.imagePreviews.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleImageFilterChange('unselected')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    imageFilter === 'unselected'
+                      ? 'bg-orange-500 text-white shadow-sm'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  未勾選 ({imageGallery.length - formData.imagePreviews.length})
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {imageGallery.map((image) => {
+              {getFilteredImages().map((image) => {
                 const selected = formData.imagePreviews.some((img) => img.id === image.id);
                 return (
                   <button
@@ -324,7 +390,7 @@ export default function NewProjectPage() {
                       )}
                     </div>
 
-                    {/* 選中標記 */}
+                    {/* 選中標記與順序 */}
                     {selected && (
                       <div className="absolute inset-0 flex items-center justify-center bg-primary-500/10 backdrop-blur-sm">
                         <div className="rounded-full bg-primary-500 p-2 shadow-lg">
@@ -332,6 +398,13 @@ export default function NewProjectPage() {
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         </div>
+                      </div>
+                    )}
+
+                    {/* 圖片順序標記 */}
+                    {selected && getImageOrder(image.id) > 0 && (
+                      <div className="absolute top-2 left-2 flex items-center justify-center w-6 h-6 bg-gradient-to-br from-primary-600 to-primary-500 text-white text-xs font-bold rounded-full shadow-lg border-2 border-white">
+                        {getImageOrder(image.id)}
                       </div>
                     )}
 
