@@ -182,6 +182,7 @@ export interface ProjectFormData {
   imagePreviewMode: ImagePreviewDisplayMode;
   customInfoSections: CustomInfoSection[];
   visibility?: ProjectVisibility;
+  hidden?: boolean;
   sortOrder?: number;
 }
 
