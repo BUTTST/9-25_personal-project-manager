@@ -209,6 +209,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
           status: migrateLegacyCategoryToStatus(category),
           github: proj.github || undefined,
           vercel: proj.vercel || undefined,
+          deployment: undefined,
           path: proj.path || undefined,
           statusNote: proj.statusNote || undefined,
           publicNote: '', // 預設空值
@@ -224,6 +225,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
             status: true,
             github: !!proj.github,
             vercel: !!proj.vercel,
+            deployment: false,
             path: !!proj.path,
             statusNote: !!proj.statusNote,
             publicNote: true,
@@ -232,6 +234,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
             customInfoSections: false,
           }),
           featured: false,
+          hidden: false,
           createdAt: Date.now(),
           updatedAt: Date.now(),
           sortOrder: Date.now() // 使用當前時間戳作為預設排序值
