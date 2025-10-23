@@ -9,9 +9,9 @@ export interface GalleryImage {
 /**
  * ⚠️ 此文件由 scripts/generate-image-gallery.js 自動生成
  * 
- * 自動生成時間：2025/10/22 下午1:39:28
+ * 自動生成時間：2025/10/23 下午8:22:27
  * 圖片來源目錄：public/前端截圖/
- * 圖片數量：12
+ * 圖片數量：26
  * 
  * 🚀 如何新增圖片：
  * 1. 將圖片放入 public/前端截圖/ 目錄
@@ -54,6 +54,11 @@ export const imageGallery: GalleryImage[] = [
     src: '/前端截圖/9-21-臉書貼文排版格式化工具.png',
   },
   {
+    id: '9-10_paddle-sandbox-test-沙盒常是-二舊',
+    title: 'paddle-sandbox-test（沙盒常是 二舊）',
+    src: '/前端截圖/9-10_paddle-sandbox-test(沙盒常是 二舊).png',
+  },
+  {
     id: '8-14-whisper-語音轉譯服務-總結',
     title: 'Whisper 語音轉譯服務（總結）',
     src: '/前端截圖/8-14-Whisper 語音轉譯服務(總結).png',
@@ -64,9 +69,14 @@ export const imageGallery: GalleryImage[] = [
     src: '/前端截圖/8-14-Whisper 語音轉譯服務(輸出).png',
   },
   {
-    id: '7-24-paddle-金流系統建置',
-    title: '7-24 （Paddle 金流系統建置）',
-    src: '/前端截圖/7-24 (Paddle 金流系統建置).png',
+    id: '7-24-cashcalculator-paddle-已認證頁面',
+    title: 'CashCalculator（Paddle 已認證頁面）',
+    src: '/前端截圖/7-24-CashCalculator(Paddle 已認證頁面).png',
+  },
+  {
+    id: '5-5_excel_expiry_tool-範例參數',
+    title: 'Excel Expiry tool（範例參數）',
+    src: '/前端截圖/5-5_Excel_Expiry_tool(範例參數).png',
   },
   {
     id: '5-25-現金管理計算工具-中',
@@ -84,9 +94,69 @@ export const imageGallery: GalleryImage[] = [
     src: '/前端截圖/5-25 現金管理計算工具(上).png',
   },
   {
-    id: '10-15-youtube-info-extractor-tool-縮圖',
-    title: 'youtube-info-extractor-tool （縮圖）',
-    src: '/前端截圖/10-15-youtube-info-extractor-tool (縮圖).png',
+    id: '10-16_sme-accounting-inventory-system-總覽',
+    title: 'SME-accounting-inventory-system（總覽）',
+    src: '/前端截圖/10-16_SME-accounting-inventory-system(總覽).png',
+  },
+  {
+    id: '10-16_sme-accounting-inventory-system-總覽_明亮',
+    title: 'SME-accounting-inventory-system（總覽 明亮）',
+    src: '/前端截圖/10-16_SME-accounting-inventory-system(總覽_明亮).png',
+  },
+  {
+    id: '10-16_sme-accounting-inventory-system-銷售-開立發票',
+    title: 'SME-accounting-inventory-system（銷售 (開立發票）)',
+    src: '/前端截圖/10-16_SME-accounting-inventory-system(銷售 (開立發票)).png',
+  },
+  {
+    id: '10-16_sme-accounting-inventory-system-傳票-&-科目',
+    title: 'SME-accounting-inventory-system（傳票 & 科目）',
+    src: '/前端截圖/10-16_SME-accounting-inventory-system(傳票 & 科目).png',
+  },
+  {
+    id: '10-16_sme-accounting-inventory-system-進貨-採購',
+    title: 'SME-accounting-inventory-system（進貨 (採購）)',
+    src: '/前端截圖/10-16_SME-accounting-inventory-system(進貨 (採購)).png',
+  },
+  {
+    id: '10-16_sme-accounting-inventory-system-報表',
+    title: 'SME-accounting-inventory-system（報表）',
+    src: '/前端截圖/10-16_SME-accounting-inventory-system(報表).png',
+  },
+  {
+    id: '10-16_sme-accounting-inventory-system-設定',
+    title: 'SME-accounting-inventory-system（設定）',
+    src: '/前端截圖/10-16_SME-accounting-inventory-system(設定).png',
+  },
+  {
+    id: '10-16_sme-accounting-inventory-system-商品-存貨',
+    title: 'SME-accounting-inventory-system（商品-存貨）',
+    src: '/前端截圖/10-16_SME-accounting-inventory-system(商品-存貨).png',
+  },
+  {
+    id: '10-16_sme-accounting-inventory-system-商品-存貨_明亮',
+    title: 'SME-accounting-inventory-system（商品-存貨 明亮）',
+    src: '/前端截圖/10-16_SME-accounting-inventory-system(商品-存貨_明亮).png',
+  },
+  {
+    id: '10-16_sme-accounting-inventory-system-客戶-供應商',
+    title: 'SME-accounting-inventory-system（客戶-供應商）',
+    src: '/前端截圖/10-16_SME-accounting-inventory-system(客戶-供應商).png',
+  },
+  {
+    id: '10-15-youtube-info-extractor-tool-歷史紀錄',
+    title: 'youtube-info-extractor-tool （歷史紀錄）',
+    src: '/前端截圖/10-15-youtube-info-extractor-tool (歷史紀錄).png',
+  },
+  {
+    id: '10-15-youtube-info-extractor-tool-影片詳情',
+    title: 'youtube-info-extractor-tool （影片詳情）',
+    src: '/前端截圖/10-15-youtube-info-extractor-tool (影片詳情).png',
+  },
+  {
+    id: '10-15-youtube-info-extractor-tool-字幕',
+    title: 'youtube-info-extractor-tool （字幕）',
+    src: '/前端截圖/10-15-youtube-info-extractor-tool (字幕).png',
   }
 ];
 

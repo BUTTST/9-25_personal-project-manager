@@ -61,6 +61,7 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
         status: project.status,
         github: project.github || '',
         vercel: project.vercel || '',
+        deployment: project.deployment || '',
         path: project.path || '',
         statusNote: project.statusNote || '',
         publicNote: project.publicNote || '',
@@ -68,6 +69,7 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
         imagePreviews: project.imagePreviews || [],
         imagePreviewMode: project.imagePreviewMode,
         customInfoSections: project.customInfoSections || [],
+        hidden: project.hidden ?? false,
       });
       setVisibility(ensureProjectVisibility(project.visibility));
     }
@@ -111,7 +113,7 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
     }
   };
 
-  const handleInputChange = (field: keyof ProjectFormData, value: string) => {
+  const handleInputChange = (field: keyof ProjectFormData, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

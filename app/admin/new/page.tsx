@@ -109,7 +109,7 @@ export default function NewProjectPage() {
     }
   };
 
-  const handleInputChange = (field: keyof ProjectFormData, value: string) => {
+  const handleInputChange = (field: keyof ProjectFormData, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
