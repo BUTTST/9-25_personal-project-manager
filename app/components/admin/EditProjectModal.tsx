@@ -45,7 +45,8 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
   const [newSectionType, setNewSectionType] = useState<'text' | 'url'>('text');
   const [imageFilter, setImageFilter] = useState<'all' | 'selected' | 'unselected'>(() => {
     if (typeof window !== 'undefined') {
-      return (localStorage.getItem('imageFilter') as 'all' | 'selected' | 'unselected') || 'all';
+      const storageKey = `imageFilter_${project.id}`;
+      return (localStorage.getItem(storageKey) as 'all' | 'selected' | 'unselected') || 'all';
     }
     return 'all';
   });
@@ -145,7 +146,8 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
   const handleImageFilterChange = (filter: 'all' | 'selected' | 'unselected') => {
     setImageFilter(filter);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('imageFilter', filter);
+      const storageKey = `imageFilter_${project.id}`;
+      localStorage.setItem(storageKey, filter);
     }
   };
 

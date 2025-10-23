@@ -41,7 +41,8 @@ export default function NewProjectPage() {
   const [newSectionType, setNewSectionType] = useState<'text' | 'url'>('text');
   const [imageFilter, setImageFilter] = useState<'all' | 'selected' | 'unselected'>(() => {
     if (typeof window !== 'undefined') {
-      return (localStorage.getItem('imageFilter') as 'all' | 'selected' | 'unselected') || 'all';
+      const storageKey = 'imageFilter_new';
+      return (localStorage.getItem(storageKey) as 'all' | 'selected' | 'unselected') || 'all';
     }
     return 'all';
   });
@@ -157,7 +158,8 @@ export default function NewProjectPage() {
   const handleImageFilterChange = (filter: 'all' | 'selected' | 'unselected') => {
     setImageFilter(filter);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('imageFilter', filter);
+      const storageKey = 'imageFilter_new';
+      localStorage.setItem(storageKey, filter);
     }
   };
 
