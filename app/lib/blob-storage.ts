@@ -366,6 +366,7 @@ export function getPublicProjects(projects: Project[]): Project[] {
       documentMeta: project.documentMeta || null,
     }))
     .filter(project =>
+      !project.hidden &&
       project.visibility.description &&
       project.status !== 'discarded'
     )

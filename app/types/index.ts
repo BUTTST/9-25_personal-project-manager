@@ -72,6 +72,7 @@ export interface Project {
   imagePreviews: ImagePreview[];
   imagePreviewMode: ImagePreviewDisplayMode;
   featured: boolean;
+  hidden: boolean; // 隐藏整个项目，但保留各区域的 visibility 设置
   customInfoSections: CustomInfoSection[];
   createdAt: number;
   updatedAt: number;

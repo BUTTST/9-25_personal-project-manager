@@ -144,6 +144,33 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     }
   };
 
+  const handleHiddenToggle = async () => {
+    if (!isAdmin) return;
+    
+    const updatedProject = {
+      ...localProject,
+      hidden: !localProject.hidden,
+      updatedAt: Date.now()
+    };
+    
+    setLocalProject(updatedProject);
+    onUpdate?.(updatedProject);
+    
+    try {
+      await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ hidden: updatedProject.hidden }),
+      });
+    } catch (error) {
+      console.error('Failed to update project hidden status:', error);
+      setLocalProject(localProject);
+      onUpdate?.(localProject);
+    }
+  };
+
   const handleFieldChange = (field: keyof Project, value: any) => {
     if (!isAdmin) return;
     const updatedProject = {
@@ -270,6 +297,18 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
                 title={localProject.featured ? '取消精選' : '設為精選'}
               >
                 <StarIcon className="h-4 w-4" />
+              </button>
+              <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
+              <button
+                onClick={handleHiddenToggle}
+                className={`p-1.5 rounded-full transition-all duration-200 ${
+                  localProject.hidden 
+                    ? 'text-red-500 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20' 
+                    : 'text-green-500 bg-green-50 dark:bg-green-500/10 hover:bg-green-100 dark:hover:bg-green-500/20'
+                }`}
+                title={localProject.hidden ? '顯示項目' : '隱藏項目'}
+              >
+                {localProject.hidden ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
               </button>
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
               <button

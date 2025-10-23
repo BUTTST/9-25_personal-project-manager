@@ -33,6 +33,7 @@ export default function NewProjectPage() {
     imagePreviewMode: defaultImagePreviewMode,
     customInfoSections: [],
     visibility: ensureProjectVisibility(),
+    hidden: false,
   });
   const [loading, setLoading] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
@@ -245,7 +246,31 @@ export default function NewProjectPage() {
         <form onSubmit={handleSubmit} className="bg-card rounded-lg shadow-sm border border-border p-6 space-y-6">
           {/* 基本資訊 */}
           <div className="space-y-4">
-            <h2 className="text-lg font-medium text-foreground">基本資訊</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium text-foreground">基本資訊</h2>
+              <button
+                type="button"
+                onClick={() => handleInputChange('hidden', !formData.hidden)}
+                className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all hover:scale-105 ${
+                  formData.hidden
+                    ? 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300'
+                    : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300'
+                } hover:shadow-md`}
+                title={formData.hidden ? "訪客無法看到此項目（各區域顯隱設定不變）" : "訪客可以看到此項目"}
+              >
+                {formData.hidden ? (
+                  <>
+                    <EyeSlashIcon className="h-4 w-4" />
+                    <span>隱藏項目</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeIcon className="h-4 w-4" />
+                    <span>顯示項目</span>
+                  </>
+                )}
+              </button>
+            </div>
             
             <div className="flex items-start gap-4">
               <div className="flex-1">

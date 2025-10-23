@@ -271,24 +271,48 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
                   <div className="w-1 h-5 bg-primary-500 rounded-full"></div>
                   基本資訊
                 </h3>
-                <button
-                  type="button"
-                  onClick={toggleAllVisibility}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all hover:scale-105 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:shadow-md"
-                  title={Object.values(visibility).every(v => v) ? "隱藏全部項目" : "顯示全部項目"}
-                >
-                  {Object.values(visibility).every(v => v) ? (
-                    <>
-                      <EyeSlashIcon className="h-4 w-4" />
-                      <span>全部隱藏</span>
-                    </>
-                  ) : (
-                    <>
-                      <EyeIcon className="h-4 w-4" />
-                      <span>全部顯示</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('hidden', !formData.hidden)}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all hover:scale-105 ${
+                      formData.hidden
+                        ? 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300'
+                        : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300'
+                    } hover:shadow-md`}
+                    title={formData.hidden ? "訪客無法看到此項目（各區域顯隱設定不變）" : "訪客可以看到此項目"}
+                  >
+                    {formData.hidden ? (
+                      <>
+                        <EyeSlashIcon className="h-4 w-4" />
+                        <span>隱藏項目</span>
+                      </>
+                    ) : (
+                      <>
+                        <EyeIcon className="h-4 w-4" />
+                        <span>顯示項目</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={toggleAllVisibility}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border transition-all hover:scale-105 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:shadow-md"
+                    title={Object.values(visibility).every(v => v) ? "隱藏全部區域" : "顯示全部區域"}
+                  >
+                    {Object.values(visibility).every(v => v) ? (
+                      <>
+                        <EyeSlashIcon className="h-4 w-4" />
+                        <span>全部隱藏</span>
+                      </>
+                    ) : (
+                      <>
+                        <EyeIcon className="h-4 w-4" />
+                        <span>全部顯示</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-4">

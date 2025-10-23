@@ -127,6 +127,7 @@ export async function POST(request: NextRequest) {
       imagePreviewMode: formData.imagePreviewMode || defaultImagePreviewMode,
       customInfoSections: formData.customInfoSections ?? [],
       featured: false,
+      hidden: formData.hidden ?? false,
       documentMeta: formData.documentMeta ?? null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
