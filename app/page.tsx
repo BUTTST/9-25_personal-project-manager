@@ -58,7 +58,14 @@ export default function HomePage() {
         console.warn('自動初始化跳過或失敗:', initError);
       }
       
-      const response = await fetch('/api/projects');
+      // 前端緩存破壞：添加時間戳參數和 HTTP 標頭
+      const response = await fetch(`/api/projects?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       if (!response.ok) {
         throw new Error('無法載入專案資料');
       }

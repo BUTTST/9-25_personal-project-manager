@@ -42,9 +42,14 @@ export default function AdminPage() {
     try {
       setLoading(true);
       const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
-      const response = await fetch('/api/projects?admin=true', {
+      
+      // 前端緩存破壞：添加時間戳參數和 HTTP 標頭
+      const response = await fetch(`/api/projects?admin=true&t=${Date.now()}`, {
+        cache: 'no-store',
         headers: {
-          'x-admin-password': adminPassword
+          'x-admin-password': adminPassword,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
         }
       });
       

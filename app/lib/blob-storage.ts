@@ -335,7 +335,14 @@ async function readExistingDataForComparison(): Promise<ProjectData | null> {
       return null;
     }
 
-    const response = await fetch(dataBlob.url);
+    // 緩存破壞：確保讀取最新數據進行比較
+    const response = await fetch(`${dataBlob.url}?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     if (!response.ok) {
       return null;
     }

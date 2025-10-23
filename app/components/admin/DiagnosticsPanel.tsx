@@ -79,8 +79,15 @@ export function DiagnosticsPanel() {
         setLoading(true);
         setError(null);
         const adminPassword = localStorage.getItem('remembered_password') || '';
-        const response = await fetch('/api/admin/diagnose', {
-          headers: { 'x-admin-password': adminPassword }
+        
+        // 前端緩存破壞：添加時間戳參數和 HTTP 標頭
+        const response = await fetch(`/api/admin/diagnose?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 
+            'x-admin-password': adminPassword,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
         });
         if (!response.ok) {
           const errorData = await response.json();

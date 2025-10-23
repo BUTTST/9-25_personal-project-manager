@@ -174,9 +174,14 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
   const handleDiagnose = async () => {
     try {
       const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
-      const response = await fetch('/api/admin/diagnose', {
+      
+      // 前端緩存破壞：添加時間戳參數和 HTTP 標頭
+      const response = await fetch(`/api/admin/diagnose?t=${Date.now()}`, {
+        cache: 'no-store',
         headers: {
-          'x-admin-password': adminPassword
+          'x-admin-password': adminPassword,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
         }
       });
 
