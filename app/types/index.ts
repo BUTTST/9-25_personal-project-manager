@@ -234,6 +234,7 @@ export function getDefaultVisibility(): Project['visibility'] {
     status: true,
     github: true,
     vercel: true,
+    deployment: true,
     path: false,
     statusNote: true,
     publicNote: true,
