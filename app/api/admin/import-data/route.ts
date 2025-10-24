@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
           ).length || 0,
           writeTimestamp: Date.now(),
           safetyCheck: 'FORCED',
-          importReason: 'Admin full data restore from backup',
+          backupReason: 'Admin full data restore from backup',
         },
       },
       true // forceWrite = true
