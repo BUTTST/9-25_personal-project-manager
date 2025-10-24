@@ -79,7 +79,28 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
     }
   };
 
-  const handleImportData = () => {
+  const handleImportData = async () => {
+    // 第一步：顯示確認對話框，要求輸入特定文字
+    const confirmText = '我確定要完全覆蓋資料庫';
+    
+    // 創建確認對話框
+    const userInput = prompt(
+      `⚠️ 警告：此操作將完全覆蓋所有現有資料！\n\n` +
+      `為確保您了解風險，請輸入以下文字：\n"${confirmText}"\n\n` +
+      `（請完整輸入，包含標點符號）`
+    );
+    
+    // 檢查輸入是否正確
+    if (userInput !== confirmText) {
+      if (userInput !== null) {
+        // 用戶有輸入但不正確
+        showToast('error', '驗證失敗', '輸入的文字不正確，操作已取消');
+      }
+      // 用戶點擊取消或輸入不正確，直接返回
+      return;
+    }
+    
+    // 第二步：驗證通過，顯示檔案選擇器
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -89,18 +110,71 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
       if (!file) return;
       
       try {
+        showToast('info', '正在讀取檔案...');
+        
         const text = await file.text();
         const importData = JSON.parse(text);
         
         // 驗證數據格式
         if (!importData.projects || !Array.isArray(importData.projects)) {
-          throw new Error('無效的數據格式');
+          throw new Error('無效的數據格式：缺少 projects 陣列');
         }
-
-        // 這裡需要調用父組件的更新函數
-        showToast('info', '導入功能開發中', '請使用表格導入功能');
+        
+        if (!importData.settings) {
+          throw new Error('無效的數據格式：缺少 settings 物件');
+        }
+        
+        // 顯示即將覆蓋的資料統計
+        const currentProjectCount = projectData.projects?.length || 0;
+        const importProjectCount = importData.projects.length;
+        
+        const finalConfirm = confirm(
+          `📊 資料統計：\n\n` +
+          `目前專案數：${currentProjectCount}\n` +
+          `匯入專案數：${importProjectCount}\n` +
+          `密碼數量：${importData.passwords?.length || 0}\n\n` +
+          `確定要完全覆蓋現有資料嗎？`
+        );
+        
+        if (!finalConfirm) {
+          showToast('info', '操作已取消');
+          return;
+        }
+        
+        // 第三步：執行完全覆蓋
+        const adminPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
+        
+        showToast('info', '正在覆蓋資料...');
+        
+        // 調用 API 進行完全覆蓋
+        const response = await fetch('/api/admin/import-data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-password': adminPassword,
+          },
+          body: JSON.stringify({
+            data: importData,
+            forceOverwrite: true,
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '匯入失敗');
+        }
+        
+        const result = await response.json();
+        showToast('success', '資料匯入成功', `已匯入 ${result.projectCount} 個專案`);
+        
+        // 重新載入頁面以顯示新數據
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+        
       } catch (error) {
-        showToast('error', '導入失敗', error instanceof Error ? error.message : '檔案格式錯誤');
+        console.error('匯入錯誤:', error);
+        showToast('error', '匯入失敗', error instanceof Error ? error.message : '檔案格式錯誤或網路問題');
       }
     };
     
