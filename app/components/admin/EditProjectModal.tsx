@@ -26,7 +26,9 @@ interface StorageImage {
 interface GalleryImage {
   id: string;
   title: string;
+  description?: string;
   src: string;
+  thumbnail?: string;
 }
 
 interface EditProjectModalProps {
