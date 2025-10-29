@@ -5,9 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/app/lib/supabase';
-import { generateId } from '@/app/lib/auth';
-import { ProjectFormData, ensureProjectVisibility, defaultImagePreviewMode, migrateLegacyCategoryToStatus } from '@/app/types';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { generateId } from '@/lib/auth';
+import { ProjectFormData, ensureProjectVisibility, defaultImagePreviewMode, migrateLegacyCategoryToStatus } from '@/types';
 
 // 禁用 Next.js 緩存
 export const revalidate = 0;

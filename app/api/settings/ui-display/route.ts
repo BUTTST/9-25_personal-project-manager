@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/app/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';

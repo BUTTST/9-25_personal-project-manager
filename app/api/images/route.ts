@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { listImages, uploadImage } from '@/app/lib/storage';
+import { listImages, uploadImage } from '@/lib/storage';
 
 // 驗證管理員權限
 function verifyAdmin(request: NextRequest): boolean {

@@ -6,8 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/app/lib/supabase';
-import { ensureProjectVisibility, migrateLegacyCategoryToStatus, defaultImagePreviewMode } from '@/app/types';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { ensureProjectVisibility, migrateLegacyCategoryToStatus, defaultImagePreviewMode } from '@/types';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';

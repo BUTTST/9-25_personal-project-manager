@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { deleteImage, deleteMultipleImages, checkImageReferences } from '@/app/lib/storage';
+import { deleteImage, deleteMultipleImages, checkImageReferences } from '@/lib/storage';
 
 // 驗證管理員權限
 function verifyAdmin(request: NextRequest): boolean {

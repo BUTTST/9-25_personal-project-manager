@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { checkImageReferences } from '@/app/lib/storage';
+import { checkImageReferences } from '@/lib/storage';
 
 // 驗證管理員權限
 function verifyAdmin(request: NextRequest): boolean {

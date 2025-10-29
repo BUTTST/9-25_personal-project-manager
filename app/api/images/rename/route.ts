@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { renameImage, checkImageReferences, updateImageReferences } from '@/app/lib/storage';
+import { renameImage, checkImageReferences, updateImageReferences } from '@/lib/storage';
 
 // 驗證管理員權限
 function verifyAdmin(request: NextRequest): boolean {

@@ -10,15 +10,25 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// 在構建時允許缺少環境變數（使用假值以便構建通過）
+const isBuildTime = process.env.NODE_ENV === 'production' && !process.env.VERCEL;
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+  if (isBuildTime) {
+    console.warn('⚠️  Supabase environment variables not found during build. Using dummy values.');
+  } else {
+    throw new Error('Missing Supabase environment variables');
+  }
 }
 
 /**
  * 前端 Client（使用 anon key）
  * 用於客戶端操作，受 RLS 限制
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key'
+);
 
 /**
  * 後端 Admin Client（使用 service role key）
@@ -26,7 +36,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
  * ⚠️ 僅在 API routes 中使用
  */
 export const supabaseAdmin = supabaseServiceKey
-  ? createClient(supabaseUrl, supabaseServiceKey, {
+  ? createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -43,7 +53,7 @@ if (!supabaseAdmin) {
  * 生成 Supabase Storage 的公開 URL
  */
 export function getStoragePublicUrl(path: string): string {
-  return `${supabaseUrl}/storage/v1/object/public/screenshots/${path}`;
+  return `${supabaseUrl || 'https://placeholder.supabase.co'}/storage/v1/object/public/screenshots/${path}`;
 }
 
 /**

@@ -7,8 +7,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import ImageUploader from '@/app/components/admin/ImageUploader';
-import ImageGallery from '@/app/components/admin/ImageGallery';
+import ImageUploader from '@/components/admin/ImageUploader';
+import ImageGallery from '@/components/admin/ImageGallery';
 
 export default function ImagesPage() {
   const router = useRouter();
