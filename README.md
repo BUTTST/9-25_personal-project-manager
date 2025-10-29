@@ -7,9 +7,9 @@
 
 <div align="center">
 
-| 線上應用 |  Vercel 主控 |  GitHub |
-|:---:|:---:|:---:|
-| [立即體驗](https://9-25-personal-project-manager.vercel.app/) | [管理部署](https://vercel.com/titans-projects-0ee27614/9-25-personal-project-manager) | [查看原始碼](https://github.com/BUTTST/9-25_personal-project-manager) |
+| GitHub | 線上應用 | Vercel 主控 | Vercel Storage | Supabase |
+|:---:|:---:|:---:|:---:|:---:|
+| [查看原始碼](https://github.com/BUTTST/9-25_personal-project-manager) | [立即體驗](https://9-25-personal-project-manager.vercel.app/) | [管理部署](https://vercel.com/titans-projects-0ee27614/9-25-personal-project-manager) | [存儲管理](https://vercel.com/titans-projects-0ee27614/9-25-personal-project-manager/stores) | [資料庫控制台](https://supabase.com/dashboard/project/cfsseikonkwfwkhsiavm) |
 
 </div>
 
