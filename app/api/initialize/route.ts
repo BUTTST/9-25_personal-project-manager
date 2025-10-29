@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readProjectData, writeProjectData } from '@/lib/blob-storage';
-import { sampleProjectData } from '@/lib/sample-data';
-import { isEmptyData } from '@/lib/data-safety';
+// ⚠️ 此文件已廢棄 - 已遷移至 Supabase
+// import { readProjectData, writeProjectData } from '@/lib/blob-storage'; // 已移除
+// import { sampleProjectData } from '@/lib/sample-data';
+// import { isEmptyData } from '@/lib/data-safety';
 
-// 自動初始化端點 - 僅在首次部署時運行
+// 自動初始化端點 - 已停用（已遷移至 Supabase）
 export async function GET(request: NextRequest) {
   // 核心問題：此端點會在讀取失敗時觸發強制覆寫，風險極高。
   // 我們將其停用，改為手動、安全的初始化方式。
+  // ⚠️ 已遷移至 Supabase，請使用 /api/admin/init-data（如果需要）
   return NextResponse.json({
-    message: '此自動初始化端點已被停用以確保資料安全。請使用管理後台的手動初始化功能。',
-    action: 'disabled',
+    message: '此自動初始化端點已被停用。專案已遷移至 Supabase，請使用管理後台進行數據管理。',
+    action: 'deprecated',
+    migration: 'Vercel Blob → Supabase',
     timestamp: new Date().toISOString()
   });
 

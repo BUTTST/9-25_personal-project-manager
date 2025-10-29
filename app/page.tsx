@@ -10,7 +10,6 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { Header } from '@/components/layout/Header';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { getPublicProjects, defaultProjectData } from '@/lib/blob-storage';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getRememberedPassword } from '@/lib/auth';
 import {
@@ -22,6 +21,24 @@ import {
   PhotoIcon,
   Squares2X2Icon,
 } from '@heroicons/react/24/outline';
+
+// 默認 UI 設定
+const defaultUIDisplaySettings: UIDisplaySettings = {
+  filters: [
+    { id: 'all', enabled: true, order: 0, label: '全部' },
+    { id: 'important', enabled: true, order: 1, label: '重要' },
+    { id: 'secondary', enabled: true, order: 2, label: '次要' },
+    { id: 'single-doc', enabled: true, order: 3, label: '單檔專案' },
+    { id: 'practice', enabled: true, order: 4, label: '實踐' },
+    { id: 'completed', enabled: true, order: 5, label: '完成' },
+    { id: 'abandoned', enabled: true, order: 6, label: '捨棄' }
+  ],
+  statistics: [
+    { id: 'stat-total', type: 'totalProjects', enabled: true, order: 0, label: '總專案數' },
+    { id: 'stat-display', type: 'displayedCount', enabled: true, order: 1, label: '顯示中' },
+    { id: 'stat-single-doc', type: 'singleDocCount', enabled: true, order: 2, label: '單檔文件' }
+  ]
+};
 
 export default function HomePage() {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
@@ -73,7 +90,7 @@ export default function HomePage() {
       setProjectData(data);
       
       // 載入 UI 設定
-      setUiSettings(data.settings.uiDisplay || defaultProjectData.settings.uiDisplay!);
+      setUiSettings(data.settings.uiDisplay || defaultUIDisplaySettings);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知錯誤');
     } finally {
