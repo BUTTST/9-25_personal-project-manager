@@ -9,7 +9,7 @@ export interface GalleryImage {
 /**
  * ⚠️ 此文件由 scripts/generate-image-gallery.js 自動生成
  * 
- * 自動生成時間：2025/10/29 上午11:10:51
+ * 自動生成時間：2025/10/29 上午11:42:20
  * 圖片來源目錄：public/前端截圖/
  * 圖片數量：26
  * 
