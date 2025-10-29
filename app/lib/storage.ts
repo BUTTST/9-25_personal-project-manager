@@ -13,7 +13,13 @@ const BUCKET_NAME = 'project-images';
 export async function uploadImage(
   file: File,
   filename?: string
-): Promise<{ success: boolean; url?: string; error?: string }> {
+): Promise<{ 
+  success: boolean; 
+  url?: string; 
+  originalFilename?: string;
+  storedFilename?: string;
+  error?: string;
+}> {
   if (!supabaseAdmin) {
     return { success: false, error: 'Supabase admin client not available' };
   }
@@ -22,8 +28,21 @@ export async function uploadImage(
     // 使用提供的檔名或原始檔名
     const uploadFilename = filename || file.name;
     
-    // 確保檔名安全（移除特殊字符）
-    const safeFilename = uploadFilename.replace(/[^a-zA-Z0-9\u4e00-\u9fa5._()-]/g, '-');
+    // 確保檔名安全（只允許 ASCII 字符）
+    // Supabase Storage 不接受中文或特殊字符
+    // 移除中文字符，只保留英文、數字、連字號、底線、點和括號
+    let safeFilename = uploadFilename
+      .replace(/[\u4e00-\u9fa5]/g, '') // 移除中文
+      .replace(/[^a-zA-Z0-9._()-]/g, '-') // 其他非法字符替換為連字號
+      .replace(/^-+|-+$/g, '') // 移除開頭和結尾的連字號
+      .replace(/-{2,}/g, '-'); // 多個連字號合併為一個
+    
+    // 如果檔名處理後為空或只有副檔名，使用時間戳
+    if (!safeFilename || safeFilename.startsWith('.')) {
+      const timestamp = Date.now();
+      const ext = file.name.split('.').pop() || 'jpg';
+      safeFilename = `image-${timestamp}.${ext}`;
+    }
 
     // 上傳檔案
     const { data, error } = await supabaseAdmin.storage
@@ -42,7 +61,12 @@ export async function uploadImage(
     }
 
     const publicUrl = getStoragePublicUrl(data.path);
-    return { success: true, url: publicUrl };
+    return { 
+      success: true, 
+      url: publicUrl,
+      originalFilename: uploadFilename,  // 原始檔名（可能包含中文）
+      storedFilename: safeFilename       // 存儲的檔名（ASCII only）
+    };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

@@ -18,6 +18,8 @@ interface UploadProgress {
   status: 'pending' | 'uploading' | 'success' | 'error';
   error?: string;
   url?: string;
+  originalFilename?: string;  // 原始檔名（可能含中文）
+  storedFilename?: string;    // 存儲檔名（ASCII only）
 }
 
 export default function ImageUploader({ onUploadComplete, adminPassword }: ImageUploaderProps) {
@@ -101,7 +103,13 @@ export default function ImageUploader({ onUploadComplete, adminPassword }: Image
           setUploadProgress((prev) =>
             prev.map((p, idx) =>
               idx === i
-                ? { ...p, status: 'success', url: result.url }
+                ? { 
+                    ...p, 
+                    status: 'success', 
+                    url: result.url,
+                    originalFilename: result.originalFilename,
+                    storedFilename: result.storedFilename
+                  }
                 : p
             )
           );
@@ -226,20 +234,27 @@ export default function ImageUploader({ onUploadComplete, adminPassword }: Image
             {uploadProgress.map((progress, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border"
+                className="p-3 bg-white dark:bg-gray-700 rounded-lg border space-y-1"
               >
-                <span className="text-sm truncate flex-1">{progress.filename}</span>
-                <span className={`text-xs ml-2 ${
-                  progress.status === 'success' ? 'text-green-600' :
-                  progress.status === 'error' ? 'text-red-600' :
-                  progress.status === 'uploading' ? 'text-blue-600' :
-                  'text-gray-500'
-                }`}>
-                  {progress.status === 'success' && '✅ 成功'}
-                  {progress.status === 'error' && `❌ ${progress.error}`}
-                  {progress.status === 'uploading' && '⏳ 上傳中...'}
-                  {progress.status === 'pending' && '⏸️ 等待中'}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm truncate flex-1">{progress.filename}</span>
+                  <span className={`text-xs ml-2 ${
+                    progress.status === 'success' ? 'text-green-600' :
+                    progress.status === 'error' ? 'text-red-600' :
+                    progress.status === 'uploading' ? 'text-blue-600' :
+                    'text-gray-500'
+                  }`}>
+                    {progress.status === 'success' && '✅ 成功'}
+                    {progress.status === 'error' && `❌ ${progress.error}`}
+                    {progress.status === 'uploading' && '⏳ 上傳中...'}
+                    {progress.status === 'pending' && '⏸️ 等待中'}
+                  </span>
+                </div>
+                {progress.status === 'success' && progress.storedFilename && progress.originalFilename !== progress.storedFilename && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    → 存儲為: {progress.storedFilename}
+                  </div>
+                )}
               </div>
             ))}
           </div>

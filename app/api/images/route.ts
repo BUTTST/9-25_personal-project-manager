@@ -58,7 +58,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       url: result.url,
-      filename: customFilename || file.name,
+      originalFilename: result.originalFilename,    // 原始檔名（可能含中文）
+      storedFilename: result.storedFilename,        // 存儲檔名（ASCII only）
+      filename: result.storedFilename,              // 向後兼容
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
