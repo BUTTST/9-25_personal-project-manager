@@ -74,7 +74,11 @@ try {
 - 處理前檢查資料類型
 - 處理遺失/未定義的值
 - 清理使用者輸入
-- **關鍵**：寫入前必須執行完整性驗證（參見 [data-safety.ts](mdc:app/lib/data-safety.ts)）
+- **關鍵**：Supabase 使用 PostgreSQL Constraints 自動驗證資料完整性
+  - NOT NULL 約束（必填欄位）
+  - CHECK 約束（值範圍驗證）
+  - UNIQUE 約束（防止重複）
+  - 參考工具函數：[data-safety.ts](mdc:app/lib/data-safety.ts)（歷史參考用）
 
 ### 主控台記錄
 使用一致的表情符號前綴以提高可見性：
@@ -98,28 +102,35 @@ try {
 ### 環境變數
 Vercel 中需要的變數：
 - `ADMIN_PASSWORD` - 管理員驗證
-- `BLOB_READ_WRITE_TOKEN` - 由 Vercel 自動生成
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase 專案 URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase 匿名金鑰（前端用）
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase 服務金鑰（後端專用，繞過 RLS）
 
 ### 圖片管理
-圖片使用自動化掃描和生成流程：
+圖片使用 Supabase Storage 上傳：
 
 **新增圖片的步驟：**
-1. 將圖片放入 `public/前端截圖/` 目錄
-2. 執行 `npm run generate-gallery`（或 `npm run dev` 會自動執行）
-3. 檢查自動生成的 `config/image-gallery.ts`
-4. 提交並推送到 Git
+1. 登入管理後台
+2. 進入「圖片管理」頁籤
+3. 點擊上傳或拖拽圖片
+4. 圖片立即可用於專案
 
 **圖片命名建議：**
-- 使用描述性名稱（標題會從文件名自動提取）
+- ✅ **完全支援中文檔名**（例如：`專案截圖(主界面).png`）
+- 使用描述性名稱（檔名會作為標題顯示）
 - 可包含日期前綴（例如：`10-15-專案名稱.png`）
-- 避免特殊字符，使用英文、數字、中文和常見符號
-- 範例：`9-24-icon-auto-creator(選擇圖標尺寸預設).png`
+- 範例：`10-16_SME-accounting-inventory-system(設定).png`
 
 **重要提醒：**
-- ⚠️ **請勿手動編輯** `config/image-gallery.ts`（自動生成文件）
-- ✅ 圖片配置是代碼層，不涉及 Blob 數據庫
-- ✅ Git 提供完整版本控制，安全無虞
-- ✅ 開發和構建時自動執行掃描腳本
+- ✅ Web 界面上傳，無需 Git 操作
+- ✅ 自動檢測重複（智能 hash 識別）
+- ✅ 重命名時自動更新專案引用
+- ✅ 刪除前自動檢查引用
+
+**技術細節：**
+- 後端：存儲為 ASCII 安全格式（帶 hash）
+- 前端：顯示完整中文檔名
+- 詳見：`app/lib/storage.ts`
 
 ## UI/UX 模式
 
@@ -181,7 +192,7 @@ Vercel 中需要的變數：
 
 ### 後部署
 - 監控 Vercel 日誌
-- 檢查 Vercel Blob 儲存
+- 檢查 Supabase 資料庫和 Storage
 - 測試生產 URL
 - 驗證環境變數已載入
 - 檢查管理員密碼是否有效
@@ -214,8 +225,8 @@ Vercel 中需要的變數：
 ### 常見問題
 
 **資料未載入**
-1. 在儀表板中檢查 Vercel Blob 儲存
-2. 驗證 `BLOB_READ_WRITE_TOKEN` 環境變數
+1. 在 Supabase 控制台檢查資料庫連接
+2. 驗證 Supabase 環境變數是否正確
 3. 使用 `/api/admin/diagnose` 端點
 4. 檢查瀏覽器主控台錯誤
 
@@ -275,7 +286,7 @@ Vercel 中需要的變數：
 ### 定期任務
 - 審查並更新依賴項
 - 檢查安全漏洞
-- 監控 Vercel Blob 儲存用量
+- 監控 Supabase 用量（資料庫 + Storage）
 - 審查錯誤日誌
 - 定期測試所有功能
 

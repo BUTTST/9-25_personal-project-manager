@@ -17,9 +17,10 @@ globs: "*.ts,*.tsx"
 - `ProjectVisibility` - 控制哪些欄位對訪客可見
 - `PasswordEntry` - 儲存的密碼 (僅限管理員)
 - `AppSettings` - 全域應用程式設定
-- `ProjectData` - 儲存在 Vercel Blob 中的完整資料結構
+- `ProjectData` - 完整資料結構（用於 API 回應格式）
 - `UIDisplaySettings` - 自訂 UI 篩選器和統計設定
 - `AuthSession` - 驗證會話資訊
+- `Database` - Supabase 資料庫型別（定義在 [app/lib/supabase.ts](mdc:app/lib/supabase.ts)）
 
 ### 分類
 專案分類是嚴格類型化的：

@@ -518,25 +518,28 @@ export async function DELETE(request: NextRequest, { params }) {
 
 ---
 
-## 🔄 從 Blob 遷移的差異
+## 📚 歷史記錄：從 Blob 遷移（僅供參考）
 
-### 主要變更
+> ⚠️ **注意**：本章節僅作為歷史記錄保留，現有系統已完全使用 Supabase。
 
-| 操作 | Blob 版本 | Supabase 版本 |
+### 主要變更（2025-10-28 完成）
+
+| 操作 | Blob 版本（舊） | Supabase 版本（現行） |
 |------|----------|--------------|
 | 讀取 | `readProjectData()` | `supabase.from('projects').select()` |
 | 寫入 | `writeProjectData(data)` | `supabase.from('projects').insert/update()` |
 | 圖片 | `public/` 靜態檔案 | Supabase Storage |
 | 欄位 | camelCase | snake_case（DB），API 自動轉換 |
 | 驗證 | `validateProjectData()` | PostgreSQL constraints + RLS |
+| 備份 | 手動下載 JSON | 自動 Point-in-Time Recovery |
 
-### 遷移檢查清單
+### 已完成遷移
 
-- [ ] 將 `import { ... } from '@/lib/blob-storage'` 改為 `import { ... } from '@/app/lib/supabase'`
-- [ ] 將欄位名稱轉換為 snake_case
-- [ ] 使用 `.from('table_name').select/insert/update/delete()` 取代 Blob 操作
-- [ ] 處理 `{ data, error }` 回傳格式
-- [ ] 移除 `writeTimestamp` 和 `safetyCheck`（由資料庫管理）
+- ✅ 所有 API 路由改用 Supabase
+- ✅ 16 個專案 100% 遷移
+- ✅ 圖片管理系統上線
+- ✅ `blob-storage.ts` 已移除
+- ✅ 0 筆資料遺失
 
 ---
 

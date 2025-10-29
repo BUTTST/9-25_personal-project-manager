@@ -1,9 +1,10 @@
 ---
 globs: "app/lib/**/*.ts,app/api/**/*.ts,app/api/**/route.ts"
 ---
-# 資料安全與防護規則
+# 資料安全與防護規則（Supabase 版）
 
 > ⚠️ **重要**：本規則的優先級最高，違反任何規則都可能導致生產資料永久丟失！
+> 📅 更新日期：2025-10-28 - 已遷移至 Supabase PostgreSQL + Storage
 
 ## 🚨 核心安全原則（絕不妥協）
 
@@ -14,19 +15,21 @@ globs: "app/lib/**/*.ts,app/api/**/*.ts,app/api/**/route.ts"
 ```typescript
 // 禁止：在 GET 端點中自動初始化
 export async function GET() {
-  const data = await readProjectData();
-  if (isEmptyData(data)) {
-    await writeProjectData(sampleData, true); // ⛔ 絕對禁止！
+  const { data: projects } = await supabaseAdmin.from('projects').select('*');
+  if (!projects || projects.length === 0) {
+    // ⛔ 絕對禁止自動插入範例資料！
+    await supabaseAdmin.from('projects').insert(sampleProjects);
   }
 }
 
 // 禁止：在應用啟動時自動覆寫
-if (!existingData || existingData.projects.length === 0) {
-  await writeProjectData(defaultData, true); // ⛔ 危險！
+if (!existingData || existingData.length === 0) {
+  await supabaseAdmin.from('projects').delete().neq('id', ''); // ⛔ 危險！
+  await supabaseAdmin.from('projects').insert(defaultData); // ⛔ 危險！
 }
 
-// 禁止：預設啟用 forceWrite
-await writeProjectData(data, true); // ⛔ 除非有明確的管理員授權
+// 禁止：無條件刪除/更新
+await supabaseAdmin.from('projects').delete(); // ⛔ 沒有 WHERE 條件
 ```
 
 ✅ **正確模式**：
@@ -40,7 +43,18 @@ export async function POST(request: NextRequest) {
   
   // 明確的用戶操作，有日誌記錄
   console.log('⚠️ 管理員觸發手動初始化');
-  await writeProjectData(sampleData, true);
+  
+  // 使用事務確保原子性
+  const { data, error } = await supabaseAdmin
+    .from('projects')
+    .insert(sampleProjects);
+    
+  if (error) {
+    console.error('初始化失敗:', error);
+    return NextResponse.json({ error: '初始化失敗' }, { status: 500 });
+  }
+  
+  return NextResponse.json({ success: true });
 }
 ```
 
@@ -50,96 +64,118 @@ export async function POST(request: NextRequest) {
 ❌ **嚴禁模式**：
 ```typescript
 // 禁止：將讀取失敗當作空資料
-async function readProjectData() {
+async function getProjects() {
   try {
-    const response = await fetch(blobUrl);
-    return await response.json();
+    const { data } = await supabaseAdmin.from('projects').select('*');
+    return data || []; // ⛔ 危險：error 時也返回空陣列
   } catch (error) {
-    return defaultProjectData; // ⛔ 危險：可能誤判為首次部署
+    return []; // ⛔ 危險：可能誤判為首次部署
   }
 }
 
 // 禁止：靜默失敗
-const data = await readProjectData();
-if (!data || data.projects.length === 0) {
+const projects = await getProjects();
+if (projects.length === 0) {
   // 可能是讀取失敗，不是真的為空！
   await initializeData(); // ⛔ 不安全
 }
 ```
 
-✅ **正確模式（本專案實作）**：
+✅ **正確模式（Supabase 版本）**：
 ```typescript
-// app/lib/blob-storage.ts 摘要：
-export async function readProjectData(): Promise<ProjectData> {
-  if (process.env.NEXT_PUBLIC_USE_LOCAL_BACKUP === 'true') {
-    // 本地備份模式：阻擋遠端讀取，避免以本機覆蓋雲端
-    throw new ProjectDataError('LOCAL_BACKUP_MODE_ENABLED', '...');
+// 正確：區分錯誤和空資料
+export async function getProjects() {
+  if (!supabaseAdmin) {
+    throw new Error('Supabase admin client not available');
   }
-  try {
-    const { blobs } = await list();
-    const dataBlob = blobs.find((b) => b.pathname === 'project-data.json');
-    if (!dataBlob) return enrichProjectData(defaultProjectData); // 首次：安全預設
+  
+  const { data, error } = await supabaseAdmin
+    .from('projects')
+    .select('*')
+    .order('sort_order');
+  
+  // 明確處理錯誤
+  if (error) {
+    console.error('Database query failed:', error);
+    throw new Error(`Failed to fetch projects: ${error.message}`);
+  }
+  
+  // data 為 null 或 [] 都是合法的（真正的空資料）
+  return data || [];
+}
 
-    const response = await fetch(dataBlob.url);
-    if (!response.ok) throw new ProjectDataError('BLOB_FETCH_FAILED', '...');
-    const data = (await response.json()) as ProjectData;
-    if (!validateProjectData(data)) throw new ProjectDataError('BLOB_SCHEMA_INVALID', '...');
-    return enrichProjectData(data);
-  } catch (error) {
-    // 本地開發或連線失敗時，優雅降級為預設資料（僅記憶體使用，不寫回）
-    console.warn('⚠️ 無法連接 Vercel Blob，使用預設空數據 (dev fallback)');
-    return enrichProjectData(defaultProjectData);
-  }
+// 使用時處理異常
+try {
+  const projects = await getProjects();
+  // 這裡的 projects.length === 0 是真正的空資料
+} catch (error) {
+  // 這才是讀取失敗，不應觸發初始化
+  console.error('Cannot read projects:', error);
+  return NextResponse.json({ error: '暫時無法讀取資料' }, { status: 503 });
 }
 ```
 
-### 原則 3：多層驗證才能寫入
-**必須**：每次寫入前執行完整的安全檢查鏈。
+### 原則 3：使用資料庫層級保護
+**必須**：利用 Supabase 的內建安全機制，而非手動驗證。
 
-✅ **必須實施的三層驗證**：
+✅ **Supabase 安全機制**：
 ```typescript
-async function writeProjectData(data: ProjectData, forceWrite = false) {
-  // 第一層：資料完整性驗證
-  const { isValid, errors } = validateDataIntegrity(data);
-  if (!isValid && !forceWrite) {
-    console.error('❌ 資料完整性驗證失敗:', errors);
-    throw new Error(`資料驗證失敗: ${errors.join(', ')}`);
+// ✅ 使用 PostgreSQL Constraints 保護資料完整性
+// 在資料表建立時設定：
+// - NOT NULL 約束（必填欄位）
+// - CHECK 約束（值範圍驗證）
+// - UNIQUE 約束（防止重複）
+// - FOREIGN KEY 約束（關聯完整性）
+
+// ✅ 使用 Row Level Security (RLS) 控制存取
+// projects 表的 RLS 政策：
+// - SELECT: 允許公開讀取（WHERE hidden = false）
+// - INSERT/UPDATE/DELETE: 僅後端 service_role 可操作
+
+// API 路由中的正確模式：
+export async function POST(request: NextRequest) {
+  // 第一層：驗證管理員權限
+  const password = request.headers.get('x-admin-password');
+  if (!password || password !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: '未授權' }, { status: 401 });
   }
 
-  // 第二層：空資料保護
-  if (!forceWrite && isEmptyData(data)) {
-    console.error('🚨 警告：嘗試寫入空資料！');
-    
-    // 讀取現有資料進行比對
-    const existingData = await readExistingDataForComparison();
-    if (existingData && !isEmptyData(existingData)) {
-      console.error('🛑 資料保護：阻止空資料覆蓋現有資料');
-      throw new Error('SAFETY_LOCK: 阻止空資料覆蓋。使用 forceWrite=true 強制執行。');
-    }
+  // 第二層：驗證 Supabase admin client
+  if (!supabaseAdmin) {
+    return NextResponse.json({ error: 'Database not available' }, { status: 503 });
   }
 
-  // 第三層：記錄安全檢查標記
-  const updatedData = {
-    ...data,
-    metadata: {
-      ...data.metadata,
-      lastUpdated: Date.now(),
-      writeTimestamp: Date.now(),
-      safetyCheck: forceWrite ? 'FORCED' : 'VERIFIED',
-      writeReason: forceWrite ? 'Admin forced write' : 'Normal update'
-    }
-  };
+  // 第三層：驗證輸入資料
+  const body = await request.json();
+  if (!body.dateAndFileName || !body.description) {
+    return NextResponse.json({ error: '必填欄位缺失' }, { status: 400 });
+  }
 
-  // 執行寫入
-  console.log('💾 執行資料寫入:', {
-    projects: updatedData.projects.length,
-    safetyCheck: updatedData.metadata.safetyCheck
-  });
+  // 第四層：執行資料庫操作（PostgreSQL 會自動驗證 constraints）
+  const { data, error } = await supabaseAdmin
+    .from('projects')
+    .insert({
+      date_and_file_name: body.dateAndFileName,
+      description: body.description,
+      // ... 其他欄位
+    })
+    .select()
+    .single();
+
+  // 第五層：處理資料庫錯誤
+  if (error) {
+    console.error('Database insert failed:', error);
+    // PostgreSQL 錯誤碼提供詳細資訊
+    if (error.code === '23505') { // unique_violation
+      return NextResponse.json({ error: '專案已存在' }, { status: 409 });
+    }
+    return NextResponse.json({ error: '新增失敗' }, { status: 500 });
+  }
+
+  // 記錄操作日誌
+  console.log('✅ 新增專案成功:', data.id);
   
-  return await put(BLOB_FILENAME, JSON.stringify(updatedData, null, 2), {
-    access: 'public',
-    addRandomSuffix: false
-  });
+  return NextResponse.json(data, { status: 201 });
 }
 ```
 
@@ -212,53 +248,78 @@ export async function POST(request: NextRequest) {
 // 僅回傳提示訊息，避免任何讀取失敗時誤觸初始化
 ```
 
-## 🛡️ Vercel Blob 特定注意事項
+## 🛡️ Supabase 特定注意事項
 
-### 注意 1：冷啟動延遲
-Serverless Functions 冷啟動時，Blob 可能尚未就緒：
+### 注意 1：使用 Service Role Key 繞過 RLS
 ```typescript
-// ✅ 使用重試機制
-async function readProjectDataWithRetry(maxRetries = 3) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await readProjectData();
-    } catch (error) {
-      if (i === maxRetries - 1) throw error;
-      console.log(`🔄 讀取失敗，重試 ${i + 1}/${maxRetries}...`);
-      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
-    }
+// ⚠️ Service Role Key 擁有完全權限，僅在後端使用
+import { supabaseAdmin } from '@/lib/supabase';
+
+// ❌ 錯誤：在前端使用 service role key
+// 這會暴露完全權限給所有用戶
+
+// ✅ 正確：僅在 API routes 使用
+export async function POST(request: NextRequest) {
+  // 驗證管理員權限後，才使用 supabaseAdmin
+  if (!verifyAdmin(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  
+  // 現在可以安全使用 supabaseAdmin
+  const { data, error } = await supabaseAdmin
+    .from('projects')
+    .insert(newProject);
 }
 ```
 
-### 注意 2：檔案存在性檢查
+### 注意 2：Row Level Security (RLS) 政策
 ```typescript
-// ✅ 先列出檔案，再讀取
-const { blobs } = await list();
-const dataBlob = blobs.find(blob => blob.pathname === BLOB_FILENAME);
+// ✅ 前端使用 supabase（受 RLS 限制）
+import { supabase } from '@/lib/supabase';
 
-if (!dataBlob) {
-  // 確實不存在
-} else {
-  // 存在，可以安全讀取
-}
+// 只能讀取公開資料
+const { data } = await supabase
+  .from('projects')
+  .select('*')
+  .eq('hidden', false); // RLS 會自動強制此條件
+
+// ✅ 後端使用 supabaseAdmin（繞過 RLS）
+const { data } = await supabaseAdmin
+  .from('projects')
+  .select('*'); // 可讀取所有資料，包括 hidden = true
 ```
 
-### 注意 3：寫入不是原子操作
+### 注意 3：PostgreSQL 事務與原子性
 ```typescript
-// ⚠️ 注意：Blob 寫入會完全覆蓋
-// 沒有事務保護，一旦寫入就無法回滾
-// 因此寫入前的驗證至關重要
+// ✅ Supabase 支援事務（與 Blob 的主要差異）
+// 使用 rpc 執行複雜事務
+const { data, error } = await supabaseAdmin.rpc('batch_update_projects', {
+  project_ids: ['id1', 'id2'],
+  new_status: 'completed'
+});
 
-// ✅ 建議：在寫入前創建備份標記（本專案以 metadata 記錄）
-const updatedData = {
-  ...data,
-  metadata: {
-    ...data.metadata,
-    writeTimestamp: Date.now(),
-    safetyCheck: forceWrite ? 'FORCED' : 'VERIFIED'
-  }
-};
+// ✅ 批量操作的原子性
+const { data, error } = await supabaseAdmin
+  .from('projects')
+  .insert([project1, project2, project3]); // 全部成功或全部失敗
+
+// 如果需要跨表操作，使用 PostgreSQL 事務：
+// BEGIN; ... COMMIT; 或 ROLLBACK;
+```
+
+### 注意 4：連接池與超時
+```typescript
+// ⚠️ Serverless 環境的連接限制
+// Supabase 免費版：最多 60 個並發連接
+
+// ✅ 正確：使用 supabaseAdmin 已經有連接池管理
+// 無需手動管理連接
+
+// ⚠️ 查詢超時設定
+const { data, error } = await supabaseAdmin
+  .from('projects')
+  .select('*')
+  .abortSignal(AbortSignal.timeout(5000)); // 5 秒超時
 ```
 
 ## 📋 代碼審查檢查清單
@@ -472,25 +533,49 @@ async function safeWriteProjectData(data: ProjectData) {
 
 ## 🆘 緊急情況處理
 
-如果發現資料被意外覆寫：
+如果發現資料被意外覆寫或刪除：
 
 1. **立即停止**：停止所有自動化部署
-2. **檢查備份**：查看本地備份或 Vercel Blob 歷史版本
-3. **使用還原端點**：透過管理後台的匯入功能還原
-4. **分析原因**：檢查日誌找出觸發原因
+2. **檢查備份**：
+   - Supabase 自動備份（Point-in-Time Recovery）
+   - 本地備份檔案
+   - Git 歷史記錄
+3. **使用還原功能**：
+   - Supabase 控制台的 Point-in-Time Recovery
+   - 或透過管理後台的匯入功能還原
+4. **分析原因**：檢查 Supabase 日誌和應用日誌找出觸發原因
 5. **修復代碼**：根據本規則修正問題
-6. **加強防護**：添加更多驗證層
+6. **加強防護**：
+   - 檢查 RLS 政策是否正確
+   - 確認 constraints 是否足夠
+   - 添加更多資料庫層級的保護
 
-## 🎯 總結：黃金法則
+## 🎯 總結：黃金法則（Supabase 版）
 
 1. **永不信任自動化**：任何自動執行的寫入邏輯都是風險
-2. **讀取失敗拋錯誤**：不要靜默處理，讓調用者決定
-3. **多層驗證保護**：完整性 → 空資料檢查 → 安全鎖
-4. **強制寫入需授權**：`forceWrite=true` 必須有明確理由
-5. **詳細日誌記錄**：每次寫入都要記錄原因和內容
-6. **區分情況處理**：「不存在」≠「讀取失敗」≠「資料為空」
+2. **讀取失敗拋錯誤**：明確處理 `error`，不要靜默返回空資料
+3. **利用資料庫保護**：使用 PostgreSQL constraints、RLS、事務
+4. **Service Role 需授權**：`supabaseAdmin` 僅在驗證後使用
+5. **詳細日誌記錄**：記錄所有資料庫操作和錯誤
+6. **區分情況處理**：`error` ≠ `data === null` ≠ `data.length === 0`
+7. **善用 PostgreSQL 錯誤碼**：根據錯誤碼提供精確的錯誤訊息
+
+### Supabase 特有優勢
+
+✅ **PostgreSQL 提供的保護**：
+- Constraints 自動驗證資料完整性
+- RLS 自動控制存取權限
+- Triggers 可實現自動審計
+- 事務保證原子性
+
+✅ **不再需要手動實作**：
+- ❌ `forceWrite` 參數（RLS 取代）
+- ❌ `safetyCheck` 標記（Timestamps 自動管理）
+- ❌ 空資料保護（Constraints 處理）
+- ❌ 手動備份標記（Point-in-Time Recovery）
 
 ---
 
-> 💡 **記住**：在 Serverless + Object Storage 的世界裡，資料一旦覆寫就無法回滾。
-> 寧可多一層檢查，也不要冒險自動化。安全永遠比方便更重要。
+> 💡 **記住**：Supabase PostgreSQL 提供企業級資料保護。
+> 善用資料庫層級的安全機制，而非在應用層重複實作。
+> RLS + Constraints + 事務 = 強大的資料安全保障。

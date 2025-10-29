@@ -3,7 +3,7 @@ alwaysApply: false
 ---
 # 個人專案管理器 - 專案結構
 
-這是一個使用 Next.js 14 (App Router)、TypeScript、Tailwind CSS 和 Vercel Blob 儲存體建立的個人專案展示與管理平台。
+這是一個使用 Next.js 14 (App Router)、TypeScript、Tailwind CSS 和 Supabase（PostgreSQL + Storage）建立的個人專案展示與管理平台。
 
 ## 核心架構
 
@@ -27,15 +27,17 @@ alwaysApply: false
 
 ### 關鍵檔案
 - [app/types/index.ts](mdc:app/types/index.ts) - `Project`、`PasswordEntry`、`AppSettings` 等核心類型定義
-- [app/lib/blob-storage.ts](mdc:app/lib/blob-storage.ts) - Vercel Blob 儲存體操作
+- [app/lib/supabase.ts](mdc:app/lib/supabase.ts) - Supabase 客戶端配置（前端 + 後端）
+- [app/lib/storage.ts](mdc:app/lib/storage.ts) - Supabase Storage 操作庫（圖片管理）
 - [app/lib/auth.ts](mdc:app/lib/auth.ts) - 驗證邏輯
-- [app/lib/data-safety.ts](mdc:app/lib/data-safety.ts) - 資料驗證與備份
+- [app/lib/data-safety.ts](mdc:app/lib/data-safety.ts) - 資料驗證工具（參考用）
+- [app/lib/statistics.ts](mdc:app/lib/statistics.ts) - 統計資料計算
+- [app/api/projects/route.ts](mdc:app/api/projects/route.ts) - 專案列表 API（GET/POST）
+- [app/api/images/route.ts](mdc:app/api/images/route.ts) - 圖片管理 API（上傳/列表）
 - [app/api/settings/ui-display/route.ts](mdc:app/api/settings/ui-display/route.ts) - UI 自訂設定 `GET/PUT`
 - [app/api/settings/reset-ui/route.ts](mdc:app/api/settings/reset-ui/route.ts) - 重置 UI 設定
 - [app/api/admin/diagnose/route.ts](mdc:app/api/admin/diagnose/route.ts) - 系統診斷
 - [app/api/admin/init-data/route.ts](mdc:app/api/admin/init-data/route.ts) - 安全初始化
-- [app/api/admin/force-init/route.ts](mdc:app/api/admin/force-init/route.ts) - 強制初始化（需審慎）
-- [app/api/initialize/route.ts](mdc:app/api/initialize/route.ts) - 已停用自動初始化
 - [package.json](mdc:package.json) - 依賴項與腳本
 - [tsconfig.json](mdc:tsconfig.json) - TypeScript 設定與路徑別名
 
@@ -53,7 +55,8 @@ alwaysApply: false
 - **語言**: TypeScript
 - **樣式**: Tailwind CSS 與自訂設計系統
 - **圖示**: Heroicons v2
-- **儲存**: Vercel Blob (用於專案、密碼、設定)
+- **資料庫**: Supabase PostgreSQL (專案、密碼、設定)
+- **儲存**: Supabase Storage (圖片上傳)
 - **部署**: Vercel
 
 ## 功能區域
@@ -64,9 +67,14 @@ alwaysApply: false
 5. **主題支援**: 淺色/深色模式自動偵測
 
 ## 資料流
-- 所有持久性資料以 JSON 格式儲存於 Vercel Blob
-- API 路由處理需管理員驗證的 CRUD 操作
+- 所有持久性資料儲存於 Supabase PostgreSQL
+- 圖片儲存於 Supabase Storage（CDN 加速）
+- API 路由使用 `supabaseAdmin` 處理需管理員驗證的 CRUD 操作
+- 前端使用 `supabase` 讀取公開資料（受 RLS 限制）
 - 客戶端元件管理本地狀態並與 API 同步
 - 伺服器元件擷取資料進行初始渲染
 
-備註：公開讀取端點不會暴露 `passwords` 與 `developerNote`，並過濾 `discarded` 或對訪客不可見的資料。
+備註：
+- RLS 政策自動限制前端只能讀取 `hidden = false` 的專案
+- `passwords` 表完全禁止前端訪問
+- `developerNote` 僅在管理員模式下顯示
