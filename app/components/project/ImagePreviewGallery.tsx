@@ -14,6 +14,7 @@ interface ImagePreviewGalleryProps {
 
 export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: ImagePreviewGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const visibleImages = useMemo(() => images.filter((img) => !!img?.src), [images]);
 
   if (collapsed) {
@@ -51,8 +52,11 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
         <button
           type="button"
           onClick={handleImageClick}
+          onMouseDown={() => setPreviewImage(currentImage.src)}
+          onMouseUp={() => setPreviewImage(null)}
+          onMouseLeave={() => setPreviewImage(null)}
           className="group relative w-full overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-muted/60 to-muted/30 shadow-inner transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-          title={visibleImages.length > 1 ? '點擊或按右鍵切換下一張' : ''}
+          title={visibleImages.length > 1 ? '點擊或按右鍵切換下一張 | 按住滑鼠放大預覽' : '按住滑鼠放大預覽'}
         >
           <Image
             src={currentImage.thumbnail || currentImage.src}
@@ -110,7 +114,25 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
         {/* 導航提示 */}
         {visibleImages.length > 1 && (
           <div className="text-xs text-muted-foreground text-center bg-muted/30 rounded-lg py-2 px-3">
-            💡 提示：點擊圖片或使用左右箭頭按鈕切換圖片
+            💡 提示：點擊圖片或使用左右箭頭按鈕切換圖片 | 按住滑鼠放大預覽
+          </div>
+        )}
+
+        {/* 圖片放大預覽 Modal */}
+        {previewImage && (
+          <div 
+            className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
+            onMouseUp={() => setPreviewImage(null)}
+            onMouseLeave={() => setPreviewImage(null)}
+          >
+            <img
+              src={previewImage}
+              alt="預覽"
+              className="max-w-full max-h-full object-contain"
+            />
+            <div className="absolute top-4 right-4 text-white text-sm bg-black bg-opacity-50 px-3 py-2 rounded">
+              放開滑鼠以關閉預覽
+            </div>
           </div>
         )}
       </div>
@@ -119,36 +141,60 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
 
   // 多張同時展開模式（grid）
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {visibleImages.map((image) => (
-          <button
-            key={image.id}
-            type="button"
-            onClick={() => onSelectImage?.(image)}
-            className="group relative overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Image
-              src={image.thumbnail || image.src}
-              alt={image.title || '專案圖片'}
-              width={600}
-              height={340}
-              className="h-auto w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/30" />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-black/0 px-4 py-3 text-left">
-              <div className="text-sm font-semibold text-white">
-                {image.title || '專案圖片'}
-              </div>
-              {image.description && (
-                <div className="text-xs text-white/80 line-clamp-2 whitespace-pre-wrap">
-                  {image.description}
+    <>
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {visibleImages.map((image) => (
+            <button
+              key={image.id}
+              type="button"
+              onClick={() => onSelectImage?.(image)}
+              onMouseDown={() => setPreviewImage(image.src)}
+              onMouseUp={() => setPreviewImage(null)}
+              onMouseLeave={() => setPreviewImage(null)}
+              className="group relative overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:scale-[1.02] active:scale-[0.98]"
+              title="按住滑鼠放大預覽"
+            >
+              <Image
+                src={image.thumbnail || image.src}
+                alt={image.title || '專案圖片'}
+                width={600}
+                height={340}
+                className="h-auto w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/30" />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-black/0 px-4 py-3 text-left">
+                <div className="text-sm font-semibold text-white">
+                  {image.title || '專案圖片'}
                 </div>
-              )}
-            </div>
-          </button>
-        ))}
+                {image.description && (
+                  <div className="text-xs text-white/80 line-clamp-2 whitespace-pre-wrap">
+                    {image.description}
+                  </div>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
+
+      {/* 圖片放大預覽 Modal */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
+          onMouseUp={() => setPreviewImage(null)}
+          onMouseLeave={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            alt="預覽"
+            className="max-w-full max-h-full object-contain"
+          />
+          <div className="absolute top-4 right-4 text-white text-sm bg-black bg-opacity-50 px-3 py-2 rounded">
+            放開滑鼠以關閉預覽
+          </div>
+        </div>
+      )}
+    </>
   );
 }
