@@ -314,20 +314,28 @@ export async function checkImageReferences(
   }
 
   try {
-    // 查詢所有包含此圖片路徑的專案
-    const { data, error } = await supabaseAdmin
+    // 構建 Supabase Storage 的完整 URL
+    const imageUrl = getStoragePublicUrl(filename);
+    
+    // 查詢所有專案，檢查 image_previews 中是否包含此圖片 URL
+    const { data: projects, error } = await supabaseAdmin
       .from('projects')
-      .select('id, date_and_file_name, image_previews')
-      .contains('image_previews', [{ src: `/前端截圖/${filename}` }]);
+      .select('id, date_and_file_name, image_previews');
 
     if (error) {
       return { success: false, error: error.message };
     }
 
-    const references = (data || []).map((project: any) => ({
-      id: project.id,
-      name: project.date_and_file_name,
-    }));
+    // 手動過濾包含此圖片的專案
+    const references = (projects || [])
+      .filter((project: any) => {
+        const previews = project.image_previews || [];
+        return previews.some((preview: any) => preview.src === imageUrl);
+      })
+      .map((project: any) => ({
+        id: project.id,
+        name: project.date_and_file_name,
+      }));
 
     return { success: true, references };
   } catch (error: any) {
@@ -349,6 +357,10 @@ export async function updateImageReferences(
   }
 
   try {
+    // 構建舊的和新的 Supabase Storage URL
+    const oldImageUrl = getStoragePublicUrl(oldFilename);
+    const newImageUrl = getStoragePublicUrl(newFilename);
+    
     let updatedCount = 0;
 
     for (const projectId of projectIds) {
@@ -366,10 +378,10 @@ export async function updateImageReferences(
 
       // 更新圖片路徑
       const updatedPreviews = (project.image_previews as any[]).map((preview) => {
-        if (preview.src === `/前端截圖/${oldFilename}`) {
+        if (preview.src === oldImageUrl) {
           return {
             ...preview,
-            src: `/前端截圖/${newFilename}`,
+            src: newImageUrl,
           };
         }
         return preview;

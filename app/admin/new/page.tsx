@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/ToastProvider';
+import { getRememberedPassword } from '@/lib/auth';
 import {
   ProjectFormData,
   ProjectStatus,
@@ -13,11 +14,27 @@ import {
   defaultImagePreviewMode,
   ensureProjectVisibility,
 } from '@/types';
-import { imageGallery } from '@/config/image-gallery';
 import { ArrowLeftIcon, PhotoIcon, PlusIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 
+// 從 Supabase Storage 獲取的圖片類型
+interface StorageImage {
+  name: string;
+  url: string;
+  size: number;
+  created_at: string;
+}
+
+// 轉換為 GalleryImage 格式（兼容現有邏輯）
+interface GalleryImage {
+  id: string;
+  title: string;
+  src: string;
+}
+
 export default function NewProjectPage() {
+  const [imageGallery, setImageGallery] = useState<GalleryImage[]>([]);
+  const [loadingImages, setLoadingImages] = useState(true);
   const [formData, setFormData] = useState<ProjectFormData>({
     dateAndFileName: '',
     description: '',
@@ -58,6 +75,52 @@ export default function NewProjectPage() {
       return;
     }
   }, [isAdmin, router]);
+
+  // 從 Supabase Storage 獲取圖片列表
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        setLoadingImages(true);
+        const password = getRememberedPassword();
+        
+        if (!password) {
+          console.warn('無法獲取管理員密碼，無法載入圖片');
+          setLoadingImages(false);
+          return;
+        }
+
+        const response = await fetch('/api/images', {
+          headers: {
+            'x-admin-password': password,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('無法載入圖片');
+        }
+
+        const data = await response.json();
+        
+        // 轉換 Supabase Storage 格式為 GalleryImage 格式
+        const galleryImages: GalleryImage[] = (data.files || []).map((file: StorageImage) => ({
+          id: file.name,
+          title: file.name.replace(/\.[^/.]+$/, ''), // 移除副檔名
+          src: file.url,
+        }));
+
+        setImageGallery(galleryImages);
+      } catch (error) {
+        console.error('載入圖片失敗:', error);
+        showToast('error', '無法載入圖片庫');
+      } finally {
+        setLoadingImages(false);
+      }
+    };
+
+    if (isAdmin) {
+      fetchImages();
+    }
+  }, [isAdmin, showToast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
