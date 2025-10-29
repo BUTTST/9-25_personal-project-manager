@@ -80,9 +80,10 @@ MCP 無法執行:
 
 ```yaml
 1. Bucket name（Bucket 名稱）:
-   輸入: screenshots
+   輸入: project-images
    說明: 建立後無法更改，只能使用小寫字母、數字、連字號
-   範例: screenshots, project-images, user-avatars
+   ⚠️ 必須使用: project-images（與程式碼設定一致）
+   範例: project-images, screenshots, user-avatars
    ❌ 錯誤: Screenshots, 截圖, screen shots
 
 2. Bucket type（Bucket 類型）:
@@ -128,7 +129,7 @@ MCP 無法執行:
 **成功指標**：
 ```
 ✓ 回到 Storage 主頁
-✓ 看到 "screenshots" bucket
+✓ 看到 "project-images" bucket
 ✓ 狀態為 Public
 ```
 
@@ -141,7 +142,7 @@ MCP 無法執行:
 **提示詞**：
 
 ```
-請使用 Supabase MCP 為 screenshots bucket 設定 Storage 政策：
+請使用 Supabase MCP 為 project-images bucket 設定 Storage 政策：
 
 1. 允許公開讀取
 2. 允許管理員上傳
@@ -157,22 +158,22 @@ MCP 無法執行:
 -- 允許公開讀取
 CREATE POLICY "Public Access"
 ON storage.objects FOR SELECT
-USING ( bucket_id = 'screenshots' );
+USING ( bucket_id = 'project-images' );
 
 -- 允許管理員上傳
 CREATE POLICY "Admin Upload"
 ON storage.objects FOR INSERT
-WITH CHECK ( bucket_id = 'screenshots' );
+WITH CHECK ( bucket_id = 'project-images' );
 
 -- 允許管理員更新
 CREATE POLICY "Admin Update"
 ON storage.objects FOR UPDATE
-USING ( bucket_id = 'screenshots' );
+USING ( bucket_id = 'project-images' );
 
 -- 允許管理員刪除
 CREATE POLICY "Admin Delete"
 ON storage.objects FOR DELETE
-USING ( bucket_id = 'screenshots' );
+USING ( bucket_id = 'project-images' );
 ```
 
 ---
@@ -211,7 +212,7 @@ USING ( bucket_id = 'screenshots' );
 
 **在 Supabase Storage 頁面**：
 
-- [ ] ✅ 看到 **screenshots** bucket
+- [ ] ✅ 看到 **project-images** bucket
 - [ ] ✅ Bucket 狀態為 **Public**
 - [ ] ✅ Bucket 可以正常訪問
 

@@ -345,7 +345,7 @@ URL: https://mcp.supabase.com/mcp
 
 **在 Supabase 控制台**：
 - [ ] ✅ Table Editor 顯示 3 個資料表
-- [ ] ✅ Storage 顯示 screenshots bucket
+- [ ] ✅ Storage 顯示 project-images bucket
 - [ ] ✅ RLS 已啟用
 
 **在 Vercel 控制台**：
