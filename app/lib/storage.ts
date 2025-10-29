@@ -8,7 +8,24 @@ import { supabaseAdmin, getStoragePublicUrl } from './supabase';
 const BUCKET_NAME = 'project-images';
 
 /**
+ * 生成檔名的簡短 hash（用於識別原始檔名）
+ */
+function generateFilenameHash(filename: string): string {
+  let hash = 0;
+  for (let i = 0; i < filename.length; i++) {
+    const char = filename.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36).substring(0, 6);
+}
+
+/**
  * 上傳圖片到 Supabase Storage
+ * 
+ * 智能處理檔名衝突：
+ * 1. 檢查原始檔名是否已存在（避免重複上傳相同圖片）
+ * 2. 清理檔名後如果衝突，自動添加序號
  */
 export async function uploadImage(
   file: File,
@@ -21,12 +38,15 @@ export async function uploadImage(
   error?: string;
 }> {
   if (!supabaseAdmin) {
-    return { success: false, error: 'Supabase admin client not available' };
+    return { success: false, error: 'Supabase admin 客戶端不可用' };
   }
 
   try {
     // 使用提供的檔名或原始檔名
     const uploadFilename = filename || file.name;
+    
+    // 生成原始檔名的 hash（用於檢測重複上傳）
+    const filenameHash = generateFilenameHash(uploadFilename);
     
     // 確保檔名安全（只允許 ASCII 字符）
     // Supabase Storage 不接受中文或特殊字符
@@ -44,20 +64,59 @@ export async function uploadImage(
       safeFilename = `image-${timestamp}.${ext}`;
     }
 
+    // 取得現有檔案列表，檢查是否有衝突
+    const { data: existingFiles, error: listError } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .list('', { limit: 1000 });
+
+    if (listError) {
+      return { success: false, error: `無法檢查現有檔案：${listError.message}` };
+    }
+
+    // 檢查 1：原始檔名是否已存在（通過 hash 識別）
+    const existingFileWithSameOriginal = existingFiles?.find(f => 
+      f.name.includes(`-${filenameHash}.`)
+    );
+
+    if (existingFileWithSameOriginal) {
+      return { 
+        success: false, 
+        error: `圖片「${uploadFilename}」已存在於系統中（存儲為：${existingFileWithSameOriginal.name}）` 
+      };
+    }
+
+    // 檢查 2：清理後的檔名是否衝突，如果衝突則添加序號
+    const nameParts = safeFilename.split('.');
+    const ext = nameParts.pop() || 'png';
+    const baseName = nameParts.join('.');
+    
+    // 建立帶 hash 的檔名：{baseName}-{hash}.{ext}
+    let finalFilename = `${baseName}-${filenameHash}.${ext}`;
+    let counter = 1;
+
+    // 如果檔名仍然衝突（極少見，但理論上可能），添加數字序號
+    while (existingFiles?.some(f => f.name === finalFilename)) {
+      finalFilename = `${baseName}-${filenameHash}-${counter}.${ext}`;
+      counter++;
+    }
+
     // 上傳檔案
     const { data, error } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
-      .upload(safeFilename, file, {
+      .upload(finalFilename, file, {
         cacheControl: '3600',
         upsert: false, // 不覆蓋現有檔案
       });
 
     if (error) {
-      // 檢查是否是檔案已存在
-      if (error.message.includes('duplicate')) {
-        return { success: false, error: `檔案 "${safeFilename}" 已存在` };
+      // 檢查是否是檔案已存在（理論上不應該發生，因為我們已經檢查過）
+      if (error.message.includes('duplicate') || error.message.includes('already exists')) {
+        return { 
+          success: false, 
+          error: `檔案「${finalFilename}」已存在於儲存空間中` 
+        };
       }
-      return { success: false, error: error.message };
+      return { success: false, error: `上傳失敗：${error.message}` };
     }
 
     const publicUrl = getStoragePublicUrl(data.path);
@@ -65,10 +124,13 @@ export async function uploadImage(
       success: true, 
       url: publicUrl,
       originalFilename: uploadFilename,  // 原始檔名（可能包含中文）
-      storedFilename: safeFilename       // 存儲的檔名（ASCII only）
+      storedFilename: finalFilename      // 存儲的檔名（ASCII + hash）
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { 
+      success: false, 
+      error: `上傳發生錯誤：${error.message}` 
+    };
   }
 }
 
