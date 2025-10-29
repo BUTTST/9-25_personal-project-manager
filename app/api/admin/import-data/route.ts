@@ -1,86 +1,84 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { writeProjectData, validateProjectData } from '@/lib/blob-storage';
-import { ProjectData } from '@/types';
+/**
+ * Import Data API - Supabase 版本
+ * POST: 批量匯入專案資料
+ */
 
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/app/lib/supabase';
+import { Project } from '@/app/types';
+
+export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
 /**
- * 完全覆蓋式資料匯入 API
- * 用於從備份檔案恢復系統資料
+ * POST /api/admin/import-data
+ * Body: { projects: Project[] }
  */
 export async function POST(request: NextRequest) {
   try {
-    // 驗證管理員權限
     const password = request.headers.get('x-admin-password');
+
     if (!password || password !== process.env.ADMIN_PASSWORD) {
       return NextResponse.json({ error: '未授權訪問' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { data, forceOverwrite } = body;
-
-    // 驗證是否有強制覆蓋標記
-    if (!forceOverwrite) {
-      return NextResponse.json(
-        { error: '此 API 僅支援強制覆蓋模式，請確認操作' },
-        { status: 400 }
-      );
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
     }
 
-    // 驗證匯入的資料格式
-    if (!validateProjectData(data)) {
-      return NextResponse.json(
-        { error: '無效的資料格式：資料結構不符合要求' },
-        { status: 400 }
-      );
+    const { projects } = await request.json();
+
+    if (!Array.isArray(projects)) {
+      return NextResponse.json({ error: 'projects 必須是陣列' }, { status: 400 });
     }
 
-    // 記錄操作日誌
-    console.log('🔄 管理員執行完全覆蓋式匯入:', {
-      timestamp: new Date().toISOString(),
-      projectCount: data.projects?.length || 0,
-      passwordCount: data.passwords?.length || 0,
-      forceOverwrite: true,
-    });
+    // 轉換為資料庫格式
+    const dbProjects = projects.map((p: Project) => ({
+      id: p.id,
+      date_and_file_name: p.dateAndFileName,
+      description: p.description,
+      category: p.category,
+      status: p.status,
+      github: p.github || null,
+      vercel: p.vercel || null,
+      deployment: p.deployment || null,
+      path: p.path || null,
+      status_note: p.statusNote || null,
+      public_note: p.publicNote || null,
+      developer_note: p.developerNote || null,
+      visibility: p.visibility,
+      image_previews: p.imagePreviews || [],
+      image_preview_mode: p.imagePreviewMode || 'grid',
+      custom_info_sections: p.customInfoSections || [],
+      document_meta: p.documentMeta || null,
+      featured: p.featured || false,
+      hidden: p.hidden || false,
+      sort_order: p.sortOrder || 0,
+      created_at: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString(),
+      updated_at: p.updatedAt ? new Date(p.updatedAt).toISOString() : new Date().toISOString(),
+    }));
 
-    // 執行完全覆蓋寫入
-    await writeProjectData(
-      {
-        ...data,
-        metadata: {
-          ...data.metadata,
-          lastUpdated: Date.now(),
-          totalProjects: data.projects?.length || 0,
-          publicProjects: data.projects?.filter((p: any) => 
-            p.visibility?.description && p.status !== 'discarded'
-          ).length || 0,
-          writeTimestamp: Date.now(),
-          safetyCheck: 'FORCED',
-          backupReason: 'Admin full data restore from backup',
-        },
-      },
-      true // forceWrite = true
-    );
+    // 批量插入（使用 upsert 以支援更新）
+    const { data, error } = await supabaseAdmin
+      .from('projects')
+      .upsert(dbProjects, { onConflict: 'id' })
+      .select();
 
-    console.log('✅ 資料匯入成功完成');
+    if (error) {
+      console.error('Failed to import projects:', error);
+      return NextResponse.json({ error: '匯入失敗', details: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      message: '資料已成功覆蓋',
-      projectCount: data.projects?.length || 0,
-      passwordCount: data.passwords?.length || 0,
-      timestamp: new Date().toISOString(),
+      message: '資料匯入成功',
+      importedCount: data?.length || 0,
     });
   } catch (error) {
-    console.error('❌ 資料匯入失敗:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to import data:', error);
     return NextResponse.json(
-      {
-        error: '資料匯入失敗',
-        details: message,
-      },
+      { error: '匯入失敗', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
 }
-

@@ -3,245 +3,618 @@ globs: "app/lib/**/*.ts,app/api/**/*.ts"
 ---
 # 資料管理指南
 
-## 儲存架構
-所有持久性資料都以單一 JSON 檔案的形式儲存在 Vercel Blob 中，並由 [blob-storage.ts](mdc:app/lib/blob-storage.ts) 管理。
+> 📅 更新日期：2025-10-28  
+> 🔄 版本：v2.0（Supabase 版本）
 
-## 資料結構
-完整的資料結構在 [types/index.ts](mdc:app/types/index.ts) 中定義為 `ProjectData`：
+## 🗄️ 儲存架構
+
+### 資料庫
+
+所有持久性資料都儲存在 **Supabase PostgreSQL** 資料庫中：
+
+```yaml
+資料表:
+  - projects: 專案資料（22個欄位）
+  - passwords: 密碼資料（6個欄位）
+  - settings: 應用設定（key-value）
+
+Storage:
+  - screenshots bucket: 圖片儲存
+```
+
+### 配置檔案
+
+- **Supabase Client**：[app/lib/supabase.ts](mdc:app/lib/supabase.ts)
+- **Storage 操作**：[app/lib/storage.ts](mdc:app/lib/storage.ts)
+
+---
+
+## 📊 資料結構
+
+### Projects 表
+
 ```typescript
-{
-  projects: Project[],
-  passwords: PasswordEntry[],
-  settings: AppSettings,
-  metadata: {
-    lastUpdated: number,
-    version: string,
-    totalProjects: number,
-    publicProjects: number,
-    writeTimestamp?: number,
-    safetyCheck?: 'VERIFIED' | 'FORCED',
-    backupTimestamp?: number,
-    backupReason?: string
-  }
+interface Project {
+  id: string;                          // 主鍵（text）
+  date_and_file_name: string;          // 專案名稱
+  description: string;                 // 說明
+  category: string;                    // 類別
+  status: string;                      // 狀態
+  github?: string;                     // GitHub 連結
+  vercel?: string;                     // Vercel 連結
+  deployment?: string;                 // 部署網址
+  path?: string;                       // 本地路徑
+  status_note?: string;                // 狀態註解
+  public_note?: string;                // 公開註解
+  developer_note?: string;             // 開發者註解
+  visibility: Record<string, boolean>; // 可見性設定（JSONB）
+  image_previews: Array<{              // 圖片預覽（JSONB）
+    id: string;
+    title: string;
+    src: string;
+  }>;
+  image_preview_mode: string;          // 圖片顯示模式
+  custom_info_sections: Array<any>;    // 自訂資訊（JSONB）
+  document_meta?: Record<string, any>; // 文件元資料（JSONB）
+  featured: boolean;                   // 是否精選
+  hidden: boolean;                     // 是否隱藏
+  sort_order: number;                  // 排序順序
+  created_at: string;                  // 建立時間（timestamptz）
+  updated_at: string;                  // 更新時間（timestamptz）
 }
 ```
 
-## 讀取資料
-使用 [blob-storage.ts](mdc:app/lib/blob-storage.ts) 中的 `readProjectData()`：
-```typescript
-import { readProjectData } from '@/lib/blob-storage';
+### Passwords 表
 
-const data = await readProjectData();
-// 若 blob 不存在，或本地開發無法連線，將以預設資料進行優雅降級（不會寫回）
+```typescript
+interface Password {
+  id: string;
+  platform: string;
+  account: string;
+  password: string;
+  created_at: string;
+  updated_at: string;
+}
 ```
 
-特色：
-- 自動回退到預設資料（僅在 dev 或檔案不存在時）
-- 回傳前進行資料驗證與標準化（分類、狀態、可見性、圖片/自訂段落）
-- 用於偵錯的主控台記錄
-- 具備優雅降級的錯誤處理
+### Settings 表
 
-## 寫入資料
-使用內建安全檢查的 `writeProjectData(data, forceWrite?)`：
 ```typescript
-import { writeProjectData } from '@/lib/blob-storage';
+interface Settings {
+  key: string;                    // 主鍵
+  value: Record<string, any>;     // JSONB 值
+  updated_at: string;
+}
 
-// 正常寫入 (含安全檢查)
-await writeProjectData(updatedData);
-
-// 強制寫入 (繞過安全檢查 - 請謹慎使用)
-await writeProjectData(updatedData, true);
+// 預設 keys:
+// - 'app_settings': 應用配置
+// - 'ui_display': UI 顯示設定
 ```
 
-安全功能：
-1. **資料完整性驗證**，透過 [data-safety.ts](mdc:app/lib/data-safety.ts)
-2. **空資料保護** - 防止意外的資料清除
-3. **備份元資料** - 追蹤寫入操作
-4. **強制寫入選項** - 用於有意的覆寫
+---
 
-## 資料安全
-[data-safety.ts](mdc:app/lib/data-safety.ts) 模組提供：
+## 🔧 資料操作
 
-### 驗證函數
-- `validateDataIntegrity(data)` - 全面的資料驗證
-- `isEmptyData(data)` - 檢查資料是否實質上為空
-- `createBackupData(data, reason)` - 建立含元資料的備份
+### 讀取資料
 
-### 驗證規則
-- `projects` 陣列必須存在且有效
-- `settings` 必須包含所有必要欄位
-- 每個專案必須有必要欄位 (id, dateAndFileName, category 等)
-- 可見性設定必須完整
-- 元資料必須包含版本和時間戳記
+#### 前端（公開資料）
 
-## 資料變動模式
-
-### 新增項目
 ```typescript
-const data = await readProjectData();
-const newProject = {
-  id: generateId(),
-  ...projectData,
-  createdAt: Date.now(),
-  updatedAt: Date.now(),
-  sortOrder: data.projects.length
-};
+import { supabase } from '@/app/lib/supabase';
 
-const updatedData = {
-  ...data,
-  projects: [...data.projects, newProject],
-  metadata: {
-    ...data.metadata,
-    lastUpdated: Date.now(),
-    totalProjects: data.projects.length + 1
-  }
-};
-
-await writeProjectData(updatedData);
+// 查詢公開專案
+const { data, error } = await supabase
+  .from('projects')
+  .select('*')
+  .eq('hidden', false)
+  .order('sort_order');
 ```
 
-### 更新項目
+#### 後端（管理員）
+
 ```typescript
-const data = await readProjectData();
-const updatedProjects = data.projects.map(p =>
-  p.id === projectId ? { ...p, ...updates, updatedAt: Date.now() } : p
-);
+import { supabaseAdmin } from '@/app/lib/supabase';
 
-const updatedData = {
-  ...data,
-  projects: updatedProjects,
-  metadata: {
-    ...data.metadata,
-    lastUpdated: Date.now()
-  }
-};
-
-await writeProjectData(updatedData);
+// 查詢所有專案（繞過 RLS）
+const { data, error } = await supabaseAdmin
+  .from('projects')
+  .select('*')
+  .order('sort_order');
 ```
 
-### 刪除項目
+### 寫入資料
+
+**⚠️ 重要**：所有寫入操作必須：
+1. 驗證管理員權限
+2. 使用 `supabaseAdmin`
+3. 處理欄位名稱轉換（camelCase ↔ snake_case）
+
 ```typescript
-const data = await readProjectData();
-const filteredProjects = data.projects.filter(p => p.id !== projectId);
+// API Route 中
+const password = request.headers.get('x-admin-password');
+if (!password || password !== process.env.ADMIN_PASSWORD) {
+  return NextResponse.json({ error: '未授權' }, { status: 401 });
+}
 
-const updatedData = {
-  ...data,
-  projects: filteredProjects,
-  metadata: {
-    ...data.metadata,
-    lastUpdated: Date.now(),
-    totalProjects: filteredProjects.length
-  }
-};
-
-await writeProjectData(updatedData);
+// 插入資料
+const { data, error } = await supabaseAdmin
+  .from('projects')
+  .insert({
+    date_and_file_name: formData.dateAndFileName,
+    description: formData.description,
+    // ... 其他欄位
+  })
+  .select()
+  .single();
 ```
 
-## 篩選資料
+### 更新資料
 
-### 公開專案
-使用 `getPublicProjects()` 篩選訪客視圖：
 ```typescript
-import { getPublicProjects } from '@/lib/blob-storage';
-
-const publicProjects = getPublicProjects(allProjects);
-// 回傳的專案具備：
-// - visibility.description === true
-// - status !== 'discarded'
-// - developerNote 已移除
+// 更新單一專案
+const { data, error } = await supabaseAdmin
+  .from('projects')
+  .update({
+    description: newDescription,
+    updated_at: new Date().toISOString(), // 自動觸發器會處理
+  })
+  .eq('id', projectId)
+  .select()
+  .single();
 ```
 
-### 自訂篩選
-為訪客篩選時，務必尊重可見性設定：
+### 刪除資料
+
 ```typescript
-const visibleProjects = projects.filter(project => {
-  if (!isAdmin) {
-    // 訪客僅能看到 description 可見的專案
-    if (!project.visibility.description) return false;
-    // 訪客看不到已捨棄的專案
-    if (project.category === 'abandoned') return false;
-  }
-  return true;
+// 刪除專案
+const { error } = await supabaseAdmin
+  .from('projects')
+  .delete()
+  .eq('id', projectId);
+```
+
+---
+
+## 🔄 欄位名稱轉換
+
+### 資料庫 ↔ 前端轉換規則
+
+```typescript
+// 資料庫使用 snake_case
+// 前端使用 camelCase
+
+// DB → Frontend
+const formatProject = (dbRow: any) => ({
+  id: dbRow.id,
+  dateAndFileName: dbRow.date_and_file_name,
+  statusNote: dbRow.status_note,
+  publicNote: dbRow.public_note,
+  developerNote: dbRow.developer_note,
+  imagePreviews: dbRow.image_previews,
+  imagePreviewMode: dbRow.image_preview_mode,
+  customInfoSections: dbRow.custom_info_sections,
+  documentMeta: dbRow.document_meta,
+  sortOrder: dbRow.sort_order,
+  createdAt: new Date(dbRow.created_at).getTime(),
+  updatedAt: new Date(dbRow.updated_at).getTime(),
+  // ... 其他欄位
+});
+
+// Frontend → DB
+const toDbFormat = (project: any) => ({
+  id: project.id,
+  date_and_file_name: project.dateAndFileName,
+  status_note: project.statusNote || null,
+  public_note: project.publicNote || null,
+  developer_note: project.developerNote || null,
+  image_previews: project.imagePreviews || [],
+  image_preview_mode: project.imagePreviewMode || 'grid',
+  custom_info_sections: project.customInfoSections || [],
+  document_meta: project.documentMeta || null,
+  sort_order: project.sortOrder || 0,
+  // ... 其他欄位
 });
 ```
 
-## 統計計算
-參閱 [statistics.ts](mdc:app/lib/statistics.ts) 計算專案統計資料：
-- 總專案數
-- 公開專案數
-- 分類計數
-- 基於狀態的計數
-- 自訂指標
+---
 
-## UI 設定管理
-UI 自訂 (篩選器、統計) 儲存在 `settings.uiDisplay` 中，端點：
-- `GET /api/settings/ui-display`（公開）
-- `PUT /api/settings/ui-display`（管理員）
-- `POST /api/settings/reset-ui`（管理員，重置為預設）
+## 🖼️ 圖片管理
 
-透過 `/api/settings/ui-display` 端點更新。
+### 上傳圖片
 
-## 錯誤恢復
-若資料損毀：
-1. 使用 `/api/admin/diagnose` 檢查資料狀態
-2. 使用 `/api/admin/force-init` 重設為預設值
-3. 使用 `/api/admin/init-data` 載入範例資料
-4. 透過 Vercel 儀表板 > Blob Storage 手動恢復
+```typescript
+import { uploadImage } from '@/app/lib/storage';
 
-## 圖片管理（自動化）
+// 上傳單一圖片
+const result = await uploadImage(file, customFilename);
 
-### 圖片存儲架構
-- **圖片文件**：存放在 `public/前端截圖/` 目錄
-- **圖片配置**：自動生成於 `config/image-gallery.ts`
-- **圖片引用**：項目的 `imagePreviews` 陣列（存儲於 Blob）
-
-### 新增圖片流程
-```bash
-# 1. 將圖片放入目錄
-public/前端截圖/新專案截圖.png
-
-# 2. 執行自動掃描（開發時自動執行）
-npm run generate-gallery
-
-# 3. 腳本自動生成配置文件
-config/image-gallery.ts  # ← 自動更新
-
-# 4. 提交並推送
-git add .
-git commit -m "新增圖片"
-git push
+if (result.success) {
+  console.log('圖片 URL:', result.url);
+  // URL 格式: https://[project-id].supabase.co/storage/v1/object/public/screenshots/filename.png
+}
 ```
 
-### 圖片命名建議
-- **描述性名稱**：標題會從文件名自動提取
-- **日期前綴**：可選，例如 `10-15-專案名稱.png`
-- **避免特殊字符**：使用英文、數字、中文和常見符號
+### 列出圖片
 
-### 重要事項
-⚠️ **圖片配置文件是自動生成的**
-- `config/image-gallery.ts` 由 `scripts/generate-image-gallery.js` 生成
-- **請勿手動編輯** `config/image-gallery.ts`
-- 如需調整生成邏輯，編輯 `scripts/generate-image-gallery.js`
+```typescript
+import { listImages } from '@/app/lib/storage';
 
-✅ **圖片管理的安全性**
-- 圖片配置是**代碼文件**，不涉及 Blob 寫入
-- Git 提供版本控制和回滾能力
-- 不會影響項目數據的安全性
+const result = await listImages();
 
-### 圖片選取流程
-1. 管理員在編輯界面看到 `imageGallery` 列表
-2. 勾選所需圖片
-3. 選定的圖片引用存儲到項目的 `imagePreviews` 陣列
-4. 前端讀取 `imagePreviews` 並顯示相應圖片
+if (result.success) {
+  result.files.forEach(file => {
+    console.log(file.name, file.url, file.size);
+  });
+}
+```
 
-## 最佳實踐
-1. 寫入時務必更新 `metadata.lastUpdated`
-2. 更新相關的元資料計數 (`totalProjects`, `publicProjects`)
-3. 寫入前驗證資料
-4. 優雅地處理讀寫錯誤
-5. 僅在有意圖時使用強制寫入
-6. 部署前在開發環境中測試資料操作
-7. 在所有操作中保持一致的資料結構
-8. 為偵錯記錄重要的資料操作
-9. 新增圖片後記得執行 `npm run generate-gallery`（或 `npm run dev` 會自動執行）
-10. 圖片文件名應具描述性，因為標題會從中提取
+### 重命名圖片
+
+```typescript
+import { renameImage, updateImageReferences } from '@/app/lib/storage';
+
+// 1. 重命名 Storage 中的檔案
+const result = await renameImage('old.png', 'new.png');
+
+// 2. 更新專案引用
+if (result.success) {
+  await updateImageReferences('old.png', 'new.png', affectedProjectIds);
+}
+```
+
+### 刪除圖片
+
+```typescript
+import { deleteImage, checkImageReferences } from '@/app/lib/storage';
+
+// 1. 檢查引用
+const refResult = await checkImageReferences('image.png');
+
+if (refResult.references && refResult.references.length > 0) {
+  console.warn('圖片被使用中:', refResult.references);
+}
+
+// 2. 刪除
+const result = await deleteImage('image.png');
+```
+
+---
+
+## 🔒 Row Level Security (RLS)
+
+### Projects 表
+
+```sql
+-- 公開讀取（訪客）
+-- 條件：未隱藏 且 description 可見
+SELECT * FROM projects 
+WHERE NOT hidden 
+  AND (visibility->>'description')::boolean = true;
+
+-- 管理員操作（透過 service_role key）
+-- 完全存取，繞過 RLS
+```
+
+### Passwords 表
+
+```sql
+-- 完全禁止前端訪問
+-- 僅後端 API 可操作（使用 service_role key）
+```
+
+### Settings 表
+
+```sql
+-- 公開讀取：允許
+-- 公開寫入：禁止
+-- 管理員寫入：允許（透過 service_role key）
+```
+
+---
+
+## 🔍 常用查詢模式
+
+### 篩選查詢
+
+```typescript
+// 按類別篩選
+const { data } = await supabase
+  .from('projects')
+  .select('*')
+  .eq('category', 'important')
+  .order('sort_order');
+
+// 按狀態篩選
+const { data } = await supabase
+  .from('projects')
+  .select('*')
+  .eq('status', 'in-progress')
+  .order('created_at', { ascending: false });
+
+// 複合條件
+const { data } = await supabase
+  .from('projects')
+  .select('*')
+  .eq('category', 'important')
+  .eq('hidden', false)
+  .order('sort_order');
+```
+
+### JSONB 查詢
+
+```typescript
+// 查詢 visibility 中的特定值
+const { data } = await supabase
+  .from('projects')
+  .select('*')
+  .eq('visibility->description', true);
+
+// 查詢包含特定圖片的專案
+const { data } = await supabase
+  .from('projects')
+  .select('*')
+  .contains('image_previews', [{ src: '/前端截圖/example.png' }]);
+```
+
+### 全文搜尋（未來）
+
+```typescript
+// 使用 PostgreSQL Full-Text Search
+const { data } = await supabase
+  .from('projects')
+  .select('*')
+  .textSearch('description', 'whisper OR gemini');
+```
+
+---
+
+## 📝 資料驗證
+
+### 插入前驗證
+
+```typescript
+// 必填欄位檢查
+if (!data.date_and_file_name || !data.description) {
+  throw new Error('必填欄位缺失');
+}
+
+// 類型檢查
+if (typeof data.sort_order !== 'number') {
+  throw new Error('sort_order 必須是數字');
+}
+
+// JSONB 格式驗證
+if (!Array.isArray(data.image_previews)) {
+  throw new Error('image_previews 必須是陣列');
+}
+```
+
+---
+
+## ⚡ 效能優化
+
+### 使用索引
+
+```sql
+-- 已建立的索引
+idx_projects_category    -- category 查詢
+idx_projects_status      -- status 查詢
+idx_projects_sort_order  -- 排序查詢
+idx_projects_created_at  -- 時間排序
+```
+
+**建議**：
+- 篩選時優先使用有索引的欄位
+- 避免在 JSONB 欄位上進行大量查詢
+
+### 批量操作
+
+```typescript
+// ✅ 好：使用批量插入
+const { data, error } = await supabaseAdmin
+  .from('projects')
+  .insert(multipleProjects);
+
+// ❌ 避免：迴圈插入
+for (const project of projects) {
+  await supabaseAdmin.from('projects').insert(project);
+}
+```
+
+---
+
+## 🔧 Migration 管理
+
+### 建立 Migration
+
+```typescript
+// 透過 Supabase MCP
+await apply_migration(projectId, 'migration_name', sqlQuery);
+```
+
+### 查看 Migrations
+
+```typescript
+// 列出所有 migrations
+const migrations = await list_migrations(projectId);
+```
+
+### Migration 命名慣例
+
+```
+格式: YYYYMMDDHHMMSS_description
+範例: 20251028171332_create_projects_table
+```
+
+---
+
+## 🆘 錯誤處理
+
+### 常見錯誤
+
+```typescript
+// 1. 連接失敗
+if (!supabaseAdmin) {
+  return { error: 'Supabase admin client not available' };
+}
+
+// 2. 查詢錯誤
+const { data, error } = await supabase.from('projects').select('*');
+if (error) {
+  console.error('Query failed:', error);
+  return { error: error.message };
+}
+
+// 3. 權限錯誤（RLS）
+// 使用 supabaseAdmin 繞過 RLS
+```
+
+---
+
+## 📚 API 使用範例
+
+### 完整的 CRUD 範例
+
+```typescript
+// app/api/projects/route.ts
+
+import { supabaseAdmin } from '@/app/lib/supabase';
+
+// CREATE
+export async function POST(request: NextRequest) {
+  const { data, error } = await supabaseAdmin
+    .from('projects')
+    .insert(newProject)
+    .select()
+    .single();
+}
+
+// READ
+export async function GET() {
+  const { data, error } = await supabaseAdmin
+    .from('projects')
+    .select('*')
+    .order('sort_order');
+}
+
+// UPDATE
+export async function PATCH(request: NextRequest, { params }) {
+  const { data, error } = await supabaseAdmin
+    .from('projects')
+    .update(updates)
+    .eq('id', params.id)
+    .select()
+    .single();
+}
+
+// DELETE
+export async function DELETE(request: NextRequest, { params }) {
+  const { error } = await supabaseAdmin
+    .from('projects')
+    .delete()
+    .eq('id', params.id);
+}
+```
+
+---
+
+## 🔄 從 Blob 遷移的差異
+
+### 主要變更
+
+| 操作 | Blob 版本 | Supabase 版本 |
+|------|----------|--------------|
+| 讀取 | `readProjectData()` | `supabase.from('projects').select()` |
+| 寫入 | `writeProjectData(data)` | `supabase.from('projects').insert/update()` |
+| 圖片 | `public/` 靜態檔案 | Supabase Storage |
+| 欄位 | camelCase | snake_case（DB），API 自動轉換 |
+| 驗證 | `validateProjectData()` | PostgreSQL constraints + RLS |
+
+### 遷移檢查清單
+
+- [ ] 將 `import { ... } from '@/lib/blob-storage'` 改為 `import { ... } from '@/app/lib/supabase'`
+- [ ] 將欄位名稱轉換為 snake_case
+- [ ] 使用 `.from('table_name').select/insert/update/delete()` 取代 Blob 操作
+- [ ] 處理 `{ data, error }` 回傳格式
+- [ ] 移除 `writeTimestamp` 和 `safetyCheck`（由資料庫管理）
+
+---
+
+## 💡 最佳實踐
+
+### 1. 永遠使用參數化查詢
+
+```typescript
+// ✅ 好：使用 Supabase 的參數化查詢
+const { data } = await supabase
+  .from('projects')
+  .select('*')
+  .eq('id', userId);
+
+// ❌ 避免：字串拼接 SQL（SQL injection 風險）
+await supabase.rpc('custom_function', { raw_sql: `SELECT * FROM projects WHERE id = '${userId}'` });
+```
+
+### 2. 處理 null 值
+
+```typescript
+// PostgreSQL 區分 null 和空字串
+github: formData.github?.trim() || null  // ✅ 使用 null
+github: formData.github?.trim() || ''    // ❌ 使用空字串會佔用空間
+```
+
+### 3. 使用 JSONB 進行靈活資料
+
+```typescript
+// ✅ 適合用 JSONB 的場景
+- visibility（動態欄位）
+- image_previews（陣列）
+- custom_info_sections（不固定結構）
+
+// ❌ 不適合用 JSONB 的場景
+- date_and_file_name（需要索引、排序）
+- category、status（需要快速查詢）
+```
+
+### 4. 批量操作使用事務
+
+```typescript
+// 批量更新排序
+const updates = projects.map(p => 
+  supabaseAdmin
+    .from('projects')
+    .update({ sort_order: p.sortOrder })
+    .eq('id', p.id)
+);
+
+await Promise.all(updates);
+```
+
+---
+
+## 🎯 未來優化
+
+### 短期
+
+- [ ] 圖片自動優化（壓縮、WebP）
+- [ ] 全文搜尋（PostgreSQL FTS）
+- [ ] 資料庫備份自動化
+
+### 中期
+
+- [ ] 多使用者支援（Supabase Auth）
+- [ ] 即時協作（Supabase Realtime）
+- [ ] 進階查詢（複合條件、日期範圍）
+
+### 長期
+
+- [ ] 資料分析儀表板
+- [ ] 圖表視覺化
+- [ ] API 文檔自動生成
+
+---
+
+**相關文檔**：
+- [API路由指南.mdc](mdc:.cursor/rules/API路由指南.mdc)
+- [資料安全與防護.mdc](mdc:.cursor/rules/資料安全與防護.mdc)
+- [TypeScript指南.mdc](mdc:.cursor/rules/TypeScript指南.mdc)

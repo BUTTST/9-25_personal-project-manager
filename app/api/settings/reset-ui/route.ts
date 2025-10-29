@@ -1,44 +1,56 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { readProjectData, writeProjectData, defaultProjectData } from '@/lib/blob-storage';
+/**
+ * Reset UI Settings API - Supabase 版本
+ * POST: 重置 UI 設定為預設值
+ */
 
-// 禁用 Next.js 緩存，確保每次請求都獲取最新數據
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/app/lib/supabase';
+
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
+const DEFAULT_UI_DISPLAY = {
+  filters: [],
+  statistics: [],
+};
+
+/**
+ * POST /api/settings/reset-ui
+ * 重置 UI 顯示設定
+ */
 export async function POST(request: NextRequest) {
-  const password = request.headers.get('x-admin-password');
-
-  if (!password || password !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: '未授權訪問' }, { status: 401 });
-  }
-
   try {
-    const data = await readProjectData();
+    const password = request.headers.get('x-admin-password');
 
-    // 重置 UI 設定為默認配置
-    const updatedData = {
-      ...data,
-      settings: {
-        ...data.settings,
-        uiDisplay: {
-          filters: [...defaultProjectData.settings.uiDisplay.filters],
-          statistics: [...defaultProjectData.settings.uiDisplay.statistics],
-        },
-      },
-    };
+    if (!password || password !== process.env.ADMIN_PASSWORD) {
+      return NextResponse.json({ error: '未授權訪問' }, { status: 401 });
+    }
 
-    await writeProjectData(updatedData);
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+    }
+
+    // 重置為預設值
+    const { error } = await supabaseAdmin
+      .from('settings')
+      .update({ value: DEFAULT_UI_DISPLAY })
+      .eq('key', 'ui_display');
+
+    if (error) {
+      console.error('Failed to reset ui_display:', error);
+      return NextResponse.json({ error: '重置設定失敗', details: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({
-      message: 'UI 設定已重置為默認值',
-      uiDisplay: updatedData.settings.uiDisplay,
+      success: true,
+      message: 'UI 設定已重置為預設值',
+      value: DEFAULT_UI_DISPLAY,
     });
   } catch (error) {
-    console.error('Failed to reset UI settings:', error);
+    console.error('Failed to reset ui_display:', error);
     return NextResponse.json(
-      { error: '重置失敗', details: error instanceof Error ? error.message : '未知錯誤' },
+      { error: '重置設定失敗', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
 }
-

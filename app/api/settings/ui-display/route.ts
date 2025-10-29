@@ -1,83 +1,88 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { readProjectData, writeProjectData } from '@/lib/blob-storage';
-import { UIDisplaySettings } from '@/types';
+/**
+ * UI Display Settings API - Supabase 版本
+ * GET: 獲取 UI 顯示設定
+ * PUT: 更新 UI 顯示設定
+ */
 
-// 禁用 Next.js 緩存，確保每次請求都獲取最新數據
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase, supabaseAdmin } from '@/app/lib/supabase';
+
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
 /**
- * 更新 UI 顯示設定
+ * GET /api/settings/ui-display
+ * 獲取 UI 顯示設定（公開）
  */
-export async function PUT(request: NextRequest) {
+export async function GET() {
   try {
-    // 驗證管理員權限
-    const password = request.headers.get('x-admin-password');
-    if (!password || password !== process.env.ADMIN_PASSWORD) {
-      return NextResponse.json({ error: '未授權訪問' }, { status: 401 });
+    const { data, error } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'ui_display')
+      .single();
+
+    if (error) {
+      console.error('Failed to fetch ui_display settings:', error);
+      return NextResponse.json(
+        { filters: [], statistics: [] },
+        { status: 200 }
+      );
     }
-    
-    // 解析請求資料
-    const newSettings: UIDisplaySettings = await request.json();
-    
-    // 驗證資料格式
-    if (!newSettings.filters || !Array.isArray(newSettings.filters)) {
-      return NextResponse.json({ error: '篩選器設定格式錯誤' }, { status: 400 });
-    }
-    
-    if (!newSettings.statistics || !Array.isArray(newSettings.statistics)) {
-      return NextResponse.json({ error: '統計設定格式錯誤' }, { status: 400 });
-    }
-    
-    // 讀取現有資料
-    const data = await readProjectData();
-    
-    // 更新 UI 設定
-    data.settings.uiDisplay = newSettings;
-    
-    // 寫入資料
-    await writeProjectData(data);
-    
-    return NextResponse.json({ 
-      success: true, 
-      settings: newSettings,
-      message: 'UI 設定已成功儲存'
-    });
+
+    return NextResponse.json(data?.value || { filters: [], statistics: [] });
   } catch (error) {
-    console.error('儲存 UI 設定失敗:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json(
-      {
-        error: '儲存失敗，請稍後再試',
-        details: message,
-        translatedMessage: `⚠️ 儲存 UI 設定失敗：${message}`,
-      },
-      { status: 500 }
-    );
+    console.error('Failed to get ui_display:', error);
+    return NextResponse.json({ filters: [], statistics: [] });
   }
 }
 
 /**
- * 獲取 UI 顯示設定
+ * PUT /api/settings/ui-display
+ * 更新 UI 顯示設定（需管理員權限）
  */
-export async function GET(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
-    const data = await readProjectData();
-    return NextResponse.json({
-      success: true,
-      settings: data.settings.uiDisplay
-    });
+    const password = request.headers.get('x-admin-password');
+
+    if (!password || password !== process.env.ADMIN_PASSWORD) {
+      return NextResponse.json({ error: '未授權訪問' }, { status: 401 });
+    }
+
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+    }
+
+    const newValue = await request.json();
+
+    // 驗證資料格式
+    if (!newValue.filters || !Array.isArray(newValue.filters)) {
+      return NextResponse.json({ error: 'filters 必須是陣列' }, { status: 400 });
+    }
+
+    if (!newValue.statistics || !Array.isArray(newValue.statistics)) {
+      return NextResponse.json({ error: 'statistics 必須是陣列' }, { status: 400 });
+    }
+
+    // 更新資料庫
+    const { data, error } = await supabaseAdmin
+      .from('settings')
+      .update({ value: newValue })
+      .eq('key', 'ui_display')
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to update ui_display:', error);
+      return NextResponse.json({ error: '更新設定失敗', details: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, value: data.value });
   } catch (error) {
-    console.error('讀取 UI 設定失敗:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to update ui_display:', error);
     return NextResponse.json(
-      {
-        error: '讀取失敗',
-        details: message,
-        translatedMessage: `⚠️ 讀取 UI 設定失敗：${message}`,
-      },
-      { status: 503 }
+      { error: '更新設定失敗', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
     );
   }
 }
-

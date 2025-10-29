@@ -10,6 +10,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ProjectTable } from '@/components/admin/ProjectTable';
 import { SettingsSection } from '@/components/admin/SettingsSection';
 import { TableImportSection } from '@/components/admin/TableImportSection';
+import ImageUploader from '@/components/admin/ImageUploader';
+import ImageGallery from '@/components/admin/ImageGallery';
 import {
   PlusIcon,
   CogIcon,
@@ -24,7 +26,9 @@ import { DiagnosticsPanel } from '@/components/admin/DiagnosticsPanel';
 export default function AdminPage() {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'projects' | 'import' | 'settings' | 'diagnostics'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'import' | 'images' | 'settings' | 'diagnostics'>('projects');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [adminPassword, setAdminPassword] = useState('');
   
   const { isAdmin } = useAuth();
   const { showToast } = useToast();
@@ -35,6 +39,11 @@ export default function AdminPage() {
       router.push('/');
       return;
     }
+    
+    // 獲取管理員密碼
+    const storedPassword = typeof window !== 'undefined' ? localStorage.getItem('remembered_password') || '' : '';
+    setAdminPassword(storedPassword);
+    
     loadData();
   }, [isAdmin, router]);
 
@@ -264,11 +273,13 @@ export default function AdminPage() {
                       activeTab === 'projects'
                         ? 'calc(0.5rem)'
                         : activeTab === 'import'
-                          ? 'calc(25% + 0.375rem)'
-                          : activeTab === 'settings'
-                            ? 'calc(50% + 0.25rem)'
-                            : 'calc(75% + 0.125rem)',
-                    width: 'calc(25% - 0.75rem)',
+                          ? 'calc(20% + 0.375rem)'
+                          : activeTab === 'images'
+                            ? 'calc(40% + 0.25rem)'
+                            : activeTab === 'settings'
+                              ? 'calc(60% + 0.125rem)'
+                              : 'calc(80%)',
+                    width: 'calc(20% - 0.75rem)',
                   }}
                 />
                 
@@ -293,6 +304,17 @@ export default function AdminPage() {
                   }`}
                 >
                   批量導入
+                </button>
+                
+                <button
+                  onClick={() => setActiveTab('images')}
+                  className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 ${
+                    activeTab === 'images'
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  圖片管理
                 </button>
                 
                 <button
@@ -335,6 +357,21 @@ export default function AdminPage() {
               <TableImportSection
                 onImportComplete={handleImportComplete}
               />
+            )}
+            
+            {activeTab === 'images' && (
+              <div className="p-6 space-y-6">
+                <ImageUploader
+                  adminPassword={adminPassword}
+                  onUploadComplete={() => setRefreshKey((prev) => prev + 1)}
+                />
+                <div className="border-t dark:border-gray-700 pt-6">
+                  <ImageGallery
+                    adminPassword={adminPassword}
+                    onRefresh={refreshKey > 0}
+                  />
+                </div>
+              </div>
             )}
             
             {activeTab === 'settings' && (
