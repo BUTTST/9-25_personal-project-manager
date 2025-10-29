@@ -169,6 +169,138 @@ export function getStoragePublicUrl(path: string): string {
 
 ---
 
+## 🔴 錯誤 4：中文檔名上傳失敗
+
+### ❌ 錯誤訊息
+```
+❌ Invalid key: 螢幕擷取畫面-2025-10-12-163827.png
+```
+
+### 🔍 問題原因
+- **Supabase Storage 只接受 ASCII 字符作為檔名**
+- 不支援中文、日文、韓文等 Unicode 字符
+- 原始檔名清理邏輯允許中文字符 `\u4e00-\u9fa5`，但 Supabase 拒絕
+
+### 技術限制
+```yaml
+Supabase Storage 檔名規則:
+  允許: a-z, A-Z, 0-9, -, _, ., (, )
+  禁止: 中文、特殊符號、空格等非 ASCII 字符
+```
+
+### ✅ 解決方案
+
+**採用方案：前端顯示原名 + 後端存 ASCII**
+
+#### 1. 檔名清理邏輯（`app/lib/storage.ts`）
+
+```typescript
+// 修改前（允許中文）
+const safeFilename = uploadFilename.replace(/[^a-zA-Z0-9\u4e00-\u9fa5._()-]/g, '-');
+
+// 修改後（移除中文）
+let safeFilename = uploadFilename
+  .replace(/[\u4e00-\u9fa5]/g, '')           // 移除所有中文字符
+  .replace(/[^a-zA-Z0-9._()-]/g, '-')       // 非法字符替換為連字號
+  .replace(/^-+|-+$/g, '')                  // 移除開頭和結尾的連字號
+  .replace(/-{2,}/g, '-');                  // 多個連字號合併為一個
+
+// 處理空檔名
+if (!safeFilename || safeFilename.startsWith('.')) {
+  const timestamp = Date.now();
+  const ext = file.name.split('.').pop() || 'jpg';
+  safeFilename = `image-${timestamp}.${ext}`;
+}
+```
+
+#### 2. 返回值擴展（雙檔名系統）
+
+```typescript
+// 函數返回類型
+export async function uploadImage(
+  file: File,
+  filename?: string
+): Promise<{ 
+  success: boolean; 
+  url?: string; 
+  originalFilename?: string;  // 新增：原始檔名（含中文）
+  storedFilename?: string;    // 新增：存儲檔名（ASCII only）
+  error?: string;
+}>
+
+// 返回邏輯
+return { 
+  success: true, 
+  url: publicUrl,
+  originalFilename: uploadFilename,  // 保留原始中文檔名
+  storedFilename: safeFilename       // 實際存儲的 ASCII 檔名
+};
+```
+
+#### 3. API 返回格式（`app/api/images/route.ts`）
+
+```typescript
+return NextResponse.json({
+  success: true,
+  url: result.url,
+  originalFilename: result.originalFilename,    // 原始中文檔名
+  storedFilename: result.storedFilename,        // 存儲 ASCII 檔名
+  filename: result.storedFilename,              // 向後兼容
+});
+```
+
+#### 4. 前端顯示（`app/components/admin/ImageUploader.tsx`）
+
+```tsx
+{/* 顯示原始中文檔名 */}
+<span className="text-sm">{progress.filename}</span>
+
+{/* 如果檔名有轉換，顯示存儲名稱 */}
+{progress.status === 'success' && 
+ progress.storedFilename && 
+ progress.originalFilename !== progress.storedFilename && (
+  <div className="text-xs text-gray-500">
+    → 存儲為: {progress.storedFilename}
+  </div>
+)}
+```
+
+### 📊 檔名轉換範例
+
+| 原始檔名 | 轉換後檔名 | 說明 |
+|---------|-----------|------|
+| `螢幕擷取畫面-2025.png` | `-2025.png` | 移除中文 |
+| `我的照片 (1).jpg` | `-1-.jpg` | 移除中文和空格 |
+| `測試123test.png` | `123test.png` | 保留英文數字 |
+| `圖片.png` | `image-1730182834567.png` | 空檔名使用時間戳 |
+| `profile-picture.jpg` | `profile-picture.jpg` | 純英文不變 |
+
+### 🎯 用戶體驗
+
+**上傳流程**：
+```
+1. 選擇檔案: 螢幕擷取畫面.png
+2. 上傳中: ⏳ 螢幕擷取畫面.png
+3. 上傳成功: 
+   ✅ 螢幕擷取畫面.png
+   → 存儲為: -.png
+```
+
+**優點**：
+- ✅ 前端顯示熟悉的中文檔名
+- ✅ 後端存儲符合 Supabase 規範
+- ✅ 同時保留兩種檔名信息
+- ✅ 向後兼容現有代碼
+
+**影響文件**：3 個文件
+- `app/lib/storage.ts`（檔名處理邏輯）
+- `app/api/images/route.ts`（API 返回格式）
+- `app/components/admin/ImageUploader.tsx`（前端顯示）
+
+**詳細文檔**：[中文檔名支援實施報告.md](./中文檔名支援實施報告.md)
+
+---
+
 ## 📋 問題總結與經驗
 
 ### 🎯 關鍵經驗
@@ -187,6 +319,12 @@ export function getStoragePublicUrl(path: string): string {
    - 代碼中的配置名稱必須與實際服務配置一致
    - Storage bucket、資料表名稱等都要檢查
    - 使用常數集中管理配置名稱
+
+4. **檔名處理要符合平台規範**
+   - Supabase Storage 只接受 ASCII 字符
+   - 使用雙檔名系統：前端顯示原名，後端存 ASCII
+   - 實作容錯處理：空檔名使用時間戳備用
+   - 提供清晰的 UI 反饋，讓用戶知道檔名轉換情況
 
 ### ✅ 最終狀態
 
@@ -208,9 +346,10 @@ export function getStoragePublicUrl(path: string): string {
 
 **功能驗證**
 - ✅ 專案資料讀取正常
-- ✅ 圖片上傳功能正常
+- ✅ 圖片上傳功能正常（含中文檔名支援）
 - ✅ 管理後台運作正常
 - ✅ Supabase Storage 連接成功
+- ✅ 雙檔名系統運作正常
 
 ---
 
@@ -243,6 +382,7 @@ export function getStoragePublicUrl(path: string): string {
 - [01_創建Supabase專案.md](./01_創建Supabase專案.md)
 - [02_手動建立Storage.md](./02_手動建立Storage.md)
 - [04_程式碼改造指南.md](./04_程式碼改造指南.md)
+- [中文檔名支援實施報告.md](./中文檔名支援實施報告.md)（詳細技術實施）
 
 ---
 
