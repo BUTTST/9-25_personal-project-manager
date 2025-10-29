@@ -40,6 +40,21 @@ const defaultUIDisplaySettings: UIDisplaySettings = {
   ]
 };
 
+// 獲取公開專案（訪客模式）
+function getPublicProjects(projects: Project[]): Project[] {
+  return projects
+    .filter(project =>
+      !project.hidden &&
+      project.visibility.description &&
+      project.status !== 'discarded'
+    )
+    .map(project => ({
+      ...project,
+      developerNote: '',
+      passwords: [],
+    }));
+}
+
 export default function HomePage() {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
