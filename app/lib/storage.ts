@@ -5,7 +5,7 @@
 
 import { supabaseAdmin, getStoragePublicUrl } from './supabase';
 
-const BUCKET_NAME = 'screenshots';
+const BUCKET_NAME = 'project-images';
 
 /**
  * 上傳圖片到 Supabase Storage

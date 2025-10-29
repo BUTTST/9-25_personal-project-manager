@@ -10,13 +10,23 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// 在構建時允許缺少環境變數（使用假值以便構建通過）
-const isBuildTime = process.env.NODE_ENV === 'production' && !process.env.VERCEL;
+// 檢測環境：開發環境、構建時、或 Vercel 生產環境
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isVercel = !!process.env.VERCEL;
+const isBuildTime = process.env.NODE_ENV === 'production' && !isVercel;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  if (isBuildTime) {
-    console.warn('⚠️  Supabase environment variables not found during build. Using dummy values.');
+  // 開發環境或本地構建：使用警告但允許繼續（使用佔位符）
+  if (isDevelopment || isBuildTime) {
+    console.warn('⚠️  Supabase environment variables not found. Using placeholder values.');
+    if (isDevelopment) {
+      console.warn('📝 請確認 .env.local 文件包含：');
+      console.warn('   - NEXT_PUBLIC_SUPABASE_URL');
+      console.warn('   - NEXT_PUBLIC_SUPABASE_ANON_KEY');
+      console.warn('   - SUPABASE_SERVICE_ROLE_KEY');
+    }
   } else {
+    // Vercel 生產環境：嚴格要求環境變數
     throw new Error('Missing Supabase environment variables');
   }
 }
@@ -53,7 +63,7 @@ if (!supabaseAdmin) {
  * 生成 Supabase Storage 的公開 URL
  */
 export function getStoragePublicUrl(path: string): string {
-  return `${supabaseUrl || 'https://placeholder.supabase.co'}/storage/v1/object/public/screenshots/${path}`;
+  return `${supabaseUrl || 'https://placeholder.supabase.co'}/storage/v1/object/public/project-images/${path}`;
 }
 
 /**
