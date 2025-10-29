@@ -11,6 +11,7 @@ import {
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { EditProjectModal } from '@/components/admin/EditProjectModal';
+import { getRememberedPassword } from '@/lib/auth';
 import {
   GlobeAltIcon,
   CodeBracketIcon,
@@ -101,14 +102,24 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     onUpdate?.(updatedProject);
     
     // 同步到伺服器
+    const password = getRememberedPassword();
+    
     try {
-      await fetch(`/api/projects/${project.id}`, {
+      const response = await fetch(`/api/projects/${project.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'x-admin-password': password || '',
         },
         body: JSON.stringify({ visibility: updatedProject.visibility }),
       });
+      
+      if (!response.ok) {
+        console.error('Failed to update project visibility:', await response.text());
+        // 回滾更改
+        setLocalProject(project);
+        onUpdate?.(project);
+      }
     } catch (error) {
       console.error('Failed to update project visibility:', error);
       // 回滾更改
@@ -129,14 +140,23 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     setLocalProject(updatedProject);
     onUpdate?.(updatedProject);
     
+    const password = getRememberedPassword();
+    
     try {
-      await fetch(`/api/projects/${project.id}`, {
+      const response = await fetch(`/api/projects/${project.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'x-admin-password': password || '',
         },
         body: JSON.stringify({ featured: updatedProject.featured }),
       });
+      
+      if (!response.ok) {
+        console.error('Failed to update project featured status:', await response.text());
+        setLocalProject(localProject);
+        onUpdate?.(localProject);
+      }
     } catch (error) {
       console.error('Failed to update project featured status:', error);
       setLocalProject(localProject);
@@ -156,14 +176,23 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     setLocalProject(updatedProject);
     onUpdate?.(updatedProject);
     
+    const password = getRememberedPassword();
+    
     try {
-      await fetch(`/api/projects/${project.id}`, {
+      const response = await fetch(`/api/projects/${project.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'x-admin-password': password || '',
         },
         body: JSON.stringify({ hidden: updatedProject.hidden }),
       });
+      
+      if (!response.ok) {
+        console.error('Failed to update project hidden status:', await response.text());
+        setLocalProject(localProject);
+        onUpdate?.(localProject);
+      }
     } catch (error) {
       console.error('Failed to update project hidden status:', error);
       setLocalProject(localProject);
@@ -181,13 +210,22 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     setLocalProject(updatedProject);
     onUpdate?.(updatedProject);
 
+    const password = getRememberedPassword();
+
     try {
       fetch(`/api/projects/${project.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'x-admin-password': password || '',
         },
         body: JSON.stringify({ [field]: value }),
+      }).then(response => {
+        if (!response.ok) {
+          console.error(`Failed to update project ${field}:`, response.statusText);
+          setLocalProject(localProject);
+          onUpdate?.(localProject);
+        }
       });
     } catch (error) {
       console.error(`Failed to update project ${field}:`, error);
