@@ -353,6 +353,77 @@ return NextResponse.json({
 
 ---
 
+---
+
+## 🔴 錯誤 5：中文檔名上傳失敗（Invalid key）
+
+### ❌ 錯誤訊息
+```
+❌ Invalid key: 螢幕擷取畫面-2025-10-12-163827.png
+❌ Invalid key: 10-16_SME(設定).png
+```
+
+### 🔍 問題原因
+- Supabase Storage **不支援** Unicode 字符（中文、日文、韓文等）
+- 只接受 ASCII 字符：`a-z`, `A-Z`, `0-9`, `-`, `_`, `.`, `(`, `)`
+- 中文檔名直接上傳會被拒絕
+
+### ✅ 解決方案（三階段優化）
+
+#### 第一版：雙檔名系統
+- 上傳時清理檔名（移除中文）
+- 返回 `originalFilename` 和 `storedFilename`
+- **問題**：清理後檔名衝突
+
+#### 第二版：Hash 識別系統
+- 為原始檔名生成 6 位 hash
+- 最終檔名：`{clean_name}-{hash}.{ext}`
+- 檢測重複上傳（通過 hash）
+- **問題**：前端顯示清理後檔名（中文丟失）
+
+#### 第三版：Metadata 顯示原始檔名 ✅
+- 將原始檔名存入 Supabase Storage metadata
+- 列表時從 metadata 讀取原始檔名
+- 前端完美顯示中文檔名
+
+**完整實施**：
+```typescript
+// 1. 上傳時存儲 metadata
+await supabaseAdmin.storage
+  .from(BUCKET_NAME)
+  .upload(finalFilename, file, {
+    metadata: {
+      originalFilename: uploadFilename,  // 原始中文檔名
+    },
+  });
+
+// 2. 列表時讀取 metadata
+const files = data.map((file) => ({
+  name: file.name,
+  originalFilename: (file.metadata as any)?.originalFilename || file.name,
+  url: getStoragePublicUrl(file.name),
+}));
+
+// 3. 前端顯示原始檔名
+title: (file.originalFilename || file.name).replace(/\.[^/.]+$/, '')
+```
+
+**最終效果**：
+```
+上傳：10-16_SME(設定).png
+存儲：10-16_SME-()-a3f9c2.png
+顯示：10-16_SME(設定)  ✅ 完美！
+```
+
+**影響文件**：
+- `app/lib/storage.ts`（主要邏輯）
+- `app/admin/new/page.tsx`（前端顯示）
+- `app/components/admin/EditProjectModal.tsx`（前端顯示）
+
+**詳細文檔**：參見 [中文檔名問題-增加Hash識別重檔.md](./中文檔名問題-增加Hash識別重檔.md)
+
+---
+
 ## 🚀 部署建議
 
 ### Vercel 環境變數檢查清單
@@ -372,7 +443,8 @@ return NextResponse.json({
 2. ✅ 訪問首頁（專案列表正常）
 3. ✅ 登入管理後台（驗證 API 連接）
 4. ✅ 測試圖片上傳（Storage 功能）
-5. ✅ 檢查 Supabase 日誌（無異常）
+5. ✅ **測試中文檔名上傳**（顯示正常）
+6. ✅ 檢查 Supabase 日誌（無異常）
 
 ---
 
@@ -382,9 +454,10 @@ return NextResponse.json({
 - [01_創建Supabase專案.md](./01_創建Supabase專案.md)
 - [02_手動建立Storage.md](./02_手動建立Storage.md)
 - [04_程式碼改造指南.md](./04_程式碼改造指南.md)
-- [中文檔名支援實施報告.md](./中文檔名支援實施報告.md)（詳細技術實施）
+- [中文檔名問題-增加Hash識別重檔.md](./中文檔名問題-增加Hash識別重檔.md)（中文檔名完整技術實施）
 
 ---
 
-**文件維護**：記錄實際遇到的問題，便於未來參考和排查類似錯誤。
+**文件維護**：記錄實際遇到的問題，便於未來參考和排查類似錯誤。  
+**最後更新**：2025-10-29
 

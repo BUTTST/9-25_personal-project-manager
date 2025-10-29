@@ -100,12 +100,16 @@ export async function uploadImage(
       counter++;
     }
 
-    // 上傳檔案
+    // 上傳檔案（將原始檔名存儲到 metadata 中，以便前端顯示）
     const { data, error } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .upload(finalFilename, file, {
         cacheControl: '3600',
         upsert: false, // 不覆蓋現有檔案
+        contentType: file.type,
+        metadata: {
+          originalFilename: uploadFilename, // 存儲原始中文檔名
+        },
       });
 
     if (error) {
@@ -154,12 +158,13 @@ export async function uploadMultipleImages(
 }
 
 /**
- * 列出所有圖片
+ * 列出所有圖片（包含原始中文檔名）
  */
 export async function listImages(): Promise<{
   success: boolean;
   files?: Array<{
     name: string;
+    originalFilename?: string;
     url: string;
     size: number;
     created_at: string;
@@ -184,13 +189,19 @@ export async function listImages(): Promise<{
       return { success: false, error: error.message };
     }
 
-    const files = data.map((file) => ({
-      name: file.name,
-      url: getStoragePublicUrl(file.name),
-      size: file.metadata?.size || 0,
-      created_at: file.created_at,
-      updated_at: file.updated_at,
-    }));
+    const files = data.map((file) => {
+      // 嘗試從 metadata 中獲取原始檔名（包含中文）
+      const originalFilename = (file.metadata as any)?.originalFilename || file.name;
+      
+      return {
+        name: file.name,
+        originalFilename: originalFilename,
+        url: getStoragePublicUrl(file.name),
+        size: file.metadata?.size || 0,
+        created_at: file.created_at,
+        updated_at: file.updated_at,
+      };
+    });
 
     return { success: true, files };
   } catch (error: any) {

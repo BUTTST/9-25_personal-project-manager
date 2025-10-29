@@ -17,6 +17,7 @@ import { XMarkIcon, EyeIcon, EyeSlashIcon, PlusIcon, TrashIcon } from '@heroicon
 // 從 Supabase Storage 獲取的圖片類型
 interface StorageImage {
   name: string;
+  originalFilename?: string;
   url: string;
   size: number;
   created_at: string;
@@ -124,7 +125,7 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
         // 轉換 Supabase Storage 格式為 GalleryImage 格式
         const galleryImages: GalleryImage[] = (data.files || []).map((file: StorageImage) => ({
           id: file.name,
-          title: file.name.replace(/\.[^/.]+$/, ''), // 移除副檔名
+          title: (file.originalFilename || file.name).replace(/\.[^/.]+$/, ''), // 使用原始檔名（含中文），移除副檔名
           src: file.url,
         }));
 
