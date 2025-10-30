@@ -14,8 +14,9 @@ import {
   defaultImagePreviewMode,
   ensureProjectVisibility,
 } from '@/types';
-import { ArrowLeftIcon, PhotoIcon, PlusIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PhotoIcon, PlusIcon, TrashIcon, EyeIcon, EyeSlashIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { ToggleControl } from '@/components/ui/ToggleControl';
+import InlineImageUploader from '@/components/admin/InlineImageUploader';
 
 // 從 Supabase Storage 獲取的圖片類型
 interface StorageImage {
@@ -67,6 +68,8 @@ export default function NewProjectPage() {
     return 'all';
   });
   const [visibility, setVisibility] = useState(formData.visibility);
+  const [editingImageId, setEditingImageId] = useState<string | null>(null);
+  const [editingImageTitle, setEditingImageTitle] = useState('');
   
   const { isAdmin } = useAuth();
   const { showToast } = useToast();
@@ -284,6 +287,124 @@ export default function NewProjectPage() {
     }));
   };
 
+  // 处理图片上传完成
+  const handleImageUploadComplete = (uploadedImageIds: string[]) => {
+    // 刷新图片列表
+    const fetchImages = async () => {
+      try {
+        const password = getRememberedPassword();
+        if (!password) return;
+
+        const response = await fetch('/api/images', {
+          headers: {
+            'x-admin-password': password,
+          },
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const galleryImages: GalleryImage[] = (data.files || []).map((file: StorageImage) => ({
+          id: file.name,
+          title: (file.originalFilename || file.name).replace(/\.[^/.]+$/, ''),
+          src: file.url,
+        }));
+
+        setImageGallery(galleryImages);
+
+        // 自动勾选新上传的图片
+        uploadedImageIds.forEach(imageId => {
+          const image = galleryImages.find(img => img.id === imageId);
+          if (image && !formData.imagePreviews.some(img => img.id === imageId)) {
+            setFormData((prev) => ({
+              ...prev,
+              imagePreviews: [...prev.imagePreviews, { ...image }],
+            }));
+          }
+        });
+
+        showToast('success', `成功上传 ${uploadedImageIds.length} 张图片并自动勾选`);
+      } catch (error) {
+        console.error('刷新图片列表失败:', error);
+      }
+    };
+
+    fetchImages();
+  };
+
+  // 双击开始编辑图片名称
+  const handleImageDoubleClick = (image: GalleryImage) => {
+    setEditingImageId(image.id);
+    setEditingImageTitle(image.title);
+  };
+
+  // 保存图片名称
+  const handleSaveImageTitle = async (imageId: string) => {
+    if (!editingImageTitle.trim() || editingImageTitle === imageGallery.find(img => img.id === imageId)?.title) {
+      setEditingImageId(null);
+      return;
+    }
+
+    try {
+      const password = getRememberedPassword();
+      if (!password) {
+        showToast('error', '无法获取管理员密码');
+        return;
+      }
+
+      const response = await fetch('/api/images/rename', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': password,
+        },
+        body: JSON.stringify({
+          oldFilename: imageId,
+          newFilename: editingImageTitle,
+          updateReferences: true,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        showToast('success', `图片已重命名，已更新 ${data.projectsUpdated} 个专案的引用`);
+        
+        // 刷新图片列表
+        const imgResponse = await fetch('/api/images', {
+          headers: {
+            'x-admin-password': password,
+          },
+        });
+
+        if (imgResponse.ok) {
+          const imgData = await imgResponse.json();
+          const galleryImages: GalleryImage[] = (imgData.files || []).map((file: StorageImage) => ({
+            id: file.name,
+            title: (file.originalFilename || file.name).replace(/\.[^/.]+$/, ''),
+            src: file.url,
+          }));
+          setImageGallery(galleryImages);
+
+          // 更新已选中图片的信息
+          setFormData((prev) => ({
+            ...prev,
+            imagePreviews: prev.imagePreviews.map(img => {
+              const updated = galleryImages.find(g => g.id === img.id);
+              return updated ? { ...updated } : img;
+            }),
+          }));
+        }
+
+        setEditingImageId(null);
+      } else {
+        showToast('error', '重命名失败: ' + (data.error || '未知错误'));
+      }
+    } catch (error: any) {
+      showToast('error', '重命名失败: ' + error.message);
+    }
+  };
+
   if (!isAdmin) {
     return null;
   }
@@ -449,6 +570,19 @@ export default function NewProjectPage() {
           {/* 圖片預覽 */}
           <div className="space-y-4 border-t border-border pt-6">
             <h2 className="text-lg font-medium text-foreground">圖片預覽</h2>
+            
+            {/* 图片上传区域 */}
+            <div className="bg-gradient-to-br from-primary-50/50 to-primary-100/30 dark:from-primary-900/20 dark:to-primary-800/10 border border-primary-200 dark:border-primary-700/50 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300 mb-3 flex items-center gap-2">
+                <ArrowLeftIcon className="h-4 w-4 rotate-90" />
+                快速上传图片
+              </h3>
+              <InlineImageUploader
+                adminPassword={getRememberedPassword() || ''}
+                onUploadComplete={handleImageUploadComplete}
+              />
+            </div>
+
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">已選擇 {formData.imagePreviews.length} 張圖片</span>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -542,11 +676,43 @@ export default function NewProjectPage() {
                     </div>
 
                     {/* 文字信息區 */}
-                    <div className="p-2 bg-card">
-                      <div className="text-xs font-medium text-foreground line-clamp-2">
-                        {image.title}
-                      </div>
-                      {image.description && (
+                    <div className="p-2 bg-card" onClick={(e) => e.stopPropagation()}>
+                      {editingImageId === image.id ? (
+                        <div className="space-y-1">
+                          <input
+                            type="text"
+                            value={editingImageTitle}
+                            onChange={(e) => setEditingImageTitle(e.target.value)}
+                            onBlur={() => handleSaveImageTitle(image.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSaveImageTitle(image.id);
+                              } else if (e.key === 'Escape') {
+                                setEditingImageId(null);
+                              }
+                            }}
+                            className="w-full px-1.5 py-0.5 text-xs border rounded dark:bg-gray-800"
+                            autoFocus
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <p className="text-[9px] text-muted-foreground">
+                            按 Enter 保存，Esc 取消
+                          </p>
+                        </div>
+                      ) : (
+                        <div
+                          className="text-xs font-medium text-foreground line-clamp-2 cursor-text hover:text-primary-600 transition-colors"
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            handleImageDoubleClick(image);
+                          }}
+                          title="双击编辑名称"
+                        >
+                          {image.title}
+                          <PencilIcon className="inline-block w-3 h-3 ml-1 opacity-0 group-hover:opacity-50 transition-opacity" />
+                        </div>
+                      )}
+                      {image.description && !editingImageId && (
                         <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
                           {image.description}
                         </div>
