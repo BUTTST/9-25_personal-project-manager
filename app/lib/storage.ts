@@ -1,6 +1,10 @@
 /**
  * Supabase Storage 操作庫
  * 處理圖片上傳、刪除、重命名等操作
+ * 
+ * 架構說明：
+ * - Storage：存儲實際圖片檔案（檔名使用 ASCII）
+ * - image_metadata 表：存儲檔名映射關係（支援中文顯示名稱）
  */
 
 import { supabaseAdmin, getStoragePublicUrl } from './supabase';
@@ -100,16 +104,13 @@ export async function uploadImage(
       counter++;
     }
 
-    // 上傳檔案（將原始檔名存儲到 metadata 中，以便前端顯示）
+    // 上傳檔案到 Storage
     const { data, error } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .upload(finalFilename, file, {
         cacheControl: '3600',
         upsert: false, // 不覆蓋現有檔案
         contentType: file.type,
-        metadata: {
-          originalFilename: uploadFilename, // 存儲原始中文檔名
-        },
       });
 
     if (error) {
@@ -121,6 +122,23 @@ export async function uploadImage(
         };
       }
       return { success: false, error: `上傳失敗：${error.message}` };
+    }
+
+    // ⭐ 同步寫入資料庫：保存檔名映射關係
+    const { error: dbError } = await supabaseAdmin
+      .from('image_metadata')
+      .insert({
+        stored_filename: finalFilename,
+        original_filename: uploadFilename, // 原始中文檔名
+        file_size: file.size,
+        content_type: file.type,
+        file_hash: filenameHash,
+      });
+
+    if (dbError) {
+      console.error('⚠️ 寫入資料庫失敗:', dbError);
+      // 不影響上傳結果，但記錄警告
+      // 如果需要嚴格保證數據一致性，可以在這裡刪除已上傳的檔案
     }
 
     const publicUrl = getStoragePublicUrl(data.path);
@@ -158,7 +176,8 @@ export async function uploadMultipleImages(
 }
 
 /**
- * 列出所有圖片（包含原始中文檔名）
+ * 列出所有圖片（從資料庫讀取中文檔名）
+ * ⭐ 關鍵改進：直接從 image_metadata 表讀取顯示名稱
  */
 export async function listImages(): Promise<{
   success: boolean;
@@ -177,31 +196,26 @@ export async function listImages(): Promise<{
   }
 
   try {
-    const { data, error } = await supabaseAdmin.storage
-      .from(BUCKET_NAME)
-      .list('', {
-        limit: 1000,
-        offset: 0,
-        sortBy: { column: 'created_at', order: 'desc' },
-      });
+    // ⭐ 直接從資料庫讀取所有圖片的元數據（包含中文檔名）
+    const { data: metadataList, error: dbError } = await supabaseAdmin
+      .from('image_metadata')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (error) {
-      return { success: false, error: error.message };
+    if (dbError) {
+      console.error('從資料庫讀取圖片列表失敗:', dbError);
+      return { success: false, error: `資料庫查詢失敗: ${dbError.message}` };
     }
 
-    const files = data.map((file) => {
-      // 嘗試從 metadata 中獲取原始檔名（包含中文）
-      const originalFilename = (file.metadata as any)?.originalFilename || file.name;
-      
-      return {
-        name: file.name,
-        originalFilename: originalFilename,
-        url: getStoragePublicUrl(file.name),
-        size: file.metadata?.size || 0,
-        created_at: file.created_at,
-        updated_at: file.updated_at,
-      };
-    });
+    // 轉換為 API 回應格式
+    const files = (metadataList || []).map((metadata) => ({
+      name: metadata.stored_filename,
+      originalFilename: metadata.original_filename, // ✨ 中文檔名
+      url: getStoragePublicUrl(metadata.stored_filename),
+      size: metadata.file_size || 0,
+      created_at: metadata.created_at,
+      updated_at: metadata.updated_at,
+    }));
 
     return { success: true, files };
   } catch (error: any) {
@@ -210,7 +224,7 @@ export async function listImages(): Promise<{
 }
 
 /**
- * 刪除圖片
+ * 刪除圖片（同步刪除 Storage 和資料庫記錄）
  */
 export async function deleteImage(
   filename: string
@@ -220,12 +234,24 @@ export async function deleteImage(
   }
 
   try {
-    const { error } = await supabaseAdmin.storage
+    // 1. 刪除 Storage 中的檔案
+    const { error: storageError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .remove([filename]);
 
-    if (error) {
-      return { success: false, error: error.message };
+    if (storageError) {
+      return { success: false, error: storageError.message };
+    }
+
+    // 2. ⭐ 同步刪除資料庫記錄
+    const { error: dbError } = await supabaseAdmin
+      .from('image_metadata')
+      .delete()
+      .eq('stored_filename', filename);
+
+    if (dbError) {
+      console.error('⚠️ 刪除資料庫記錄失敗:', dbError);
+      // 不影響結果，但記錄警告
     }
 
     return { success: true };
@@ -235,7 +261,7 @@ export async function deleteImage(
 }
 
 /**
- * 批量刪除圖片
+ * 批量刪除圖片（同步刪除 Storage 和資料庫記錄）
  */
 export async function deleteMultipleImages(
   filenames: string[]
@@ -245,12 +271,24 @@ export async function deleteMultipleImages(
   }
 
   try {
-    const { error } = await supabaseAdmin.storage
+    // 1. 刪除 Storage 中的檔案
+    const { error: storageError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .remove(filenames);
 
-    if (error) {
-      return { success: false, error: error.message };
+    if (storageError) {
+      return { success: false, error: storageError.message };
+    }
+
+    // 2. ⭐ 同步刪除資料庫記錄
+    const { error: dbError } = await supabaseAdmin
+      .from('image_metadata')
+      .delete()
+      .in('stored_filename', filenames);
+
+    if (dbError) {
+      console.error('⚠️ 批量刪除資料庫記錄失敗:', dbError);
+      // 不影響結果，但記錄警告
     }
 
     return { success: true };
@@ -260,7 +298,7 @@ export async function deleteMultipleImages(
 }
 
 /**
- * 更新圖片的顯示名稱（僅更新 metadata.originalFilename）
+ * 更新圖片的顯示名稱（僅更新資料庫中的 original_filename）
  * 實際存儲檔名不變，不影響 URL 和專案引用
  * 
  * 適用場景：管理員想改變顯示的中文檔名，但不想影響現有引用
@@ -274,36 +312,17 @@ export async function updateImageDisplayName(
   }
 
   try {
-    // Supabase Storage 不支援直接更新 metadata
-    // 使用下載-重新上傳方式更新 metadata
-    
-    // 1. 下載現有檔案
-    const { data: fileData, error: downloadError } = await supabaseAdmin.storage
-      .from(BUCKET_NAME)
-      .download(storedFilename);
+    // ⭐ 直接更新資料庫中的顯示名稱
+    const { error: updateError } = await supabaseAdmin
+      .from('image_metadata')
+      .update({ 
+        original_filename: newDisplayName,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('stored_filename', storedFilename);
 
-    if (downloadError) {
-      return { success: false, error: `下載檔案失敗: ${downloadError.message}` };
-    }
-
-    // 2. 刪除舊檔案
-    await supabaseAdmin.storage
-      .from(BUCKET_NAME)
-      .remove([storedFilename]);
-
-    // 3. 以相同檔名重新上傳，更新 metadata
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from(BUCKET_NAME)
-      .upload(storedFilename, fileData, {
-        cacheControl: '3600',
-        upsert: true,
-        metadata: {
-          originalFilename: newDisplayName, // 更新顯示名稱（可含中文）
-        },
-      });
-
-    if (uploadError) {
-      return { success: false, error: `重新上傳失敗: ${uploadError.message}` };
+    if (updateError) {
+      return { success: false, error: `更新資料庫失敗: ${updateError.message}` };
     }
 
     return { success: true };
@@ -333,13 +352,16 @@ export async function renameImage(
   }
 
   try {
-    // 1. 獲取舊檔案的 metadata（保留原始檔名）
-    const { data: existingFiles } = await supabaseAdmin.storage
-      .from(BUCKET_NAME)
-      .list('', { limit: 1000 });
-    
-    const oldFile = existingFiles?.find(f => f.name === oldFilename);
-    const oldOriginalFilename = (oldFile?.metadata as any)?.originalFilename || oldFilename;
+    // 1. 從資料庫獲取舊檔案的資訊
+    const { data: oldMetadata, error: selectError } = await supabaseAdmin
+      .from('image_metadata')
+      .select('*')
+      .eq('stored_filename', oldFilename)
+      .single();
+
+    if (selectError) {
+      console.warn('⚠️ 無法從資料庫讀取檔案資訊:', selectError);
+    }
 
     // 2. 下載舊檔案
     const { data: fileData, error: downloadError } = await supabaseAdmin.storage
@@ -370,22 +392,41 @@ export async function renameImage(
     const baseName = nameParts.join('.');
     const finalFilename = `${baseName}-${filenameHash}.${ext}`;
 
-    // 4. 上傳為新檔名，保留原始檔名到 metadata
+    // 4. 上傳為新檔名到 Storage
     const { error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .upload(finalFilename, fileData, {
         cacheControl: '3600',
         upsert: false,
-        metadata: {
-          originalFilename: newFilename, // 保存新的原始檔名（含中文）
-        },
       });
 
     if (uploadError) {
       return { success: false, error: `上傳失敗: ${uploadError.message}` };
     }
 
-    // 5. 刪除舊檔案
+    // 5. ⭐ 更新資料庫：刪除舊記錄，插入新記錄
+    // 刪除舊記錄
+    await supabaseAdmin
+      .from('image_metadata')
+      .delete()
+      .eq('stored_filename', oldFilename);
+
+    // 插入新記錄
+    const { error: dbError } = await supabaseAdmin
+      .from('image_metadata')
+      .insert({
+        stored_filename: finalFilename,
+        original_filename: newFilename,
+        file_size: oldMetadata?.file_size || 0,
+        content_type: oldMetadata?.content_type || null,
+        file_hash: filenameHash,
+      });
+
+    if (dbError) {
+      console.error('⚠️ 寫入資料庫失敗:', dbError);
+    }
+
+    // 6. 刪除 Storage 中的舊檔案
     const { error: deleteError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .remove([oldFilename]);

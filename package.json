@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate-icons": "node scripts/generate-icons.js"
+    "generate-icons": "node scripts/generate-icons.js",
+    "migrate-images": "node scripts/migrate-image-metadata.js"
   },
   "dependencies": {
     "next": "14.0.3",
