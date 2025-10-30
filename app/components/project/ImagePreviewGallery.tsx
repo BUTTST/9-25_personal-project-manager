@@ -15,6 +15,8 @@ interface ImagePreviewGalleryProps {
 export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: ImagePreviewGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isPreviewActive, setIsPreviewActive] = useState(false);
+  const [previewTimer, setPreviewTimer] = useState<NodeJS.Timeout | null>(null);
   const visibleImages = useMemo(() => images.filter((img) => !!img?.src), [images]);
 
   if (collapsed) {
@@ -43,6 +45,40 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
     }
   };
 
+  // 處理按住放大預覽
+  const handleMouseDown = (imageUrl: string) => {
+    // 設置500ms延遲，只有按住才觸發預覽
+    const timer = setTimeout(() => {
+      setPreviewImage(imageUrl);
+      setIsPreviewActive(true);
+    }, 500);
+    
+    setPreviewTimer(timer);
+  };
+
+  const handleMouseUp = () => {
+    // 清除定時器
+    if (previewTimer) {
+      clearTimeout(previewTimer);
+      setPreviewTimer(null);
+    }
+    
+    // 如果預覽已激活，則關閉預覽
+    if (isPreviewActive) {
+      setPreviewImage(null);
+      setIsPreviewActive(false);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    // 如果預覽還未激活（還在等待），則取消
+    if (previewTimer && !isPreviewActive) {
+      clearTimeout(previewTimer);
+      setPreviewTimer(null);
+    }
+    // 注意：如果預覽已激活，不做任何事（等待用戶在Modal上釋放滑鼠）
+  };
+
   // 單張切換模式
   if (mode === 'single') {
     const currentImage = visibleImages[currentIndex];
@@ -52,11 +88,11 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
         <button
           type="button"
           onClick={handleImageClick}
-          onMouseDown={() => setPreviewImage(currentImage.src)}
-          onMouseUp={() => setPreviewImage(null)}
-          onMouseLeave={() => setPreviewImage(null)}
+          onMouseDown={() => handleMouseDown(currentImage.src)}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
           className="group relative w-full overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-muted/60 to-muted/30 shadow-inner transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-          title={visibleImages.length > 1 ? '點擊或按右鍵切換下一張 | 按住滑鼠放大預覽' : '按住滑鼠放大預覽'}
+          title={visibleImages.length > 1 ? '點擊或按右鍵切換下一張 | 按住滑鼠 0.5 秒放大預覽' : '按住滑鼠 0.5 秒放大預覽'}
         >
           <Image
             src={currentImage.thumbnail || currentImage.src}
@@ -114,7 +150,7 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
         {/* 導航提示 */}
         {visibleImages.length > 1 && (
           <div className="text-xs text-muted-foreground text-center bg-muted/30 rounded-lg py-2 px-3">
-            💡 提示：點擊圖片或使用左右箭頭按鈕切換圖片 | 按住滑鼠放大預覽
+            💡 提示：點擊圖片或使用左右箭頭按鈕切換圖片 | 按住滑鼠 0.5 秒放大預覽
           </div>
         )}
 
@@ -122,8 +158,8 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
         {previewImage && (
           <div 
             className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
-            onMouseUp={() => setPreviewImage(null)}
-            onMouseLeave={() => setPreviewImage(null)}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
           >
             <img
               src={previewImage}
@@ -149,11 +185,11 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
               key={image.id}
               type="button"
               onClick={() => onSelectImage?.(image)}
-              onMouseDown={() => setPreviewImage(image.src)}
-              onMouseUp={() => setPreviewImage(null)}
-              onMouseLeave={() => setPreviewImage(null)}
+              onMouseDown={() => handleMouseDown(image.src)}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
               className="group relative overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:scale-[1.02] active:scale-[0.98]"
-              title="按住滑鼠放大預覽"
+              title="按住滑鼠 0.5 秒放大預覽"
             >
               <Image
                 src={image.thumbnail || image.src}
@@ -182,8 +218,8 @@ export function ImagePreviewGallery({ images, mode, collapsed, onSelectImage }: 
       {previewImage && (
         <div 
           className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
-          onMouseUp={() => setPreviewImage(null)}
-          onMouseLeave={() => setPreviewImage(null)}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
           <img
             src={previewImage}

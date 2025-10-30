@@ -34,6 +34,8 @@ export default function ImageGallery({ adminPassword, onRefresh }: ImageGalleryP
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isPreviewActive, setIsPreviewActive] = useState(false);
+  const [previewTimer, setPreviewTimer] = useState<NodeJS.Timeout | null>(null);
 
   // 載入圖片列表
   const loadImages = async () => {
@@ -227,6 +229,40 @@ export default function ImageGallery({ adminPassword, onRefresh }: ImageGalleryP
     });
   };
 
+  // 處理按住放大預覽
+  const handleMouseDown = (imageUrl: string) => {
+    // 設置500ms延遲，只有按住才觸發預覽
+    const timer = setTimeout(() => {
+      setPreviewImage(imageUrl);
+      setIsPreviewActive(true);
+    }, 500);
+    
+    setPreviewTimer(timer);
+  };
+
+  const handleMouseUp = () => {
+    // 清除定時器
+    if (previewTimer) {
+      clearTimeout(previewTimer);
+      setPreviewTimer(null);
+    }
+    
+    // 如果預覽已激活，則關閉預覽
+    if (isPreviewActive) {
+      setPreviewImage(null);
+      setIsPreviewActive(false);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    // 如果預覽還未激活（還在等待），則取消
+    if (previewTimer && !isPreviewActive) {
+      clearTimeout(previewTimer);
+      setPreviewTimer(null);
+    }
+    // 注意：如果預覽已激活，不做任何事（等待用戶在Modal上釋放滑鼠）
+  };
+
   if (loading) {
     return <div className="text-center py-12">載入中...</div>;
   }
@@ -332,9 +368,10 @@ export default function ImageGallery({ adminPassword, onRefresh }: ImageGalleryP
                   className={`bg-gray-100 dark:bg-gray-800 relative ${
                     isListView ? 'w-48 h-48 flex-shrink-0' : 'aspect-square'
                   }`}
-                  onMouseDown={() => setPreviewImage(image.url)}
-                  onMouseUp={() => setPreviewImage(null)}
-                  onMouseLeave={() => setPreviewImage(null)}
+                  onMouseDown={() => handleMouseDown(image.url)}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseLeave}
+                  title="按住滑鼠 0.5 秒放大預覽"
                 >
                   <img
                     src={image.url}
@@ -426,8 +463,8 @@ export default function ImageGallery({ adminPassword, onRefresh }: ImageGalleryP
       {previewImage && (
         <div 
           className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
-          onMouseUp={() => setPreviewImage(null)}
-          onMouseLeave={() => setPreviewImage(null)}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
           <img
             src={previewImage}
