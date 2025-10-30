@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ProjectData } from '@/types';
+import { useState, useMemo } from 'react';
+import { ProjectData, getDefaultVisibility } from '@/types';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { useToast } from '@/components/ui/ToastProvider';
 import { 
@@ -11,7 +11,9 @@ import {
   SwatchIcon,
   DocumentArrowDownIcon,
   DocumentArrowUpIcon,
-  TrashIcon
+  TrashIcon,
+  CheckCircleIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline';
 
 interface SettingsSectionProps {
@@ -21,7 +23,16 @@ interface SettingsSectionProps {
 }
 
 export function SettingsSection({ settings, projectData, onUpdate }: SettingsSectionProps) {
-  const [localSettings, setLocalSettings] = useState(settings);
+  // 确保 settings 和 defaultProjectVisibility 有默认值
+  const initialSettings = useMemo(() => ({
+    ...settings,
+    defaultProjectVisibility: {
+      ...getDefaultVisibility(),
+      ...(settings?.defaultProjectVisibility || {})
+    }
+  }), [settings]);
+
+  const [localSettings, setLocalSettings] = useState(initialSettings);
   const [diagnosticInfo, setDiagnosticInfo] = useState<any>(null);
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const { showToast } = useToast();
@@ -44,12 +55,33 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
 
   const handleDefaultVisibilityChange = (field: string, value: boolean) => {
     const updatedDefaults = {
+      ...getDefaultVisibility(),
       ...localSettings.defaultProjectVisibility,
       [field]: value
     };
     
     handleSettingChange('defaultProjectVisibility', updatedDefaults);
   };
+
+  // 统计信息
+  const projectStats = useMemo(() => {
+    const projects = projectData?.projects || [];
+    return {
+      total: projects.length,
+      important: projects.filter(p => p.category === 'important').length,
+      secondary: projects.filter(p => p.category === 'secondary').length,
+      practice: projects.filter(p => p.category === 'practice').length,
+      singleDoc: projects.filter(p => p.category === 'single-doc').length,
+      completed: projects.filter(p => p.status === 'completed').length,
+      inProgress: projects.filter(p => p.status === 'in-progress').length,
+      onHold: projects.filter(p => p.status === 'on-hold').length,
+      longTerm: projects.filter(p => p.status === 'long-term').length,
+      discarded: projects.filter(p => p.status === 'discarded').length,
+      hidden: projects.filter(p => p.hidden).length,
+      public: projects.filter(p => !p.hidden).length,
+      withImages: projects.filter(p => p.imagePreviews && p.imagePreviews.length > 0).length,
+    };
+  }, [projectData]);
 
   const handleExportData = () => {
     try {
@@ -274,55 +306,125 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
 
   return (
     <div className="p-6 space-y-8 text-foreground">
-      <div className="flex items-center space-x-2 mb-6">
-        <CogIcon className="h-5 w-5 text-muted-foreground" />
-        <h2 className="text-lg font-semibold">系統設定</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-2">
+          <CogIcon className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold">系統設定</h2>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          系統版本 v1.0.0 | Supabase Storage
+        </div>
+      </div>
+
+      {/* 專案統計概覽 */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-6">
+        <h3 className="text-base font-semibold mb-4 flex items-center gap-2 text-blue-900 dark:text-blue-100">
+          <CheckCircleIcon className="h-5 w-5" />
+          專案統計總覽
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{projectStats.total}</div>
+            <div className="text-xs text-muted-foreground">總專案數</div>
+          </div>
+          <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{projectStats.inProgress}</div>
+            <div className="text-xs text-muted-foreground">進行中</div>
+          </div>
+          <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{projectStats.completed}</div>
+            <div className="text-xs text-muted-foreground">已完成</div>
+          </div>
+          <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{projectStats.important}</div>
+            <div className="text-xs text-muted-foreground">重要專案</div>
+          </div>
+          <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+            <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{projectStats.withImages}</div>
+            <div className="text-xs text-muted-foreground">有圖片</div>
+          </div>
+          <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+            <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">{projectStats.public}</div>
+            <div className="text-xs text-muted-foreground">公開</div>
+          </div>
+          <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{projectStats.hidden}</div>
+            <div className="text-xs text-muted-foreground">隱藏</div>
+          </div>
+          <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+            <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">{projectStats.singleDoc}</div>
+            <div className="text-xs text-muted-foreground">單檔項目</div>
+          </div>
+        </div>
       </div>
 
       {/* 顯示控制設定 */}
-      <div className="space-y-6">
-         <div>
-           <h3 className="text-base font-medium mb-4">使用者體驗設定</h3>
-           <div className="space-y-4">
-             <ToggleControl
-               checked={localSettings.rememberPassword}
-               onChange={(checked) => handleSettingChange('rememberPassword', checked)}
-               label="記住密碼"
-               description="登入時自動記住管理員密碼"
-             />
-           </div>
-           <p className="text-sm text-muted-foreground mt-2">
-             💡 提示：專案的顯示開關控制項已移至各專案的編輯頁面
-           </p>
-         </div>
+      <div className="space-y-6 border-t border-border pt-6">
+        <div>
+          <h3 className="text-base font-medium mb-4 flex items-center gap-2">
+            <EyeIcon className="h-5 w-5 text-primary-500" />
+            使用者體驗設定
+          </h3>
+          <div className="space-y-4 bg-muted/30 rounded-lg p-4 border border-border">
+            <ToggleControl
+              checked={localSettings.rememberPassword ?? true}
+              onChange={(checked) => handleSettingChange('rememberPassword', checked)}
+              label="記住密碼"
+              description="登入時自動記住管理員密碼"
+            />
+            <ToggleControl
+              checked={localSettings.showToggleControls ?? false}
+              onChange={(checked) => handleSettingChange('showToggleControls', checked)}
+              label="顯示專案表格控制項"
+              description="在專案管理表格顯示額外的控制按鈕"
+            />
+          </div>
+          <p className="text-sm text-muted-foreground mt-3">
+            💡 提示：專案的顯示開關控制項已移至各專案的編輯頁面
+          </p>
+        </div>
 
         {/* 預設可見性設定 */}
         <div>
-          <h3 className="text-base font-medium mb-4">新專案預設可見性</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries({
-              dateAndFileName: '日期和檔名',
-              description: '說明',
-              category: '類別',
-              github: 'GitHub 連結',
-              vercel: 'Vercel 連結',
-              path: '路徑',
-              statusNote: '狀態備註',
-              publicNote: '一般註解',
-              developerNote: '開發者註解'
-            }).map(([key, label]) => (
-              <ToggleControl
-                key={key}
-                checked={localSettings.defaultProjectVisibility[key as keyof typeof localSettings.defaultProjectVisibility] ?? true}
-                onChange={(checked) => handleDefaultVisibilityChange(key, checked)}
-                label={label}
-                size="sm"
-              />
-            ))}
+          <h3 className="text-base font-medium mb-4 flex items-center gap-2">
+            <SwatchIcon className="h-5 w-5 text-primary-500" />
+            新專案預設可見性
+          </h3>
+          <div className="bg-gradient-to-br from-primary-50/50 to-primary-100/30 dark:from-primary-900/20 dark:to-primary-800/10 border border-primary-200 dark:border-primary-700/50 rounded-xl p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries({
+                dateAndFileName: '日期和檔名',
+                description: '說明',
+                category: '類別',
+                status: '狀態',
+                github: 'GitHub 連結',
+                vercel: 'Vercel 連結',
+                deployment: '部署平台',
+                path: '本地路徑',
+                statusNote: '狀態備註',
+                publicNote: '一般註解',
+                developerNote: '開發者註解',
+                imagePreviews: '圖片預覽',
+                customInfoSections: '自訂資訊區塊'
+              }).map(([key, label]) => {
+                const visibility = localSettings.defaultProjectVisibility || getDefaultVisibility();
+                const isChecked = visibility[key as keyof typeof visibility] ?? true;
+                
+                return (
+                  <ToggleControl
+                    key={key}
+                    checked={isChecked}
+                    onChange={(checked) => handleDefaultVisibilityChange(key, checked)}
+                    label={label}
+                    size="sm"
+                  />
+                );
+              })}
+            </div>
+            <p className="text-sm text-primary-700 dark:text-primary-300 mt-4">
+              📌 這些設定將套用到所有新建立的專案，現有專案不受影響
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            設定新專案建立時的預設可見性狀態
-          </p>
         </div>
       </div>
 
@@ -451,26 +553,64 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
 
       {/* 系統資訊 */}
       <div className="border-t border-border pt-6">
-        <h3 className="text-base font-medium text-foreground mb-4">系統資訊</h3>
-        <div className="bg-muted rounded-lg p-4">
-          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <dt className="font-medium text-muted-foreground">系統版本：</dt>
-              <dd className="text-foreground">v1.0.0</dd>
+        <h3 className="text-base font-medium text-foreground mb-4 flex items-center gap-2">
+          <CogIcon className="h-5 w-5 text-primary-500" />
+          系統資訊
+        </h3>
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+            <div className="flex items-start gap-3">
+              <CheckCircleIcon className="h-5 w-5 text-green-500 mt-0.5" />
+              <div>
+                <dt className="font-medium text-muted-foreground mb-1">系統版本</dt>
+                <dd className="text-foreground font-semibold">v1.0.0 (Stable)</dd>
+              </div>
             </div>
-            <div>
-              <dt className="font-medium text-muted-foreground">部署平台：</dt>
-              <dd className="text-foreground">Vercel</dd>
+            <div className="flex items-start gap-3">
+              <CheckCircleIcon className="h-5 w-5 text-blue-500 mt-0.5" />
+              <div>
+                <dt className="font-medium text-muted-foreground mb-1">部署平台</dt>
+                <dd className="text-foreground font-semibold">Vercel (Production)</dd>
+              </div>
             </div>
-            <div>
-              <dt className="font-medium text-muted-foreground">儲存方式：</dt>
-              <dd className="text-foreground">Vercel Blob</dd>
+            <div className="flex items-start gap-3">
+              <CheckCircleIcon className="h-5 w-5 text-purple-500 mt-0.5" />
+              <div>
+                <dt className="font-medium text-muted-foreground mb-1">資料庫</dt>
+                <dd className="text-foreground font-semibold">Supabase Storage</dd>
+              </div>
             </div>
-            <div>
-              <dt className="font-medium text-muted-foreground">本地儲存：</dt>
-              <dd className="text-foreground">
-                {localSettings.rememberPassword ? '已啟用' : '已禁用'}
-              </dd>
+            <div className="flex items-start gap-3">
+              {localSettings.rememberPassword ? (
+                <CheckCircleIcon className="h-5 w-5 text-green-500 mt-0.5" />
+              ) : (
+                <XCircleIcon className="h-5 w-5 text-red-500 mt-0.5" />
+              )}
+              <div>
+                <dt className="font-medium text-muted-foreground mb-1">本地儲存</dt>
+                <dd className="text-foreground font-semibold">
+                  {localSettings.rememberPassword ? '已啟用' : '已禁用'}
+                </dd>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircleIcon className="h-5 w-5 text-cyan-500 mt-0.5" />
+              <div>
+                <dt className="font-medium text-muted-foreground mb-1">專案總數</dt>
+                <dd className="text-foreground font-semibold">{projectStats.total} 個專案</dd>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircleIcon className="h-5 w-5 text-orange-500 mt-0.5" />
+              <div>
+                <dt className="font-medium text-muted-foreground mb-1">資料更新時間</dt>
+                <dd className="text-foreground font-semibold">
+                  {projectData?.metadata?.lastUpdated 
+                    ? new Date(projectData.metadata.lastUpdated).toLocaleString('zh-TW')
+                    : '未知'
+                  }
+                </dd>
+              </div>
             </div>
           </dl>
         </div>
