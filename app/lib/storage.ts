@@ -260,19 +260,88 @@ export async function deleteMultipleImages(
 }
 
 /**
- * 重命名圖片（透過下載-上傳-刪除）
- * Supabase Storage 不支援直接重命名，需要複製後刪除
+ * 更新圖片的顯示名稱（僅更新 metadata.originalFilename）
+ * 實際存儲檔名不變，不影響 URL 和專案引用
+ * 
+ * 適用場景：管理員想改變顯示的中文檔名，但不想影響現有引用
+ */
+export async function updateImageDisplayName(
+  storedFilename: string,
+  newDisplayName: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!supabaseAdmin) {
+    return { success: false, error: 'Supabase admin 客戶端不可用' };
+  }
+
+  try {
+    // Supabase Storage 不支援直接更新 metadata
+    // 使用下載-重新上傳方式更新 metadata
+    
+    // 1. 下載現有檔案
+    const { data: fileData, error: downloadError } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .download(storedFilename);
+
+    if (downloadError) {
+      return { success: false, error: `下載檔案失敗: ${downloadError.message}` };
+    }
+
+    // 2. 刪除舊檔案
+    await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .remove([storedFilename]);
+
+    // 3. 以相同檔名重新上傳，更新 metadata
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .upload(storedFilename, fileData, {
+        cacheControl: '3600',
+        upsert: true,
+        metadata: {
+          originalFilename: newDisplayName, // 更新顯示名稱（可含中文）
+        },
+      });
+
+    if (uploadError) {
+      return { success: false, error: `重新上傳失敗: ${uploadError.message}` };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 完整重命名圖片（包括存儲檔名和顯示名稱）
+ * 會改變 URL，需要同時更新所有專案引用
+ * 
+ * 適用場景：需要改變實際存儲的檔名（較少使用）
  */
 export async function renameImage(
   oldFilename: string,
   newFilename: string
-): Promise<{ success: boolean; newUrl?: string; error?: string }> {
+): Promise<{ 
+  success: boolean; 
+  newUrl?: string; 
+  newStoredFilename?: string;
+  newOriginalFilename?: string;
+  error?: string;
+}> {
   if (!supabaseAdmin) {
     return { success: false, error: 'Supabase admin client not available' };
   }
 
   try {
-    // 1. 下載舊檔案
+    // 1. 獲取舊檔案的 metadata（保留原始檔名）
+    const { data: existingFiles } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .list('', { limit: 1000 });
+    
+    const oldFile = existingFiles?.find(f => f.name === oldFilename);
+    const oldOriginalFilename = (oldFile?.metadata as any)?.originalFilename || oldFilename;
+
+    // 2. 下載舊檔案
     const { data: fileData, error: downloadError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .download(oldFilename);
@@ -281,19 +350,42 @@ export async function renameImage(
       return { success: false, error: `下載失敗: ${downloadError.message}` };
     }
 
-    // 2. 上傳為新檔名
+    // 3. 清理新檔名並生成存儲檔名（與上傳邏輯一致）
+    const filenameHash = generateFilenameHash(newFilename);
+    let safeFilename = newFilename
+      .replace(/[\u4e00-\u9fa5]/g, '') // 移除中文
+      .replace(/[^a-zA-Z0-9._()-]/g, '-') // 其他非法字符替換為連字號
+      .replace(/^-+|-+$/g, '') // 移除開頭和結尾的連字號
+      .replace(/-{2,}/g, '-'); // 多個連字號合併為一個
+    
+    // 如果檔名處理後為空或只有副檔名，使用時間戳
+    if (!safeFilename || safeFilename.startsWith('.')) {
+      const timestamp = Date.now();
+      const ext = newFilename.split('.').pop() || 'png';
+      safeFilename = `image-${timestamp}.${ext}`;
+    }
+
+    const nameParts = safeFilename.split('.');
+    const ext = nameParts.pop() || 'png';
+    const baseName = nameParts.join('.');
+    const finalFilename = `${baseName}-${filenameHash}.${ext}`;
+
+    // 4. 上傳為新檔名，保留原始檔名到 metadata
     const { error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
-      .upload(newFilename, fileData, {
+      .upload(finalFilename, fileData, {
         cacheControl: '3600',
         upsert: false,
+        metadata: {
+          originalFilename: newFilename, // 保存新的原始檔名（含中文）
+        },
       });
 
     if (uploadError) {
       return { success: false, error: `上傳失敗: ${uploadError.message}` };
     }
 
-    // 3. 刪除舊檔案
+    // 5. 刪除舊檔案
     const { error: deleteError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .remove([oldFilename]);
@@ -303,8 +395,13 @@ export async function renameImage(
       console.warn(`警告：舊檔案刪除失敗 (${oldFilename}):`, deleteError);
     }
 
-    const newUrl = getStoragePublicUrl(newFilename);
-    return { success: true, newUrl };
+    const newUrl = getStoragePublicUrl(finalFilename);
+    return { 
+      success: true, 
+      newUrl,
+      newStoredFilename: finalFilename,
+      newOriginalFilename: newFilename
+    };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

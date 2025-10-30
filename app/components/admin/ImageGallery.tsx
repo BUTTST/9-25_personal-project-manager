@@ -86,7 +86,10 @@ export default function ImageGallery({ adminPassword, onRefresh }: ImageGalleryP
 
   // 保存新檔名
   const saveRename = async (oldFilename: string) => {
-    if (!newFilename || newFilename === oldFilename) {
+    const image = images.find(img => img.name === oldFilename);
+    const currentDisplayName = image?.originalFilename || oldFilename;
+    
+    if (!newFilename || newFilename === currentDisplayName) {
       setEditingImage(null);
       return;
     }
@@ -101,7 +104,8 @@ export default function ImageGallery({ adminPassword, onRefresh }: ImageGalleryP
         body: JSON.stringify({
           oldFilename,
           newFilename,
-          updateReferences: true,
+          renameMode: 'display-only', // ⭐ 預設只更新顯示名稱（支援中文）
+          updateReferences: false, // 不需要更新引用（URL 不變）
         }),
       });
 
@@ -109,14 +113,14 @@ export default function ImageGallery({ adminPassword, onRefresh }: ImageGalleryP
 
       if (response.ok && data.success) {
         alert(
-          `重命名成功！\n` +
-          `新檔名：${newFilename}\n` +
-          `已更新 ${data.projectsUpdated} 個專案的引用`
+          `✅ 重命名成功！\n\n` +
+          `新顯示名稱：${newFilename}\n` +
+          `存儲檔名：${oldFilename}（不變）`
         );
         loadImages();
         setEditingImage(null);
       } else {
-        alert(`重命名失敗：${data.error}`);
+        alert(`❌ 重命名失敗：${data.error}`);
       }
     } catch (error: any) {
       alert(`錯誤：${error.message}`);
