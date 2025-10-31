@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ProjectData, Project, UIDisplaySettings, normalizeProjectStatus, ensureProjectVisibility } from '@/types';
 import { ProjectCard } from '@/components/project/ProjectCard';
 import { DynamicCategoryFilter } from '@/components/ui/DynamicCategoryFilter';
+import { MobileCategorySelect } from '@/components/ui/MobileCategorySelect';
 import { StatisticsGrid } from '@/components/ui/StatisticsGrid';
 import { UISettingsPanel } from '@/components/ui/UISettingsPanel';
 import { SearchBar } from '@/components/ui/SearchBar';
@@ -275,21 +276,22 @@ export default function HomePage() {
         {!loading && !error && (
         <>
           {/* 搜尋篩選與統計區塊 */}
-          <div className="mb-8 flex gap-4 items-stretch">
-            {/* 左側：搜尋與篩選 */}
-            <div className="flex-1 flex flex-col gap-4">
-              {/* 搜尋框 */}
-              <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm flex-shrink-0">
-                <SearchBar
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="搜尋專案名稱、說明或備註..."
-                />
-              </div>
+          <div className="mb-8">
+            {/* 搜尋框 - 手機版獨立顯示 */}
+            <div className="mb-4 bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm">
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="搜尋專案名稱、說明或備註..."
+              />
+            </div>
 
-              {/* 篩選按鈕區域 */}
-              <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm flex-1">
-                <div className="flex flex-wrap gap-2 items-center">
+            {/* 篩選與統計區塊 - 響應式佈局 */}
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* 左側：篩選區域 */}
+              <div className="flex-1 bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm">
+                {/* 桌面版：顯示所有篩選按鈕 */}
+                <div className="hidden md:flex flex-wrap gap-2 items-center">
                   {uiSettings && (
                     <DynamicCategoryFilter
                       configs={uiSettings.filters}
@@ -320,21 +322,60 @@ export default function HomePage() {
                     </button>
                   )}
                 </div>
-              </div>
-            </div>
 
-            {/* 右側：統計區塊 */}
-            {projectData && uiSettings && (
-              <div className="w-auto flex items-stretch">
-                <StatisticsGrid
-                  configs={uiSettings.statistics}
-                  allProjects={projectData.projects}
-                  filteredProjects={filteredProjects}
-                  isAdmin={isAdmin}
-                  isPreviewMode={isPreviewMode}
-                />
+                {/* 手機版：簡化篩選 */}
+                <div className="md:hidden flex flex-col gap-3">
+                  {/* 下拉選單與齒輪並排 */}
+                  <div className="flex gap-2">
+                    {uiSettings && (
+                      <div className="flex-1">
+                        <MobileCategorySelect
+                          configs={uiSettings.filters}
+                          value={selectedFilter}
+                          onChange={setSelectedFilter}
+                          currentLabel={uiSettings.filters.find(f => f.id === selectedFilter)?.label || '分類'}
+                        />
+                      </div>
+                    )}
+                    
+                    {isAdmin && !isPreviewMode && (
+                      <button
+                        onClick={() => setShowSettingsPanel(true)}
+                        className="flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium border transition-all duration-200 text-muted-foreground bg-card border-border hover:border-primary-300 dark:hover:border-primary-600 hover:bg-muted/50"
+                        title="顯示設定"
+                      >
+                        <Cog6ToothIcon className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* 圖片收折按鈕 */}
+                  {filteredProjects.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setAreImagesCollapsed(!areImagesCollapsed)}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary-400 hover:text-primary-500"
+                    >
+                      <PhotoIcon className="h-4 w-4" />
+                      <span>{areImagesCollapsed ? '展開全部圖片' : '收折全部圖片'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
+
+              {/* 右側：統計區塊 */}
+              {projectData && uiSettings && (
+                <div className="w-full md:w-auto">
+                  <StatisticsGrid
+                    configs={uiSettings.statistics}
+                    allProjects={projectData.projects}
+                    filteredProjects={filteredProjects}
+                    isAdmin={isAdmin}
+                    isPreviewMode={isPreviewMode}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 專案列表 */}
