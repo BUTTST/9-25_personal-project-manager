@@ -88,7 +88,6 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
       // 創建匯出數據
       const exportData = {
         projects: projectData.projects || [],
-        passwords: projectData.passwords || [],
         settings: projectData.settings,
         exportDate: new Date().toISOString(),
         version: '1.0.0'
@@ -163,8 +162,7 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
         const finalConfirm = confirm(
           `📊 資料統計：\n\n` +
           `目前專案數：${currentProjectCount}\n` +
-          `匯入專案數：${importProjectCount}\n` +
-          `密碼數量：${importData.passwords?.length || 0}\n\n` +
+          `匯入專案數：${importProjectCount}\n\n` +
           `確定要完全覆蓋現有資料嗎？`
         );
         
@@ -236,7 +234,7 @@ export function SettingsSection({ settings, projectData, onUpdate }: SettingsSec
       }
 
       const result = await response.json();
-      showToast('success', '範例數據已恢復', `已創建 ${result.projects} 個專案和 ${result.passwords} 個密碼`);
+      showToast('success', '範例數據已恢復', `已創建 ${result.projects} 個專案`);
       
       // 重新載入頁面以顯示新數據
       setTimeout(() => {

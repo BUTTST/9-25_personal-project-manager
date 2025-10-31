@@ -51,7 +51,6 @@ function getPublicProjects(projects: Project[]): Project[] {
     .map(project => ({
       ...project,
       developerNote: '',
-      passwords: [],
     }));
 }
 

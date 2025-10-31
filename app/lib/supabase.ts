@@ -104,16 +104,6 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['projects']['Row'], 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['projects']['Insert']>;
       };
-      passwords: {
-        Row: {
-          id: string;
-          platform: string;
-          account: string;
-          password: string;
-          created_at: string;
-          updated_at: string;
-        };
-      };
       settings: {
         Row: {
           key: string;

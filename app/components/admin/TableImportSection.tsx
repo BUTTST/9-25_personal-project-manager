@@ -3,7 +3,6 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { 
   Project, 
-  PasswordEntry, 
   defaultProjectStatus,
   defaultImagePreviewMode,
   ensureProjectVisibility,
@@ -31,17 +30,9 @@ interface ParsedProject {
   statusNote?: string;
 }
 
-interface ParsedPassword {
-  platform: string;
-  account: string;
-  password: string;
-}
-
 export function TableImportSection({ onImportComplete }: TableImportSectionProps) {
   const [tableText, setTableText] = useState('');
-  const [passwordText, setPasswordText] = useState('');
   const [previewProjects, setPreviewProjects] = useState<ParsedProject[]>([]);
-  const [previewPasswords, setPreviewPasswords] = useState<ParsedPassword[]>([]);
   const [loading, setLoading] = useState(false);
   
   const { showToast } = useToast();
@@ -138,30 +129,6 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
     return projects;
   };
 
-  const parsePasswordTable = (text: string): ParsedPassword[] => {
-    const lines = text.trim().split('\n');
-    const passwords: ParsedPassword[] = [];
-    
-    for (const line of lines) {
-      if (!line.trim() || line.includes('|---') || line.includes('平台')) continue;
-      
-      const columns = line.split('|').map(col => col.trim()).filter(Boolean);
-      if (columns.length >= 3) {
-        const [platform, account, password] = columns;
-        
-        if (platform && account && password) {
-          passwords.push({
-            platform,
-            account,
-            password
-          });
-        }
-      }
-    }
-    
-    return passwords;
-  };
-
   const getCategoryFromDescription = (description: string): Project['category'] => {
     if (description.includes('［重要］')) return 'important';
     if (description.includes('［次］')) return 'secondary';
@@ -174,15 +141,13 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
   const handlePreview = () => {
     try {
       const projects = parseProjectTable(tableText);
-      const passwords = parsePasswordTable(passwordText);
       
       setPreviewProjects(projects);
-      setPreviewPasswords(passwords);
       
-      if (projects.length === 0 && passwords.length === 0) {
+      if (projects.length === 0) {
         showToast('warning', '未檢測到有效資料', '請檢查表格格式');
       } else {
-        showToast('success', '解析成功', `檢測到 ${projects.length} 個專案和 ${passwords.length} 個密碼`);
+        showToast('success', '解析成功', `檢測到 ${projects.length} 個專案`);
       }
     } catch (error) {
       console.error('解析錯誤:', error);
@@ -191,7 +156,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
   };
 
   const handleImport = async () => {
-    if (previewProjects.length === 0 && previewPasswords.length === 0) {
+    if (previewProjects.length === 0) {
       showToast('error', '沒有資料可導入', '請先預覽解析結果');
       return;
     }
@@ -245,9 +210,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
       
       // 清除表單
       setTableText('');
-      setPasswordText('');
       setPreviewProjects([]);
-      setPreviewPasswords([]);
       
       showToast('success', '導入成功', `已導入 ${projects.length} 個專案`);
     } catch (error) {
@@ -282,24 +245,6 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
         </div>
       </div>
 
-      {/* 密碼表格輸入 */}
-      <div className="space-y-3">
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-2">
-            密碼表格數據
-          </label>
-          <textarea
-            value={passwordText}
-            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setPasswordText(e.target.value)}
-            className="w-full h-32 p-3 border border-border rounded-lg bg-card font-mono text-sm text-foreground placeholder:text-muted-foreground"
-            placeholder="請貼上密碼表格數據...
-例如：
-| 平台 | 帳號 | 密碼 |
-| Paddle | billy051015@gmail.com | n9una8YZrw1JKGnLsviX |"
-          />
-        </div>
-      </div>
-
       {/* 操作按鈕 */}
       <div className="flex space-x-3">
         <button
@@ -310,7 +255,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
           <span>預覽解析</span>
         </button>
         
-        {(previewProjects.length > 0 || previewPasswords.length > 0) && (
+        {previewProjects.length > 0 && (
           <button
             onClick={handleImport}
             disabled={loading}
@@ -330,7 +275,7 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
       </div>
 
       {/* 預覽結果 */}
-      {(previewProjects.length > 0 || previewPasswords.length > 0) && (
+      {previewProjects.length > 0 && (
         <div className="mt-6 space-y-4">
           <h3 className="text-md font-medium">預覽結果</h3>
           
@@ -349,22 +294,6 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
               </div>
             </div>
           )}
-
-          {previewPasswords.length > 0 && (
-            <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg border border-blue-200/60 dark:border-blue-500/30">
-              <div className="flex items-center space-x-2 mb-2">
-                <CheckCircleIcon className="h-5 w-5 text-blue-500" />
-                <span className="font-medium text-blue-800 dark:text-blue-200">密碼數據 ({previewPasswords.length} 項)</span>
-              </div>
-              <div className="max-h-40 overflow-y-auto">
-                {previewPasswords.map((password: ParsedPassword, index: number) => (
-                  <div key={index} className="text-sm text-blue-700 dark:text-blue-200/90 py-1">
-                    {password.platform} - {password.account}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -373,7 +302,6 @@ export function TableImportSection({ onImportComplete }: TableImportSectionProps
         <ul className="mt-1 space-y-1">
           <li>• 請貼上 Markdown 格式的表格數據</li>
           <li>• 專案表格應包含：日期檔名、說明、GitHub、Vercel、路徑、狀態備註等欄位</li>
-          <li>• 密碼表格應包含：平台、帳號、密碼等欄位</li>
           <li>• 支援自動識別專案類別（［重要］、［次］、［子實踐］等）</li>
         </ul>
       </div>
