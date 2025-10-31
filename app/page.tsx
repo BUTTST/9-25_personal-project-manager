@@ -21,6 +21,7 @@ import {
   Cog6ToothIcon,
   PhotoIcon,
   Squares2X2Icon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 
 // 默認 UI 設定
@@ -66,6 +67,7 @@ export default function HomePage() {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [uiSettings, setUiSettings] = useState<UIDisplaySettings | null>(null);
+  const [isQuickEditMode, setIsQuickEditMode] = useState(false);
   
   const { isAdmin } = useAuth();
 
@@ -211,9 +213,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-foreground transition-colors">
       <Header />
       
-      {/* 懸浮的預覽訪客視角按鈕 */}
+      {/* 懸浮的管理員操作按鈕組 */}
       {isAdmin && (
-        <div className="fixed top-20 right-6 z-50 animate-slide-left">
+        <div className="fixed top-20 right-6 z-50 flex flex-col gap-3 animate-slide-left">
+          {/* 預覽訪客視角按鈕 */}
           <button 
             onClick={() => setIsPreviewMode(!isPreviewMode)} 
             className={`
@@ -229,6 +232,25 @@ export default function HomePage() {
             {isPreviewMode ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
             <span className="hidden sm:inline">{isPreviewMode ? '結束預覽' : '預覽訪客'}</span>
           </button>
+
+          {/* 快速編輯模式按鈕 */}
+          {!isPreviewMode && (
+            <button 
+              onClick={() => setIsQuickEditMode(!isQuickEditMode)} 
+              className={`
+                flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm
+                transition-all duration-200 shadow-2xl hover:scale-105
+                ${isQuickEditMode 
+                  ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800' 
+                  : 'bg-card text-foreground border-2 border-border hover:border-green-400 dark:hover:border-green-500 backdrop-blur-sm'
+                }
+              `}
+              title={isQuickEditMode ? '關閉快速編輯模式' : '開啟快速編輯模式（可調整可見性控制）'}
+            >
+              <PencilSquareIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">{isQuickEditMode ? '快速編輯中' : '快速編輯'}</span>
+            </button>
+          )}
         </div>
       )}
       
@@ -250,6 +272,28 @@ export default function HomePage() {
                 </h4>
                 <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
                   您正在以訪客身份預覽此頁面。只會顯示對訪客可見的內容，開發者註解和隱藏專案不會顯示。
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 快速編輯模式提示 */}
+        {isAdmin && !isPreviewMode && isQuickEditMode && (
+          <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-500/10 dark:to-emerald-500/10 border-2 border-green-300 dark:border-green-500/40 rounded-xl p-5 shadow-lg animate-slide-up">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="relative">
+                  <PencilSquareIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="absolute inset-0 bg-green-400 rounded-full blur-md opacity-30 animate-pulse"></div>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-green-900 dark:text-green-100 mb-1">
+                  快速編輯模式
+                </h4>
+                <p className="text-xs text-green-700 dark:text-green-300 leading-relaxed">
+                  您可以快速調整每個專案的可見性控制。所有變更將即時儲存。精選、隱藏、編輯按鈕始終可用。
                 </p>
               </div>
             </div>
@@ -408,7 +452,7 @@ export default function HomePage() {
                     <ProjectCard
                       project={{ ...project, imagePreviews: project.imagePreviews }}
                       isAdmin={isAdmin && !isPreviewMode}
-                      showToggleControls={projectData?.settings.showToggleControls ?? true}
+                      showToggleControls={isQuickEditMode}
                       imageCollapsedOverride={areImagesCollapsed}
                       onUpdate={(updatedProject) => {
                         if (!projectData) return;

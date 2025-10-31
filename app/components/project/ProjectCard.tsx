@@ -94,8 +94,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
       visibility: {
         ...localProject.visibility,
         [field]: !localProject.visibility[field]
-      },
-      updatedAt: Date.now()
+      }
     };
     
     setLocalProject(updatedProject);
@@ -133,8 +132,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     
     const updatedProject = {
       ...localProject,
-      featured: !localProject.featured,
-      updatedAt: Date.now()
+      featured: !localProject.featured
     };
     
     setLocalProject(updatedProject);
@@ -169,8 +167,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     
     const updatedProject = {
       ...localProject,
-      hidden: !localProject.hidden,
-      updatedAt: Date.now()
+      hidden: !localProject.hidden
     };
     
     setLocalProject(updatedProject);
@@ -364,18 +361,9 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
           {/* 標題 - 管理員總是看得到，訪客依照可見性 */}
           {(isAdmin || localProject.visibility.dateAndFileName) && (
             <div className="flex items-start justify-between gap-3">
-              <h3 className={`text-lg font-bold line-clamp-2 tracking-tight flex-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors ${
-                !localProject.visibility.dateAndFileName && isAdmin ? 'text-muted-foreground/50 line-through' : 'text-foreground'
-              }`}>
+              <h3 className="text-lg font-bold line-clamp-2 tracking-tight flex-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors text-foreground">
                 {localProject.dateAndFileName}
               </h3>
-              {isAdmin && showToggleControls && (
-                <ToggleControl
-                  checked={localProject.visibility.dateAndFileName}
-                  onChange={() => handleVisibilityToggle('dateAndFileName')}
-                  size="sm"
-                />
-              )}
             </div>
           )}
           
