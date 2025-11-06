@@ -7,7 +7,7 @@ import { sampleProjectData } from './sample-data';
 
 // 檢查數據是否為空或無效
 export function isEmptyData(data: ProjectData): boolean {
-  return data.projects.length === 0 && data.passwords.length === 0;
+  return data.projects.length === 0;
 }
 
 // 檢查是否為首次部署（沒有任何數據）
@@ -21,13 +21,8 @@ export function safeMergeData(existingData: ProjectData, newData: ProjectData): 
   const existingProjectIds = new Set(existingData.projects.map(p => p.id));
   const newProjects = newData.projects.filter(p => !existingProjectIds.has(p.id));
 
-  // 保留現有的密碼，只添加新的
-  const existingPasswordIds = new Set(existingData.passwords.map(p => p.id));
-  const newPasswords = newData.passwords.filter(p => !existingPasswordIds.has(p.id));
-
   return {
     projects: [...existingData.projects, ...newProjects],
-    passwords: [...existingData.passwords, ...newPasswords],
     settings: {
       ...existingData.settings,
       ...newData.settings
@@ -68,10 +63,6 @@ export function validateDataIntegrity(data: ProjectData): { isValid: boolean; er
     errors.push('專案數據不是陣列格式');
   }
 
-  if (!Array.isArray(data.passwords)) {
-    errors.push('密碼數據不是陣列格式');
-  }
-
   if (!data.settings) {
     errors.push('設定數據丟失');
   }
@@ -109,7 +100,6 @@ export function generateSystemReport(data: ProjectData): string {
 數據統計:
 - 總專案數: ${data.projects?.length || 0}
 - 公開專案數: ${data.metadata?.publicProjects || 0}
-- 密碼數量: ${data.passwords?.length || 0}
 - 最後更新: ${data.metadata?.lastUpdated ? new Date(data.metadata.lastUpdated).toLocaleString() : '未知'}
 
 數據完整性: ${isValid ? '✅ 正常' : '❌ 有問題'}

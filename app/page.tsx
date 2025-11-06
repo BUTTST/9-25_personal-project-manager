@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ProjectData, Project, UIDisplaySettings, normalizeProjectStatus, ensureProjectVisibility } from '@/types';
 import { ProjectCard } from '@/components/project/ProjectCard';
 import { DynamicCategoryFilter } from '@/components/ui/DynamicCategoryFilter';
+import { MobileCategorySelect } from '@/components/ui/MobileCategorySelect';
 import { StatisticsGrid } from '@/components/ui/StatisticsGrid';
 import { UISettingsPanel } from '@/components/ui/UISettingsPanel';
 import { SearchBar } from '@/components/ui/SearchBar';
@@ -20,6 +21,7 @@ import {
   Cog6ToothIcon,
   PhotoIcon,
   Squares2X2Icon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 
 // 默認 UI 設定
@@ -51,7 +53,6 @@ function getPublicProjects(projects: Project[]): Project[] {
     .map(project => ({
       ...project,
       developerNote: '',
-      passwords: [],
     }));
 }
 
@@ -66,6 +67,7 @@ export default function HomePage() {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [uiSettings, setUiSettings] = useState<UIDisplaySettings | null>(null);
+  const [isQuickEditMode, setIsQuickEditMode] = useState(false);
   
   const { isAdmin } = useAuth();
 
@@ -211,9 +213,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-foreground transition-colors">
       <Header />
       
-      {/* 懸浮的預覽訪客視角按鈕 */}
+      {/* 懸浮的管理員操作按鈕組 */}
       {isAdmin && (
-        <div className="fixed top-20 right-6 z-50 animate-slide-left">
+        <div className="fixed top-20 right-6 z-50 flex flex-col gap-3 animate-slide-left">
+          {/* 預覽訪客視角按鈕 */}
           <button 
             onClick={() => setIsPreviewMode(!isPreviewMode)} 
             className={`
@@ -229,6 +232,25 @@ export default function HomePage() {
             {isPreviewMode ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
             <span className="hidden sm:inline">{isPreviewMode ? '結束預覽' : '預覽訪客'}</span>
           </button>
+
+          {/* 快速編輯模式按鈕 */}
+          {!isPreviewMode && (
+            <button 
+              onClick={() => setIsQuickEditMode(!isQuickEditMode)} 
+              className={`
+                flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm
+                transition-all duration-200 shadow-2xl hover:scale-105
+                ${isQuickEditMode 
+                  ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800' 
+                  : 'bg-card text-foreground border-2 border-border hover:border-green-400 dark:hover:border-green-500 backdrop-blur-sm'
+                }
+              `}
+              title={isQuickEditMode ? '關閉快速編輯模式' : '開啟快速編輯模式（可調整可見性控制）'}
+            >
+              <PencilSquareIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">{isQuickEditMode ? '快速編輯中' : '快速編輯'}</span>
+            </button>
+          )}
         </div>
       )}
       
@@ -255,6 +277,28 @@ export default function HomePage() {
             </div>
           </div>
         )}
+
+        {/* 快速編輯模式提示 */}
+        {isAdmin && !isPreviewMode && isQuickEditMode && (
+          <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-500/10 dark:to-emerald-500/10 border-2 border-green-300 dark:border-green-500/40 rounded-xl p-5 shadow-lg animate-slide-up">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="relative">
+                  <PencilSquareIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="absolute inset-0 bg-green-400 rounded-full blur-md opacity-30 animate-pulse"></div>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-green-900 dark:text-green-100 mb-1">
+                  快速編輯模式
+                </h4>
+                <p className="text-xs text-green-700 dark:text-green-300 leading-relaxed">
+                  您可以快速調整每個專案的可見性控制。所有變更將即時儲存。精選、隱藏、編輯按鈕始終可用。
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         
         {loading && (
           <div className="flex items-center justify-center py-16">
@@ -275,12 +319,21 @@ export default function HomePage() {
 
         {!loading && !error && (
         <>
+          {/* 手機版：搜尋框獨立置頂 */}
+          <div className="md:hidden mb-4 bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="搜尋專案名稱、說明或備註..."
+            />
+          </div>
+
           {/* 搜尋篩選與統計區塊 */}
-          <div className="mb-8 flex gap-4 items-stretch">
+          <div className="mb-8 flex flex-col md:flex-row gap-4">
             {/* 左側：搜尋與篩選 */}
             <div className="flex-1 flex flex-col gap-4">
-              {/* 搜尋框 */}
-              <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm flex-shrink-0">
+              {/* 桌面版：搜尋框 */}
+              <div className="hidden md:block bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm">
                 <SearchBar
                   value={searchQuery}
                   onChange={setSearchQuery}
@@ -290,7 +343,8 @@ export default function HomePage() {
 
               {/* 篩選按鈕區域 */}
               <div className="bg-gradient-to-br from-card via-card to-primary-50/30 dark:to-primary-500/5 rounded-xl shadow-md border border-border/50 p-4 backdrop-blur-sm flex-1">
-                <div className="flex flex-wrap gap-2 items-center">
+                {/* 桌面版：顯示所有篩選按鈕 */}
+                <div className="hidden md:flex flex-wrap gap-2 items-center">
                   {uiSettings && (
                     <DynamicCategoryFilter
                       configs={uiSettings.filters}
@@ -321,12 +375,106 @@ export default function HomePage() {
                     </button>
                   )}
                 </div>
+
+                {/* 手機版：左右佈局 */}
+                <div className="md:hidden flex gap-3 min-h-[200px]">
+                  {/* 左側按鈕區 */}
+                  <div className="flex flex-col justify-between" style={{width: '45%'}}>
+                    {/* 篩選按鈕 - 根據統計數量動態顯示 */}
+                    <div className="space-y-2 flex-1">
+                      {uiSettings && (() => {
+                        const statsCount = uiSettings.statistics.filter(s => s.enabled).length;
+                        let visibleFilters: string[] = [];
+                        
+                        if (statsCount <= 2) {
+                          // 2×1: 全部、重要、單檔
+                          visibleFilters = ['all', 'important', 'single-doc'];
+                        } else if (statsCount <= 4) {
+                          // 2×2: 全部、重要、單檔、完成
+                          visibleFilters = ['all', 'important', 'single-doc', 'completed'];
+                        } else {
+                          // 3×2: 全部顯示
+                          visibleFilters = ['all', 'important', 'single-doc', 'practice', 'completed', 'abandoned'];
+                        }
+
+                        const enabledFilters = uiSettings.filters
+                          .filter(f => f.enabled && visibleFilters.includes(f.id))
+                          .sort((a, b) => a.order - b.order);
+
+                        return enabledFilters.map((filter) => (
+                          <button
+                            key={filter.id}
+                            onClick={() => setSelectedFilter(filter.id)}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                              selectedFilter === filter.id
+                                ? 'bg-primary-500 text-white shadow-sm'
+                                : 'bg-card text-foreground hover:bg-muted'
+                            }`}
+                          >
+                            {filter.label}
+                          </button>
+                        ));
+                      })()}
+                    </div>
+
+                    {/* 底部：下拉選單與齒輪 */}
+                    <div className="pt-2 border-t border-border/50">
+                      {uiSettings && (() => {
+                        const statsCount = uiSettings.statistics.filter(s => s.enabled).length;
+                        
+                        if (statsCount >= 6) {
+                          // 3×2: 只顯示齒輪
+                          return (
+                            <div className="flex justify-center">
+                              {isAdmin && !isPreviewMode && (
+                                <button
+                                  onClick={() => setShowSettingsPanel(true)}
+                                  className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium border transition-all duration-200 text-muted-foreground bg-card border-border hover:border-primary-300 dark:hover:border-primary-600 hover:bg-muted/50"
+                                  title="顯示設定"
+                                >
+                                  <Cog6ToothIcon className="h-5 w-5" />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        } else {
+                          // 2×1 或 2×2: 顯示下拉選單與齒輪
+                          return (
+                            <div className="flex gap-2">
+                              <div className="flex-1">
+                                <MobileCategorySelect
+                                  configs={uiSettings.filters}
+                                  value={selectedFilter}
+                                  onChange={setSelectedFilter}
+                                  currentLabel={uiSettings.filters.find(f => f.id === selectedFilter)?.label || '分類'}
+                                />
+                              </div>
+                              
+                              {isAdmin && !isPreviewMode && (
+                                <button
+                                  onClick={() => setShowSettingsPanel(true)}
+                                  className="flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium border transition-all duration-200 text-muted-foreground bg-card border-border hover:border-primary-300 dark:hover:border-primary-600 hover:bg-muted/50"
+                                  title="顯示設定"
+                                >
+                                  <Cog6ToothIcon className="h-5 w-5" />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* 右側統計預留空間（實際統計區塊在外層） */}
+                  <div className="flex-1"></div>
+                </div>
               </div>
             </div>
 
             {/* 右側：統計區塊 */}
             {projectData && uiSettings && (
-              <div className="w-auto flex items-stretch">
+              <div className="w-full md:w-auto">
                 <StatisticsGrid
                   configs={uiSettings.statistics}
                   allProjects={projectData.projects}
@@ -368,7 +516,7 @@ export default function HomePage() {
                     <ProjectCard
                       project={{ ...project, imagePreviews: project.imagePreviews }}
                       isAdmin={isAdmin && !isPreviewMode}
-                      showToggleControls={projectData?.settings.showToggleControls ?? true}
+                      showToggleControls={isQuickEditMode}
                       imageCollapsedOverride={areImagesCollapsed}
                       onUpdate={(updatedProject) => {
                         if (!projectData) return;

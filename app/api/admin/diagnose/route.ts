@@ -51,10 +51,6 @@ export async function GET(request: NextRequest) {
         .from('projects')
         .select('id', { count: 'exact', head: true });
 
-      const { data: passwords, error: passwordsError } = await supabaseAdmin
-        .from('passwords')
-        .select('id', { count: 'exact', head: true });
-
       const { data: settings, error: settingsError } = await supabaseAdmin
         .from('settings')
         .select('key', { count: 'exact', head: true });
@@ -62,7 +58,6 @@ export async function GET(request: NextRequest) {
       diagnostics.database.status = 'connected';
       diagnostics.database.tables = [
         { name: 'projects', status: projectsError ? 'error' : 'ok', error: projectsError?.message },
-        { name: 'passwords', status: passwordsError ? 'error' : 'ok', error: passwordsError?.message },
         { name: 'settings', status: settingsError ? 'error' : 'ok', error: settingsError?.message },
       ];
     } catch (error: any) {

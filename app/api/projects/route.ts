@@ -44,8 +44,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: '無法載入專案資料', details: error.message }, { status: 500 });
       }
 
-      // 獲取密碼和設定
-      const { data: passwords } = await supabaseAdmin.from('passwords').select('*');
+      // 獲取設定
       const { data: settingsData } = await supabaseAdmin
         .from('settings')
         .select('*');
@@ -88,7 +87,6 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         projects: formattedProjects,
-        passwords: passwords || [],
         settings,
         metadata: {
           lastUpdated: Date.now(),

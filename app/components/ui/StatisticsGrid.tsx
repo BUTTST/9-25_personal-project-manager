@@ -61,9 +61,9 @@ export function StatisticsGrid({
 
   return (
     <div
-      className="grid grid-rows-2 gap-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm border border-blue-500/30 rounded-xl shadow-lg overflow-hidden h-full"
+      className="grid gap-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm border border-blue-500/30 rounded-xl shadow-lg overflow-hidden h-full
+                 grid-cols-2 md:grid-rows-2 md:grid-flow-col"
       style={{
-        gridAutoFlow: 'column',
         gridAutoColumns: 'minmax(90px, 1fr)',
       }}
     >
@@ -77,12 +77,17 @@ export function StatisticsGrid({
         );
         const colors = getStatisticColor(config.type);
 
+        // 桌面版邊框邏輯
         const col = Math.floor(index / 2);
         const isLastCol = col === Math.ceil(enabledStats.length / 2) - 1;
-        const needsRightBorder = !isLastCol;
+        const needsRightBorderDesktop = !isLastCol;
         const isFirstRow = index % 2 === 0;
         const hasPair = index + 1 < enabledStats.length;
-        const needsBottomBorder = isFirstRow && hasPair;
+        const needsBottomBorderDesktop = isFirstRow && hasPair;
+
+        // 手機版邊框邏輯（2列網格）
+        const needsRightBorderMobile = index % 2 === 0; // 左側卡片需要右邊框
+        const needsBottomBorderMobile = index < enabledStats.length - 2; // 不是最後一行的需要下邊框
 
         const iconType = getStatisticIconType(config.type);
         const IconComponent = getIconComponent(iconType);
@@ -92,11 +97,15 @@ export function StatisticsGrid({
             key={config.id}
             className={`
               bg-gradient-to-br ${colors.gradient}
-              rounded-sm p-4
-              ${needsRightBorder ? 'border-r border-blue-500/20' : ''}
-              ${needsBottomBorder ? 'border-b border-blue-500/20' : ''}
+              rounded-sm p-3 md:p-4
+              ${needsRightBorderMobile ? 'border-r md:border-r-0' : ''} 
+              ${needsRightBorderDesktop ? 'md:border-r' : ''} 
+              ${needsBottomBorderMobile ? 'border-b md:border-b-0' : ''} 
+              ${needsBottomBorderDesktop ? 'md:border-b' : ''}
+              border-blue-500/20
               hover:shadow-md transition-shadow
               flex flex-col items-center justify-center
+              min-h-[80px] md:min-h-0
             `}
           >
             <div className="flex items-center justify-between mb-2 w-full">

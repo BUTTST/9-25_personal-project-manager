@@ -8,6 +8,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/components/ui/ToastProvider';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ProjectTable } from '@/components/admin/ProjectTable';
+import { DashboardView } from '@/components/admin/DashboardView';
 import { SettingsSection } from '@/components/admin/SettingsSection';
 import { TableImportSection } from '@/components/admin/TableImportSection';
 import ImageUploader from '@/components/admin/ImageUploader';
@@ -18,6 +19,8 @@ import {
   ChartBarIcon,
   SparklesIcon,
   CheckCircleIcon,
+  Squares2X2Icon,
+  TableCellsIcon,
 } from '@heroicons/react/24/outline';
 import { ToggleControl } from '@/components/ui/ToggleControl';
 import { HeaderThemeToggle } from '@/components/ui/HeaderThemeToggle';
@@ -27,6 +30,7 @@ export default function AdminPage() {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'projects' | 'import' | 'images' | 'settings' | 'diagnostics'>('projects');
+  const [projectView, setProjectView] = useState<'dashboard' | 'table'>('dashboard');
   const [refreshKey, setRefreshKey] = useState(0);
   const [adminPassword, setAdminPassword] = useState('');
   
@@ -345,12 +349,51 @@ export default function AdminPage() {
           {/* 內容區域 */}
           <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border border-border/50 overflow-hidden animate-fade-in">
             {activeTab === 'projects' && (
-              <ProjectTable
-                projects={projectData.projects}
-                showToggleControls={projectData.settings.showToggleControls}
-                onUpdate={handleProjectUpdate}
-                onDelete={handleProjectDelete}
-              />
+              <>
+                {/* 視圖切換按鈕 */}
+                <div className="p-4 border-b border-border/50 bg-muted/20">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setProjectView('dashboard')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        projectView === 'dashboard'
+                          ? 'bg-primary-500 text-white shadow-lg'
+                          : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      <Squares2X2Icon className="h-4 w-4" />
+                      <span>儀表板</span>
+                    </button>
+                    <button
+                      onClick={() => setProjectView('table')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        projectView === 'table'
+                          ? 'bg-primary-500 text-white shadow-lg'
+                          : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      <TableCellsIcon className="h-4 w-4" />
+                      <span>表格</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 視圖內容 */}
+                {projectView === 'dashboard' ? (
+                  <DashboardView
+                    projects={projectData.projects}
+                    onUpdate={handleProjectUpdate}
+                    onDelete={handleProjectDelete}
+                  />
+                ) : (
+                  <ProjectTable
+                    projects={projectData.projects}
+                    showToggleControls={projectData.settings.showToggleControls}
+                    onUpdate={handleProjectUpdate}
+                    onDelete={handleProjectDelete}
+                  />
+                )}
+              </>
             )}
             
             {activeTab === 'import' && (

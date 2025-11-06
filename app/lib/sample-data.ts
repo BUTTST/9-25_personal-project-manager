@@ -264,29 +264,8 @@ export const sampleProjects: Project[] = [
   },
 ];
 
-// 範例密碼資料（基於用戶表格）
-export const samplePasswords = [
-  {
-    id: generateId(),
-    platform: 'Paddle',
-    account: 'billy051015@gmail.com',
-    password: 'n9una8YZrw1JKGnLsviX',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-  {
-    id: generateId(),
-    platform: 'Paddle sandbox',
-    account: 'billy051015@gmail.com',
-    password: 'n9una8YZrw1JKGnLsviX',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-];
-
 export const sampleProjectData: ProjectData = {
   projects: sampleProjects,
-  passwords: samplePasswords,
   settings: {
     showToggleControls: true,
     defaultProjectVisibility: {

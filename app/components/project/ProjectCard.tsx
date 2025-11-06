@@ -94,8 +94,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
       visibility: {
         ...localProject.visibility,
         [field]: !localProject.visibility[field]
-      },
-      updatedAt: Date.now()
+      }
     };
     
     setLocalProject(updatedProject);
@@ -133,8 +132,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     
     const updatedProject = {
       ...localProject,
-      featured: !localProject.featured,
-      updatedAt: Date.now()
+      featured: !localProject.featured
     };
     
     setLocalProject(updatedProject);
@@ -169,8 +167,7 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
     
     const updatedProject = {
       ...localProject,
-      hidden: !localProject.hidden,
-      updatedAt: Date.now()
+      hidden: !localProject.hidden
     };
     
     setLocalProject(updatedProject);
@@ -253,18 +250,15 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
   const renderEditableLink = (field: 'github' | 'vercel' | 'deployment', url: string | undefined) => {
     if (!url) return null;
     
-    // 截取網址用於顯示
-    const displayUrl = url.length > 35 ? url.substring(0, 35) + '...' : url;
-    
     return (
       <Tooltip content={url} position="top" maxWidth="max-w-md">
         <a 
           href={url} 
           target="_blank" 
           rel="noopener noreferrer" 
-          className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline truncate block transition-colors"
+          className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline block overflow-hidden text-ellipsis whitespace-nowrap transition-colors"
         >
-          {displayUrl}
+          {url}
         </a>
       </Tooltip>
     );
@@ -367,18 +361,9 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
           {/* 標題 - 管理員總是看得到，訪客依照可見性 */}
           {(isAdmin || localProject.visibility.dateAndFileName) && (
             <div className="flex items-start justify-between gap-3">
-              <h3 className={`text-lg font-bold line-clamp-2 tracking-tight flex-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors ${
-                !localProject.visibility.dateAndFileName && isAdmin ? 'text-muted-foreground/50 line-through' : 'text-foreground'
-              }`}>
+              <h3 className="text-lg font-bold line-clamp-2 tracking-tight flex-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors text-foreground">
                 {localProject.dateAndFileName}
               </h3>
-              {isAdmin && showToggleControls && (
-                <ToggleControl
-                  checked={localProject.visibility.dateAndFileName}
-                  onChange={() => handleVisibilityToggle('dateAndFileName')}
-                  size="sm"
-                />
-              )}
             </div>
           )}
           
@@ -515,11 +500,11 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
               <div className={`flex items-center justify-between gap-3 ${
                 !localProject.visibility.github && isAdmin ? 'opacity-40' : ''
               }`}>
-                <div className="flex items-center space-x-2.5 text-sm min-w-0 flex-1">
+                <div className="flex items-center space-x-2.5 text-sm min-w-0 flex-1 overflow-hidden">
                   <div className="flex-shrink-0">
                     <GitHubIcon />
                   </div>
-                  <div className={`min-w-0 flex-1 ${
+                  <div className={`min-w-0 flex-1 overflow-hidden ${
                     !localProject.visibility.github && isAdmin ? 'line-through' : ''
                   }`}>
                     {renderEditableLink('github', localProject.github)}
@@ -539,11 +524,11 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
               <div className={`flex items-center justify-between gap-3 ${
                 !localProject.visibility.vercel && isAdmin ? 'opacity-40' : ''
               }`}>
-                <div className="flex items-center space-x-2.5 text-sm min-w-0 flex-1">
+                <div className="flex items-center space-x-2.5 text-sm min-w-0 flex-1 overflow-hidden">
                   <div className="flex-shrink-0">
                     <VercelIcon />
                   </div>
-                  <div className={`min-w-0 flex-1 ${
+                  <div className={`min-w-0 flex-1 overflow-hidden ${
                     !localProject.visibility.vercel && isAdmin ? 'line-through' : ''
                   }`}>
                     {localProject.documentMeta?.filePath && !localProject.vercel ? (
@@ -574,11 +559,11 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
               <div className={`flex items-center justify-between gap-3 ${
                 !localProject.visibility.deployment && isAdmin ? 'opacity-40' : ''
               }`}>
-                <div className="flex items-center space-x-2.5 text-sm min-w-0 flex-1">
+                <div className="flex items-center space-x-2.5 text-sm min-w-0 flex-1 overflow-hidden">
                   <div className="flex-shrink-0">
                     <GlobeAltIcon className="h-4 w-4 text-purple-500" />
                   </div>
-                  <div className={`min-w-0 flex-1 ${
+                  <div className={`min-w-0 flex-1 overflow-hidden ${
                     !localProject.visibility.deployment && isAdmin ? 'line-through' : ''
                   }`}>
                     {renderEditableLink('deployment', localProject.deployment)}

@@ -31,11 +31,15 @@
 
 ### 🔧 管理員功能
 - **線上編輯**：直接在網頁上新增、編輯、刪除專案
-- **密碼管理**：安全儲存和管理平台帳號密碼
 - **權限控制**：精細的專案可見性設定，實時預覽
 - **註解分離**：支援一般註解和開發者註解（含視覺區分）
 - **預覽模式**：以訪客身份預覽頁面效果
-- **圖片管理** ⭐ NEW：
+- **雙視圖後台** ⭐ NEW：
+  - 🎨 **儀表板視圖**：視覺化數據概覽和快速操作
+  - 📋 **表格視圖**：詳細列表適合批量管理
+  - ⚡ **一鍵操作**：快速切換精選、隱藏、編輯、刪除
+  - 🕐 **最近活動**：時間線顯示最新更新的專案
+- **圖片管理** ⭐：
   - 拖拽上傳圖片到 Supabase Storage
   - 網格展示、搜尋、編輯檔名
   - 自動檢查圖片引用
@@ -315,17 +319,8 @@ git push
    - 即時預覽調整效果
 
 4. **持久化儲存**：
-   - 所有設定自動儲存至 Vercel Blob
+   - 所有設定自動儲存至 Supabase
    - 訪客和管理員都能看到統一的顯示效果
-
-### 密碼管理
-
-在「密碼管理」選項卡中：
-1. 點擊「新增密碼」
-2. 填寫平台、帳號和密碼
-3. 使用隱藏/顯示開關保護敏感資訊
-
-⚠️ **注意：** 密碼區域僅管理員可見，訪客無法存取。
 
 ## 🔧 自定義設定
 
@@ -376,68 +371,6 @@ git push
   - 安全標記（`safetyCheck`、`writeTimestamp`）
   - 明確授權的強制寫入
 
-## 📝 API 文檔
-
-### 公開 API
-```http
-GET /api/projects
-# 獲取公開專案列表
-
-GET /api/settings/ui-display
-# 取得 UI 顯示設定（篩選器、統計）；公開讀取
-```
-
-### 管理員 API
-```http
-# 專案管理
-GET /api/projects?admin=true
-HEADERS x-admin-password: <your-password>
-
-POST /api/projects
-PATCH /api/projects/:id
-DELETE /api/projects/:id
-POST /api/projects/reorder
-BODY [{ id: string, sortOrder: number }]
-
-# 圖片管理 ⭐ NEW
-GET /api/images
-# 列出所有圖片
-
-POST /api/images
-# 上傳圖片（multipart/form-data）
-BODY file: File, filename?: string
-
-POST /api/images/rename
-# 重命名圖片並更新引用
-BODY { oldFilename: string, newFilename: string, updateReferences: boolean }
-
-POST /api/images/delete
-# 刪除圖片（檢查引用）
-BODY { filename: string } | { filenames: string[], force: boolean }
-
-POST /api/images/check-references
-# 檢查圖片引用
-BODY { filename: string }
-
-# UI 設定
-GET /api/settings/ui-display
-PUT /api/settings/ui-display
-POST /api/settings/reset-ui
-
-# 管理工具
-GET /api/admin/diagnose
-POST /api/admin/import-data
-```
-
-## 🐛 問題回報
-
-如果您遇到問題或有功能建議，請：
-
-1. 檢查 [Issues](https://github.com/your-repo/issues) 是否已有相關問題
-2. 建立新的 Issue 並提供詳細資訊：
-   - 作業系統和瀏覽器版本
-   - 錯誤訊息或截圖
-   - 重現步驟
 
 ## 📝 許可證
 

@@ -81,15 +81,6 @@ export interface Project {
 
 export type ProjectVisibility = Project['visibility'];
 
-export interface PasswordEntry {
-  id: string;
-  platform: string; // 平台
-  account: string; // 帳號
-  password: string; // 密碼
-  createdAt: number;
-  updatedAt: number;
-}
-
 export interface AppSettings {
   showToggleControls: boolean;
   defaultProjectVisibility: Partial<Project['visibility']>;
@@ -102,7 +93,6 @@ export interface AppSettings {
 
 export interface ProjectData {
   projects: Project[];
-  passwords: PasswordEntry[];
   settings: AppSettings;
   metadata: {
     lastUpdated: number;
@@ -184,12 +174,6 @@ export interface ProjectFormData {
   visibility?: ProjectVisibility;
   hidden?: boolean;
   sortOrder?: number;
-}
-
-export interface PasswordFormData {
-  platform: string;
-  account: string;
-  password: string;
 }
 
 // UI 顯示設定介面
