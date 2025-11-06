@@ -1,0 +1,37 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad16" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="256" height="256" rx="48" fill="url(#grad16)"/>
+  
+  <!-- App window -->
+  <rect x="32" y="48" width="192" height="160" rx="12" fill="#ffffff" opacity="0.95"/>
+  
+  <!-- Window header -->
+  <rect x="32" y="48" width="192" height="32" rx="12" fill="url(#grad16)" opacity="0.3"/>
+  <circle cx="56" cy="64" r="6" fill="#ef4444"/>
+  <circle cx="76" cy="64" r="6" fill="#f59e0b"/>
+  <circle cx="96" cy="64" r="6" fill="#10b981"/>
+  
+  <!-- Window content - project grid -->
+  <rect x="48" y="96" width="80" height="48" rx="4" fill="#06b6d4" opacity="0.2"/>
+  <rect x="56" y="104" width="48" height="4" rx="2" fill="#06b6d4"/>
+  <rect x="56" y="112" width="64" height="3" rx="1.5" fill="#94a3b8"/>
+  
+  <rect x="144" y="96" width="80" height="48" rx="4" fill="#3b82f6" opacity="0.2"/>
+  <rect x="152" y="104" width="56" height="4" rx="2" fill="#3b82f6"/>
+  <rect x="152" y="112" width="64" height="3" rx="1.5" fill="#94a3b8"/>
+  
+  <rect x="48" y="160" width="80" height="48" rx="4" fill="#06b6d4" opacity="0.2"/>
+  <rect x="56" y="168" width="52" height="4" rx="2" fill="#06b6d4"/>
+  <rect x="56" y="176" width="64" height="3" rx="1.5" fill="#94a3b8"/>
+  
+  <rect x="144" y="160" width="80" height="48" rx="4" fill="#3b82f6" opacity="0.2"/>
+  <rect x="152" y="168" width="60" height="4" rx="2" fill="#3b82f6"/>
+  <rect x="152" y="176" width="64" height="3" rx="1.5" fill="#94a3b8"/>
+</svg>
+<!-- 設計語彙：應用視窗界面，瀏覽器視窗風格，專案網格佈局，現代化UI設計 -->

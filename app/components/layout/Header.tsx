@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { LoginModal } from '@/components/auth/LoginModal';
 import { HeaderThemeToggle } from '@/components/ui/HeaderThemeToggle';
@@ -32,8 +33,15 @@ export function Header() {
             {/* Logo 和標題 */}
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-3">
-                <div className="w-9 h-9 bg-primary-600 text-white dark:bg-primary-500 rounded-lg flex items-center justify-center shadow-sm">
-                  <span className="font-semibold text-base">P</span>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
+                  <Image
+                    src="/icons/project-showcase-platform-icon-48.png"
+                    alt="專案展示平台"
+                    width={36}
+                    height={36}
+                    className="w-full h-full object-contain"
+                    priority
+                  />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-foreground">專案展示平台</h1>
