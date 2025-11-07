@@ -1,72 +1,60 @@
 ---
-globs: "*.ts,*.tsx"
+globs: *.ts,*.tsx
 ---
+
 # TypeScript 指南
 
-## 類型安全
-- **務必**從 [app/types/index.ts](mdc:app/types/index.ts) 匯入類型
-- 使用正確的 TypeScript 類型，除非絕對必要，否則避免使用 `any`
-- 物件形狀偏好使用 `interface`，聯合/交集類型使用 `type`
-- 使用嚴格模式 (已在 tsconfig 中設定)
+## 型別定義
 
-## 核心類型定義
-所有類型定義請參閱 [app/types/index.ts](mdc:app/types/index.ts)：
+所有型別定義在 [app/types/index.ts](mdc:app/types/index.ts) 中。
 
-### 主要介面
-- `Project` - 核心專案實體，包含完整的元數據和可見性控制
-- `ProjectVisibility` - 控制哪些欄位對訪客可見
-- `PasswordEntry` - 儲存的密碼 (僅限管理員)
-- `AppSettings` - 全域應用程式設定
-- `ProjectData` - 完整資料結構（用於 API 回應格式）
-- `UIDisplaySettings` - 自訂 UI 篩選器和統計設定
-- `AuthSession` - 驗證會話資訊
-- `Database` - Supabase 資料庫型別（定義在 [app/lib/supabase.ts](mdc:app/lib/supabase.ts)）
+### 核心型別
 
-### 分類
-專案分類是嚴格類型化的：
+- **`Project`** - 專案完整資料結構
+- **`ProjectCategory`** - 專案類別：`'important' | 'secondary' | 'practice' | 'single-doc' | 'completed' | 'abandoned'`
+- **`ProjectStatus`** - 專案狀態：`'in-progress' | 'on-hold' | 'long-term' | 'completed' | 'discarded'`
+- **`ProjectVisibility`** - 可見性控制物件
+- **`ImagePreview`** - 圖片預覽資料
+- **`UIDisplaySettings`** - UI 顯示設定
+- **`AppSettings`** - 應用設定
+
+### 型別轉換
+
+資料庫使用 `snake_case`，前端使用 `camelCase`：
+- `date_and_file_name` ↔ `dateAndFileName`
+- `image_previews` ↔ `imagePreviews`
+- `created_at` ↔ `createdAt`
+
+### 型別輔助函式
+
+- `ensureProjectVisibility()` - 確保可見性物件完整
+- `normalizeProjectStatus()` - 正規化專案狀態
+- `normalizeProjectCategory()` - 正規化專案類別
+- `migrateLegacyCategoryToStatus()` - 遷移舊類別到新狀態
+
+## TypeScript 配置
+
+根據 [tsconfig.json](mdc:tsconfig.json)：
+- `strict: false` - 非嚴格模式（允許漸進式遷移）
+- `baseUrl: "."` - 基礎路徑
+- 路徑別名已配置
+
+## 最佳實踐
+
+1. **使用型別匯入**：`import type { Project } from '@/types'`
+2. **避免 `any`**：使用具體型別或 `unknown`
+3. **型別守衛**：使用 `instanceof` 或自訂守衛函式
+4. **可選鏈**：使用 `?.` 和 `??` 處理可選值
+5. **型別斷言**：只在必要時使用 `as`，優先使用型別守衛
+
+## API 回應型別
+
+API 路由應返回標準格式：
 ```typescript
-'important' | 'secondary' | 'practice' | 'single-doc' | 'completed' | 'abandoned'
+NextResponse.json({
+  success: boolean;
+  data?: T;
+  error?: string;
+  details?: string;
+})
 ```
-
-### 統計類型
-統計資料的類型定義為：
-```typescript
-'totalProjects' | 'publicProjects' | 'displayedCount' | 'importantCount' |
-'completedCount' | 'inProgressCount' | 'readyStatus' | 'abandonedCount' |
-'singleDocCount' | 'statusOnHold' | 'statusLongTerm' | 'statusCompleted' | 'statusDiscarded'
-```
-
-### UI 自訂型別
-`UIDisplaySettings`：
-```typescript
-interface UIDisplaySettings {
-  filters: FilterConfig[];      // 篩選器配置
-  statistics: StatisticConfig[]; // 統計區塊配置
-}
-```
-
-## Props 類型定義
-務必明確定義元件的 props 類型：
-```typescript
-interface MyComponentProps {
-  project: Project;
-  isAdmin: boolean;
-  onUpdate?: (project: Project) => void;
-}
-
-export function MyComponent({ project, isAdmin, onUpdate }: MyComponentProps) {
-  // ...
-}
-```
-
-## API 路由類型定義
-- 使用 'next/server' 中的 `NextRequest` 和 `NextResponse`
-- 適當地為請求主體資料定義類型
-- 回傳類型化的 JSON 回應
-
-## 工具函數
-在 [app/lib/](mdc:app/lib/) 中建立工具函數時：
-- 匯出時需有正確的回傳類型
-- 用註解說明複雜的邏輯
-- 優雅地處理錯誤
-- 需要時使用 TypeScript 的類型防護

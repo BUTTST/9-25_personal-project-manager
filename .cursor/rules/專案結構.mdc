@@ -1,80 +1,76 @@
 ---
-alwaysApply: false
+alwaysApply: true
 ---
-# 個人專案管理器 - 專案結構
 
-這是一個使用 Next.js 14 (App Router)、TypeScript、Tailwind CSS 和 Supabase（PostgreSQL + Storage）建立的個人專案展示與管理平台。
+# 專案結構指南
 
-## 核心架構
+這是一個 Next.js 14 專案展示平台，使用 App Router 架構。
 
-### 目錄結構（依現況）
-- [app/](mdc:app/) - Next.js App Router 根目錄
-  - [api/](mdc:app/api/) - 無伺服器 API 路由
-    - `projects/`：列表、CRUD、reorder
-    - `auth/`：`POST /auth/login`
-    - `settings/`：`GET/PUT /settings/ui-display`、`POST /settings/reset-ui`
-    - `admin/`：`GET /admin/diagnose`、`POST /admin/force-init`、`POST /admin/init-data`
-    - `initialize/`：已停用自動初始化的 GET 端點（僅回傳提示）
-  - [components/](mdc:app/components/) - 按功能組織的 React 元件
-    - `auth/`、`admin/`、`project/`、`ui/`、`layout/`
-  - [lib/](mdc:app/lib/) - 工具函數與核心邏輯
-    - `blob-storage.ts`、`auth.ts`、`data-safety.ts`、`sample-data.ts`、`statistics.ts`
-  - [types/](mdc:app/types/) - TypeScript 類型定義
-- [config/](mdc:config/) - 圖庫等設定
-- [public/](mdc:public/) - 靜態資源 (圖示、圖片、單檔 HTML 範例)
-- [scripts/](mdc:scripts/) - 建置與工具腳本
-- 其他：`README.md`、`DEPLOYMENT_GUIDE.md`、`資料安全規則說明.md` 等
+## 核心目錄結構
 
-### 關鍵檔案
-- [app/types/index.ts](mdc:app/types/index.ts) - `Project`、`PasswordEntry`、`AppSettings` 等核心類型定義
-- [app/lib/supabase.ts](mdc:app/lib/supabase.ts) - Supabase 客戶端配置（前端 + 後端）
-- [app/lib/storage.ts](mdc:app/lib/storage.ts) - Supabase Storage 操作庫（圖片管理）
-- [app/lib/auth.ts](mdc:app/lib/auth.ts) - 驗證邏輯
-- [app/lib/data-safety.ts](mdc:app/lib/data-safety.ts) - 資料驗證工具（參考用）
-- [app/lib/statistics.ts](mdc:app/lib/statistics.ts) - 統計資料計算
-- [app/api/projects/route.ts](mdc:app/api/projects/route.ts) - 專案列表 API（GET/POST）
-- [app/api/images/route.ts](mdc:app/api/images/route.ts) - 圖片管理 API（上傳/列表）
-- [app/api/settings/ui-display/route.ts](mdc:app/api/settings/ui-display/route.ts) - UI 自訂設定 `GET/PUT`
-- [app/api/settings/reset-ui/route.ts](mdc:app/api/settings/reset-ui/route.ts) - 重置 UI 設定
-- [app/api/admin/diagnose/route.ts](mdc:app/api/admin/diagnose/route.ts) - 系統診斷
-- [app/api/admin/init-data/route.ts](mdc:app/api/admin/init-data/route.ts) - 安全初始化
-- [package.json](mdc:package.json) - 依賴項與腳本
-- [tsconfig.json](mdc:tsconfig.json) - TypeScript 設定與路徑別名
+### `/app` - Next.js App Router 核心
+- **`/api`** - API 路由（Serverless Functions）
+  - `/projects` - 專案 CRUD 操作
+  - `/images` - 圖片管理 API
+  - `/auth` - 身份驗證
+  - `/settings` - UI 設定管理
+  - `/admin` - 管理員工具
+- **`/components`** - React 元件庫
+  - `/admin` - 管理後台元件（11個）
+  - `/auth` - 驗證相關元件
+  - `/project` - 專案展示元件
+  - `/ui` - 通用 UI 元件
+  - `/layout` - 版面配置元件
+- **`/lib`** - 核心函式庫
+  - [supabase.ts](mdc:app/lib/supabase.ts) - Supabase 客戶端配置
+  - [storage.ts](mdc:app/lib/storage.ts) - Storage 操作庫
+  - [auth.ts](mdc:app/lib/auth.ts) - 密碼驗證與記憶
+  - [statistics.ts](mdc:app/lib/statistics.ts) - 統計資料計算
+- **`/types`** - TypeScript 型別定義
+  - [index.ts](mdc:app/types/index.ts) - 所有型別定義
+- **`/admin`** - 管理後台頁面
+  - `page.tsx` - 後台主頁
+  - `/images` - 圖片管理頁面
+  - `/new` - 新增專案
+  - `/edit/[id]` - 編輯專案
+
+### `/config` - 配置檔案
+- `image-gallery.ts` - 圖片配置（自動生成，勿手動編輯）
+
+### `/scripts` - 自動化腳本
+- `generate-icons.js` - 圖標生成工具
+- `generate-image-gallery.js` - 圖片目錄掃描器
+- `migrate-image-metadata.js` - 圖片元數據遷移
+
+### `/docs` - 文件資料夾
+- `/快速指南` - 日常操作手冊
+- `/開發者內容` - 技術文件
+
+### `/public` - 靜態資源
+- `/icons` - 應用圖標
+- `/前端截圖` - 專案截圖
+- `/單檔-獨立頁面` - HTML 單檔專案
 
 ## 路徑別名
-使用已設定的路徑別名：
-- `@/*` 對應 `./app/*`
-- `@/components/*` 對應 `./app/components/*`
-- `@/lib/*` 對應 `./app/lib/*`
-- `@/types/*` 對應 `./app/types/*`
 
-範例： `import { Project } from '@/types'`
+根據 [tsconfig.json](mdc:tsconfig.json)：
+- `@/*` → `./app/*`
+- `@/components/*` → `./app/components/*`
+- `@/lib/*` → `./app/lib/*`
+- `@/types/*` → `./app/types/*`
+- `@/config/*` → `./config/*`
 
-## 技術棧
-- **框架**: Next.js 14 (App Router)
-- **語言**: TypeScript
-- **樣式**: Tailwind CSS 與自訂設計系統
-- **圖示**: Heroicons v2
-- **資料庫**: Supabase PostgreSQL (專案、密碼、設定)
-- **儲存**: Supabase Storage (圖片上傳)
-- **部署**: Vercel
+## 重要檔案
 
-## 功能區域
-1. **訪客模式**: 公開專案瀏覽，支援搜尋、篩選與統計
-2. **管理員模式**: 完整的 CRUD 操作、密碼管理、UI 自訂
-3. **驗證**: 基於密碼的管理員驗證與會話管理
-4. **UI 自訂**: 拖放篩選器/統計、可見性控制
-5. **主題支援**: 淺色/深色模式自動偵測
+- [package.json](mdc:package.json) - 專案依賴與腳本
+- [next.config.js](mdc:next.config.js) - Next.js 配置
+- [tailwind.config.js](mdc:tailwind.config.js) - Tailwind CSS 配置
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript 配置
 
-## 資料流
-- 所有持久性資料儲存於 Supabase PostgreSQL
-- 圖片儲存於 Supabase Storage（CDN 加速）
-- API 路由使用 `supabaseAdmin` 處理需管理員驗證的 CRUD 操作
-- 前端使用 `supabase` 讀取公開資料（受 RLS 限制）
-- 客戶端元件管理本地狀態並與 API 同步
-- 伺服器元件擷取資料進行初始渲染
+## 資料庫架構
 
-備註：
-- RLS 政策自動限制前端只能讀取 `hidden = false` 的專案
-- `passwords` 表完全禁止前端訪問
-- `developerNote` 僅在管理員模式下顯示
+使用 Supabase PostgreSQL：
+- `projects` 表 - 專案資料
+- `settings` 表 - 應用設定（JSONB）
+- `image_metadata` 表 - 圖片元數據
+- `project-images` Storage Bucket - 圖片存儲

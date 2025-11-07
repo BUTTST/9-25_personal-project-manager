@@ -1,125 +1,161 @@
 ---
-globs: "**/*.tsx,**/*.css,tailwind.config.js"
+globs: *.tsx,*.css
 ---
+
 # 樣式指南
 
-## Tailwind CSS
-本專案使用 Tailwind CSS v3，並在 [tailwind.config.js](mdc:tailwind.config.js) 中定義了自訂設計系統。
+## Tailwind CSS 配置
 
-## 設計系統
+根據 [tailwind.config.js](mdc:tailwind.config.js)，專案使用自訂主題系統。
 
-### 顏色
-在設定檔中定義的自訂調色盤：
-- `primary` - 主要品牌顏色 (藍色系)
-- `secondary` - 強調色
-- `muted` - 細微的背景和邊框
-- `accent` - 突顯和引人注目的元素
-- `foreground` - 文字顏色
-- `background` - 頁面背景
-- `border` - 邊框顏色
+### 顏色系統
 
-使用語意化的顏色名稱：
-```tsx
-className="bg-primary-500 text-primary-foreground"
-className="border-border bg-background text-foreground"
-```
+使用 CSS 變數定義的主題色彩：
+- `bg-surface` - 背景色
+- `text-foreground` - 前景文字色
+- `bg-card` - 卡片背景
+- `border-border` - 邊框色
+- `bg-accent` - 強調色
 
-### 深色模式
-專案透過 `class` 策略支援深色模式：
-- 使用 `dark:` 前綴應用於深色模式樣式
-- 顏色透過 CSS 變數自動調整
-- 主题由 [ThemeProvider.tsx](mdc:app/components/ui/ThemeProvider.tsx) 管理
+### 自訂顏色
 
-```tsx
-className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-```
+Primary 色階：
+- `primary-50` 到 `primary-900`
+- 預設：`primary-500` (#3b82f6)
 
-### 分類徽章樣式
-專案分類在 [globals.css](mdc:app/globals.css) 中有預定義的徽章類別：
-- `badge-important` - 重要專案 (紅/橘漸層)
-- `badge-secondary` - 次要專案 (藍色漸層)
-- `badge-practice` - 實踐專案 (綠色漸層)
-- `badge-completed` - 已完成專案 (藍綠色漸層)
-- `badge-abandoned` - 已捨棄專案 (灰色)
+### 陰影系統
 
-請務必為分類徽章使用這些類別。
-
-### 按鈕與卡片
-- 按鈕變體：`btn`, `btn-primary`, `btn-secondary`, `btn-ghost`
-- 尺寸：`btn-sm`, `btn-md`, `btn-lg`
-- 卡片互動：`card-hover`（升起、邊框與過渡效果）
+- `shadow-soft` - 柔和陰影
+- `shadow-soft-lg` - 大號柔和陰影
+- `shadow-inner-soft` - 內陰影
+- `shadow-glow` - 發光效果
+- `shadow-glow-lg` - 大號發光效果
 
 ### 動畫
-使用 Tailwind config 中的動畫工具：`animate-fade-in`、`animate-slide-in`、`animate-slide-down`、`animate-pulse-slow`、`animate-spin-slow`
 
-用法：
-```tsx
-<div className="animate-fade-in">
-  <div className="animate-slide-in delay-100">項目 1</div>
-  <div className="animate-slide-in delay-200">項目 2</div>
-</div>
+預定義動畫類別：
+- `animate-fade-in` - 淡入
+- `animate-slide-up` - 向上滑動
+- `animate-scale-in` - 縮放進入
+- `animate-pulse-slow` - 慢速脈衝
+
+## 響應式設計
+
+使用 Tailwind 斷點：
+- `sm:` - 640px+
+- `md:` - 768px+
+- `lg:` - 1024px+
+- `xl:` - 1280px+
+
+```typescript
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 ```
 
-### 間距與佈局
-- 使用一致的間距比例 (4px 增量：space-1, space-2 等)
-- 容器最大寬度：`max-w-7xl mx-auto`
-- 區塊內距：`py-8 px-4 sm:px-6 lg:px-8`
-- 卡片內距：`p-4` 或 `p-6`
+## 深色模式
 
-### 字體排印
-- 標題使用 `font-bold` 搭配 `tracking-tight`
-- 內文使用 `text-sm` 或 `text-base`
-- 靜音文字：`text-muted-foreground`
-- 程式碼/等寬字體：`font-mono`
+使用 `dark:` 前綴：
 
-### 響應式設計
-行動優先方法：
-```tsx
-className="text-sm sm:text-base lg:text-lg"
-className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+```typescript
+<div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
 ```
 
-常用斷點：
-- `sm:` - 640px
-- `md:` - 768px
-- `lg:` - 1024px
-- `xl:` - 1280px
-- `2xl:` - 1536px
+主題切換由 `ThemeProvider` 管理，使用 `class` 策略。
 
-### 漸層
-使用預定義的漸層類別或 Tailwind 的漸層工具：
-```tsx
-className="bg-gradient-to-r from-primary-500 via-primary-400 to-primary-600"
-className="bg-gradient-to-br from-blue-50/50 to-purple-50/50"
+## 間距系統
+
+使用 Tailwind 預設間距：
+- `p-4` - padding
+- `m-4` - margin
+- `gap-4` - gap
+- `space-y-4` - 垂直間距
+
+自訂間距：
+- `spacing-18` - 4.5rem
+- `spacing-22` - 5.5rem
+
+## 字體
+
+- `font-sans` - Inter（預設）
+- `font-mono` - JetBrains Mono / Fira Code
+
+字體大小：
+- `text-sm` - 0.875rem
+- `text-base` - 1rem
+- `text-lg` - 1.125rem
+- `text-xl` - 1.25rem
+
+## 圓角
+
+- `rounded` - 0.25rem
+- `rounded-lg` - 0.5rem
+- `rounded-xl` - 0.75rem
+- `rounded-4xl` - 2rem（自訂）
+
+## 過渡動畫
+
+```typescript
+<div className="transition-all duration-300 ease-in-out">
 ```
 
-### 陰影與邊框
-- 細微陰影：`shadow-sm`
-- 中等陰影：`shadow-md`
-- 大型陰影：`shadow-lg`
-- 有色陰影：`shadow-primary-500/20`
-- 邊框：`border border-border`
+預設過渡時間：
+- `duration-300` - 300ms
+- `duration-400` - 400ms（自訂）
+- `duration-600` - 600ms（自訂）
 
-### 玻璃效果
-對於玻璃擬態效果：
-```tsx
-className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm"
+## 漸變效果
+
+```typescript
+<div className="bg-gradient-to-r from-primary-500 to-primary-600">
 ```
 
-### 懸停與焦點狀態
-務必提供視覺回饋：
-```tsx
-className="hover:bg-primary-50 focus:ring-2 focus:ring-primary-500 transition-colors"
+## 卡片樣式
+
+標準卡片樣式：
+
+```typescript
+<div className="bg-card rounded-lg shadow-soft p-6 border border-border">
 ```
 
-對父子懸停效果使用 `group-hover:`：
-```tsx
-<div className="group">
-  <span className="group-hover:text-primary-600">文字</span>
-</div>
+## 按鈕樣式
+
+主要按鈕：
+```typescript
+<button className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
 ```
 
-### 載入與空狀態
-- 載入時使用 [LoadingSpinner.tsx](mdc:app/components/ui/LoadingSpinner.tsx)
-- 空狀態時使用 [EmptyState.tsx](mdc:app/components/ui/EmptyState.tsx)
-- 在不同狀態間保持一致的樣式
+次要按鈕：
+```typescript
+<button className="bg-surface border border-border hover:bg-accent px-4 py-2 rounded-lg transition-colors">
+```
+
+## 表單元素
+
+輸入框：
+```typescript
+<input className="w-full px-4 py-2 border border-border rounded-lg bg-input focus:outline-none focus:ring-2 focus:ring-primary-500" />
+```
+
+## 工具提示
+
+使用 `Tooltip` 元件，支援四個方向：
+- `top`、`bottom`、`left`、`right`
+
+## 載入狀態
+
+使用 `LoadingSpinner` 元件或：
+
+```typescript
+<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+```
+
+## 空狀態
+
+使用 `EmptyState` 元件，提供統一的空狀態樣式。
+
+## 最佳實踐
+
+1. **優先使用 Tailwind 類別**：避免自訂 CSS
+2. **使用語義化類別**：`bg-card` 而非 `bg-white`
+3. **響應式優先**：行動裝置優先設計
+4. **一致性**：使用預定義的顏色和間距
+5. **效能**：避免過度使用動畫

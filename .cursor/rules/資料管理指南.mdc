@@ -1,623 +1,265 @@
 ---
-globs: "app/lib/**/*.ts,app/api/**/*.ts"
+globs: app/lib/**/*.ts,app/api/**/*.ts
 ---
+
 # 資料管理指南
 
-> 📅 更新日期：2025-10-28  
-> 🔄 版本：v2.0（Supabase 版本）
+## Supabase 架構
 
-## 🗄️ 儲存架構
+### 資料庫表結構
 
-### 資料庫
+#### `projects` 表
 
-所有持久性資料都儲存在 **Supabase PostgreSQL** 資料庫中：
+專案主要資料：
+- `id` (string) - 唯一識別碼
+- `date_and_file_name` (string) - 專案名稱
+- `description` (text) - 專案說明
+- `category` (string) - 專案類別
+- `status` (string) - 專案狀態
+- `visibility` (jsonb) - 可見性設定
+- `image_previews` (jsonb) - 圖片預覽陣列
+- `custom_info_sections` (jsonb) - 自訂資訊區塊
+- `featured` (boolean) - 是否精選
+- `hidden` (boolean) - 是否隱藏
+- `sort_order` (integer) - 排序順序
+- `created_at` (timestamp) - 建立時間
+- `updated_at` (timestamp) - 更新時間
 
-```yaml
-資料表:
-  - projects: 專案資料（22個欄位）
-  - passwords: 密碼資料（6個欄位）
-  - settings: 應用設定（key-value）
+#### `settings` 表
 
-Storage:
-  - screenshots bucket: 圖片儲存
-```
+應用設定（JSONB）：
+- `key` (string) - 設定鍵
+- `value` (jsonb) - 設定值
+- `updated_at` (timestamp) - 更新時間
 
-### 配置檔案
+常用鍵：
+- `app_settings` - 應用設定
+- `ui_display` - UI 顯示設定
 
-- **Supabase Client**：[app/lib/supabase.ts](mdc:app/lib/supabase.ts)
-- **Storage 操作**：[app/lib/storage.ts](mdc:app/lib/storage.ts)
+#### `image_metadata` 表
 
----
+圖片元數據：
+- `stored_filename` (string) - 存儲檔名（ASCII）
+- `original_filename` (string) - 原始檔名（中文）
+- `file_size` (integer) - 檔案大小
+- `content_type` (string) - MIME 類型
+- `file_hash` (string) - 檔名 hash
+- `created_at` (timestamp) - 建立時間
+- `updated_at` (timestamp) - 更新時間
 
-## 📊 資料結構
+### Storage Bucket
 
-### Projects 表
+- **名稱**：`project-images`
+- **公開讀取**：是
+- **檔案命名**：ASCII 格式，包含 hash 識別
 
-```typescript
-interface Project {
-  id: string;                          // 主鍵（text）
-  date_and_file_name: string;          // 專案名稱
-  description: string;                 // 說明
-  category: string;                    // 類別
-  status: string;                      // 狀態
-  github?: string;                     // GitHub 連結
-  vercel?: string;                     // Vercel 連結
-  deployment?: string;                 // 部署網址
-  path?: string;                       // 本地路徑
-  status_note?: string;                // 狀態註解
-  public_note?: string;                // 公開註解
-  developer_note?: string;             // 開發者註解
-  visibility: Record<string, boolean>; // 可見性設定（JSONB）
-  image_previews: Array<{              // 圖片預覽（JSONB）
-    id: string;
-    title: string;
-    src: string;
-  }>;
-  image_preview_mode: string;          // 圖片顯示模式
-  custom_info_sections: Array<any>;    // 自訂資訊（JSONB）
-  document_meta?: Record<string, any>; // 文件元資料（JSONB）
-  featured: boolean;                   // 是否精選
-  hidden: boolean;                     // 是否隱藏
-  sort_order: number;                  // 排序順序
-  created_at: string;                  // 建立時間（timestamptz）
-  updated_at: string;                  // 更新時間（timestamptz）
-}
-```
+## 資料操作模式
 
-### Passwords 表
+### 查詢專案
 
 ```typescript
-interface Password {
-  id: string;
-  platform: string;
-  account: string;
-  password: string;
-  created_at: string;
-  updated_at: string;
-}
-```
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
-### Settings 表
-
-```typescript
-interface Settings {
-  key: string;                    // 主鍵
-  value: Record<string, any>;     // JSONB 值
-  updated_at: string;
-}
-
-// 預設 keys:
-// - 'app_settings': 應用配置
-// - 'ui_display': UI 顯示設定
-```
-
----
-
-## 🔧 資料操作
-
-### 讀取資料
-
-#### 前端（公開資料）
-
-```typescript
-import { supabase } from '@/app/lib/supabase';
-
-// 查詢公開專案
-const { data, error } = await supabase
+// 公開查詢（受 RLS 限制）
+const { data: projects } = await supabase
   .from('projects')
   .select('*')
   .eq('hidden', false)
-  .order('sort_order');
-```
+  .order('sort_order', { ascending: true });
 
-#### 後端（管理員）
-
-```typescript
-import { supabaseAdmin } from '@/app/lib/supabase';
-
-// 查詢所有專案（繞過 RLS）
-const { data, error } = await supabaseAdmin
+// 管理員查詢（所有專案）
+const { data: allProjects } = await supabaseAdmin
   .from('projects')
   .select('*')
-  .order('sort_order');
+  .order('sort_order', { ascending: true });
 ```
 
-### 寫入資料
-
-**⚠️ 重要**：所有寫入操作必須：
-1. 驗證管理員權限
-2. 使用 `supabaseAdmin`
-3. 處理欄位名稱轉換（camelCase ↔ snake_case）
+### 新增專案
 
 ```typescript
-// API Route 中
-const password = request.headers.get('x-admin-password');
-if (!password || password !== process.env.ADMIN_PASSWORD) {
-  return NextResponse.json({ error: '未授權' }, { status: 401 });
-}
+// 轉換格式：camelCase → snake_case
+const dbData = {
+  id: generateId(),
+  date_and_file_name: formData.dateAndFileName,
+  description: formData.description,
+  category: formData.category,
+  status: formData.status,
+  visibility: formData.visibility,
+  image_previews: formData.imagePreviews,
+  sort_order: nextSortOrder,
+};
 
-// 插入資料
 const { data, error } = await supabaseAdmin
   .from('projects')
-  .insert({
-    date_and_file_name: formData.dateAndFileName,
-    description: formData.description,
-    // ... 其他欄位
-  })
+  .insert(dbData)
   .select()
   .single();
 ```
 
-### 更新資料
+### 更新專案
 
 ```typescript
-// 更新單一專案
 const { data, error } = await supabaseAdmin
   .from('projects')
   .update({
-    description: newDescription,
-    updated_at: new Date().toISOString(), // 自動觸發器會處理
+    date_and_file_name: updatedData.dateAndFileName,
+    updated_at: new Date().toISOString(),
   })
   .eq('id', projectId)
   .select()
   .single();
 ```
 
-### 刪除資料
+### 刪除專案
 
 ```typescript
-// 刪除專案
 const { error } = await supabaseAdmin
   .from('projects')
   .delete()
   .eq('id', projectId);
 ```
 
----
-
-## 🔄 欄位名稱轉換
-
-### 資料庫 ↔ 前端轉換規則
-
-```typescript
-// 資料庫使用 snake_case
-// 前端使用 camelCase
-
-// DB → Frontend
-const formatProject = (dbRow: any) => ({
-  id: dbRow.id,
-  dateAndFileName: dbRow.date_and_file_name,
-  statusNote: dbRow.status_note,
-  publicNote: dbRow.public_note,
-  developerNote: dbRow.developer_note,
-  imagePreviews: dbRow.image_previews,
-  imagePreviewMode: dbRow.image_preview_mode,
-  customInfoSections: dbRow.custom_info_sections,
-  documentMeta: dbRow.document_meta,
-  sortOrder: dbRow.sort_order,
-  createdAt: new Date(dbRow.created_at).getTime(),
-  updatedAt: new Date(dbRow.updated_at).getTime(),
-  // ... 其他欄位
-});
-
-// Frontend → DB
-const toDbFormat = (project: any) => ({
-  id: project.id,
-  date_and_file_name: project.dateAndFileName,
-  status_note: project.statusNote || null,
-  public_note: project.publicNote || null,
-  developer_note: project.developerNote || null,
-  image_previews: project.imagePreviews || [],
-  image_preview_mode: project.imagePreviewMode || 'grid',
-  custom_info_sections: project.customInfoSections || [],
-  document_meta: project.documentMeta || null,
-  sort_order: project.sortOrder || 0,
-  // ... 其他欄位
-});
-```
-
----
-
-## 🖼️ 圖片管理
+## 圖片管理
 
 ### 上傳圖片
 
+使用 [app/lib/storage.ts](mdc:app/lib/storage.ts)：
+
 ```typescript
-import { uploadImage } from '@/app/lib/storage';
+import { uploadImage } from '@/lib/storage';
 
-// 上傳單一圖片
-const result = await uploadImage(file, customFilename);
-
+const result = await uploadImage(file, filename);
 if (result.success) {
-  console.log('圖片 URL:', result.url);
-  // URL 格式: https://[project-id].supabase.co/storage/v1/object/public/screenshots/filename.png
+  // 使用 result.url
 }
 ```
 
 ### 列出圖片
 
 ```typescript
-import { listImages } from '@/app/lib/storage';
+import { listImages } from '@/lib/storage';
 
-const result = await listImages();
-
-if (result.success) {
-  result.files.forEach(file => {
-    console.log(file.name, file.url, file.size);
-  });
-}
-```
-
-### 重命名圖片
-
-```typescript
-import { renameImage, updateImageReferences } from '@/app/lib/storage';
-
-// 1. 重命名 Storage 中的檔案
-const result = await renameImage('old.png', 'new.png');
-
-// 2. 更新專案引用
-if (result.success) {
-  await updateImageReferences('old.png', 'new.png', affectedProjectIds);
-}
+const { files } = await listImages();
+// files 包含 originalFilename（中文檔名）
 ```
 
 ### 刪除圖片
 
 ```typescript
-import { deleteImage, checkImageReferences } from '@/app/lib/storage';
+import { deleteImage } from '@/lib/storage';
 
-// 1. 檢查引用
-const refResult = await checkImageReferences('image.png');
-
-if (refResult.references && refResult.references.length > 0) {
-  console.warn('圖片被使用中:', refResult.references);
-}
-
-// 2. 刪除
-const result = await deleteImage('image.png');
+const result = await deleteImage(filename);
 ```
 
----
-
-## 🔒 Row Level Security (RLS)
-
-### Projects 表
-
-```sql
--- 公開讀取（訪客）
--- 條件：未隱藏 且 description 可見
-SELECT * FROM projects 
-WHERE NOT hidden 
-  AND (visibility->>'description')::boolean = true;
-
--- 管理員操作（透過 service_role key）
--- 完全存取，繞過 RLS
-```
-
-### Passwords 表
-
-```sql
--- 完全禁止前端訪問
--- 僅後端 API 可操作（使用 service_role key）
-```
-
-### Settings 表
-
-```sql
--- 公開讀取：允許
--- 公開寫入：禁止
--- 管理員寫入：允許（透過 service_role key）
-```
-
----
-
-## 🔍 常用查詢模式
-
-### 篩選查詢
+### 檢查引用
 
 ```typescript
-// 按類別篩選
-const { data } = await supabase
+import { checkImageReferences } from '@/lib/storage';
+
+const { references } = await checkImageReferences(filename);
+// references 包含使用該圖片的專案列表
+```
+
+## 設定管理
+
+### 讀取設定
+
+```typescript
+const { data: settingsData } = await supabaseAdmin
+  .from('settings')
+  .select('*');
+
+const appSettings = settingsData?.find(s => s.key === 'app_settings')?.value;
+const uiDisplay = settingsData?.find(s => s.key === 'ui_display')?.value;
+```
+
+### 更新設定
+
+```typescript
+await supabaseAdmin
+  .from('settings')
+  .upsert({
+    key: 'ui_display',
+    value: uiDisplaySettings,
+    updated_at: new Date().toISOString(),
+  });
+```
+
+## 資料格式轉換
+
+### 專案資料轉換
+
+API 回應時轉換為 camelCase：
+
+```typescript
+const formattedProject = {
+  id: dbProject.id,
+  dateAndFileName: dbProject.date_and_file_name,
+  imagePreviews: dbProject.image_previews,
+  createdAt: new Date(dbProject.created_at).getTime(),
+  updatedAt: new Date(dbProject.updated_at).getTime(),
+};
+```
+
+### 時間戳轉換
+
+- 資料庫：ISO 字串（`created_at`）
+- API 回應：Unix 時間戳（`createdAt`）
+
+## 排序管理
+
+### 獲取最大排序值
+
+```typescript
+const { data: existingProjects } = await supabaseAdmin
   .from('projects')
-  .select('*')
-  .eq('category', 'important')
-  .order('sort_order');
+  .select('sort_order')
+  .order('sort_order', { ascending: false })
+  .limit(1);
 
-// 按狀態篩選
-const { data } = await supabase
-  .from('projects')
-  .select('*')
-  .eq('status', 'in-progress')
-  .order('created_at', { ascending: false });
-
-// 複合條件
-const { data } = await supabase
-  .from('projects')
-  .select('*')
-  .eq('category', 'important')
-  .eq('hidden', false)
-  .order('sort_order');
+const nextSortOrder = existingProjects?.[0]?.sort_order + 1 || 0;
 ```
 
-### JSONB 查詢
-
-```typescript
-// 查詢 visibility 中的特定值
-const { data } = await supabase
-  .from('projects')
-  .select('*')
-  .eq('visibility->description', true);
-
-// 查詢包含特定圖片的專案
-const { data } = await supabase
-  .from('projects')
-  .select('*')
-  .contains('image_previews', [{ src: '/前端截圖/example.png' }]);
-```
-
-### 全文搜尋（未來）
-
-```typescript
-// 使用 PostgreSQL Full-Text Search
-const { data } = await supabase
-  .from('projects')
-  .select('*')
-  .textSearch('description', 'whisper OR gemini');
-```
-
----
-
-## 📝 資料驗證
-
-### 插入前驗證
-
-```typescript
-// 必填欄位檢查
-if (!data.date_and_file_name || !data.description) {
-  throw new Error('必填欄位缺失');
-}
-
-// 類型檢查
-if (typeof data.sort_order !== 'number') {
-  throw new Error('sort_order 必須是數字');
-}
-
-// JSONB 格式驗證
-if (!Array.isArray(data.image_previews)) {
-  throw new Error('image_previews 必須是陣列');
-}
-```
-
----
-
-## ⚡ 效能優化
-
-### 使用索引
-
-```sql
--- 已建立的索引
-idx_projects_category    -- category 查詢
-idx_projects_status      -- status 查詢
-idx_projects_sort_order  -- 排序查詢
-idx_projects_created_at  -- 時間排序
-```
-
-**建議**：
-- 篩選時優先使用有索引的欄位
-- 避免在 JSONB 欄位上進行大量查詢
-
-### 批量操作
-
-```typescript
-// ✅ 好：使用批量插入
-const { data, error } = await supabaseAdmin
-  .from('projects')
-  .insert(multipleProjects);
-
-// ❌ 避免：迴圈插入
-for (const project of projects) {
-  await supabaseAdmin.from('projects').insert(project);
-}
-```
-
----
-
-## 🔧 Migration 管理
-
-### 建立 Migration
-
-```typescript
-// 透過 Supabase MCP
-await apply_migration(projectId, 'migration_name', sqlQuery);
-```
-
-### 查看 Migrations
-
-```typescript
-// 列出所有 migrations
-const migrations = await list_migrations(projectId);
-```
-
-### Migration 命名慣例
-
-```
-格式: YYYYMMDDHHMMSS_description
-範例: 20251028171332_create_projects_table
-```
-
----
-
-## 🆘 錯誤處理
-
-### 常見錯誤
-
-```typescript
-// 1. 連接失敗
-if (!supabaseAdmin) {
-  return { error: 'Supabase admin client not available' };
-}
-
-// 2. 查詢錯誤
-const { data, error } = await supabase.from('projects').select('*');
-if (error) {
-  console.error('Query failed:', error);
-  return { error: error.message };
-}
-
-// 3. 權限錯誤（RLS）
-// 使用 supabaseAdmin 繞過 RLS
-```
-
----
-
-## 📚 API 使用範例
-
-### 完整的 CRUD 範例
-
-```typescript
-// app/api/projects/route.ts
-
-import { supabaseAdmin } from '@/app/lib/supabase';
-
-// CREATE
-export async function POST(request: NextRequest) {
-  const { data, error } = await supabaseAdmin
-    .from('projects')
-    .insert(newProject)
-    .select()
-    .single();
-}
-
-// READ
-export async function GET() {
-  const { data, error } = await supabaseAdmin
-    .from('projects')
-    .select('*')
-    .order('sort_order');
-}
-
-// UPDATE
-export async function PATCH(request: NextRequest, { params }) {
-  const { data, error } = await supabaseAdmin
-    .from('projects')
-    .update(updates)
-    .eq('id', params.id)
-    .select()
-    .single();
-}
-
-// DELETE
-export async function DELETE(request: NextRequest, { params }) {
-  const { error } = await supabaseAdmin
-    .from('projects')
-    .delete()
-    .eq('id', params.id);
-}
-```
-
----
-
-## 📚 歷史記錄：從 Blob 遷移（僅供參考）
-
-> ⚠️ **注意**：本章節僅作為歷史記錄保留，現有系統已完全使用 Supabase。
-
-### 主要變更（2025-10-28 完成）
-
-| 操作 | Blob 版本（舊） | Supabase 版本（現行） |
-|------|----------|--------------|
-| 讀取 | `readProjectData()` | `supabase.from('projects').select()` |
-| 寫入 | `writeProjectData(data)` | `supabase.from('projects').insert/update()` |
-| 圖片 | `public/` 靜態檔案 | Supabase Storage |
-| 欄位 | camelCase | snake_case（DB），API 自動轉換 |
-| 驗證 | `validateProjectData()` | PostgreSQL constraints + RLS |
-| 備份 | 手動下載 JSON | 自動 Point-in-Time Recovery |
-
-### 已完成遷移
-
-- ✅ 所有 API 路由改用 Supabase
-- ✅ 16 個專案 100% 遷移
-- ✅ 圖片管理系統上線
-- ✅ `blob-storage.ts` 已移除
-- ✅ 0 筆資料遺失
-
----
-
-## 💡 最佳實踐
-
-### 1. 永遠使用參數化查詢
-
-```typescript
-// ✅ 好：使用 Supabase 的參數化查詢
-const { data } = await supabase
-  .from('projects')
-  .select('*')
-  .eq('id', userId);
-
-// ❌ 避免：字串拼接 SQL（SQL injection 風險）
-await supabase.rpc('custom_function', { raw_sql: `SELECT * FROM projects WHERE id = '${userId}'` });
-```
-
-### 2. 處理 null 值
-
-```typescript
-// PostgreSQL 區分 null 和空字串
-github: formData.github?.trim() || null  // ✅ 使用 null
-github: formData.github?.trim() || ''    // ❌ 使用空字串會佔用空間
-```
-
-### 3. 使用 JSONB 進行靈活資料
-
-```typescript
-// ✅ 適合用 JSONB 的場景
-- visibility（動態欄位）
-- image_previews（陣列）
-- custom_info_sections（不固定結構）
-
-// ❌ 不適合用 JSONB 的場景
-- date_and_file_name（需要索引、排序）
-- category、status（需要快速查詢）
-```
-
-### 4. 批量操作使用事務
+### 重新排序
 
 ```typescript
 // 批量更新排序
-const updates = projects.map(p => 
-  supabaseAdmin
+for (const [index, projectId] of orderedIds.entries()) {
+  await supabaseAdmin
     .from('projects')
-    .update({ sort_order: p.sortOrder })
-    .eq('id', p.id)
-);
-
-await Promise.all(updates);
+    .update({ sort_order: index })
+    .eq('id', projectId);
+}
 ```
 
----
+## 錯誤處理
 
-## 🎯 未來優化
+### Supabase 錯誤
 
-### 短期
+```typescript
+const { data, error } = await supabaseAdmin.from('projects').select('*');
 
-- [ ] 圖片自動優化（壓縮、WebP）
-- [ ] 全文搜尋（PostgreSQL FTS）
-- [ ] 資料庫備份自動化
+if (error) {
+  console.error('Database error:', error);
+  return NextResponse.json(
+    { error: '無法載入專案', details: error.message },
+    { status: 500 }
+  );
+}
+```
 
-### 中期
+### 空值處理
 
-- [ ] 多使用者支援（Supabase Auth）
-- [ ] 即時協作（Supabase Realtime）
-- [ ] 進階查詢（複合條件、日期範圍）
+```typescript
+const projects = data || [];
+const github = dbProject.github || '';
+const imagePreviews = dbProject.image_previews || [];
+```
 
-### 長期
+## 最佳實踐
 
-- [ ] 資料分析儀表板
-- [ ] 圖表視覺化
-- [ ] API 文檔自動生成
-
----
-
-**相關文檔**：
-- [API路由指南.mdc](mdc:.cursor/rules/API路由指南.mdc)
-- [資料安全與防護.mdc](mdc:.cursor/rules/資料安全與防護.mdc)
-- [TypeScript指南.mdc](mdc:.cursor/rules/TypeScript指南.mdc)
+1. **使用型別**：使用 TypeScript 型別確保資料結構正確
+2. **轉換函式**：使用輔助函式處理格式轉換
+3. **錯誤處理**：所有資料庫操作都應處理錯誤
+4. **空值處理**：使用 `||` 提供預設值
+5. **時間戳**：統一使用 Unix 時間戳或 ISO 字串

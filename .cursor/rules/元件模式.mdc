@@ -1,96 +1,187 @@
 ---
-globs: "app/components/**/*.tsx"
+globs: app/components/**/*.tsx
 ---
+
 # React 元件模式
 
-## 元件組織
-元件按功能組織在 [app/components/](mdc:app/components/) 中：
-- `admin/` - 管理員專用元件 (表格、模態框、設定)
-- `auth/` - 驗證元件 (登入、驗證提供者)
-- `layout/` - 版面配置元件 (頁首、導覽)
-- `project/` - 專案相關元件 (卡片、篩選器)
-- `ui/` - 可重複使用的 UI 元件 (按鈕、工具提示、載入圖示)
+## 元件結構
 
-## 客戶端 vs 伺服器元件
-- **預設使用伺服器元件**進行資料擷取
-- **僅在需要時**使用 `'use client'` 指令：
-  - 互動式狀態 (useState, useReducer)
-  - 事件處理器 (onClick, onChange)
-  - 瀏覽器 API (localStorage, window)
-  - React hooks (useEffect, useContext)
+### 檔案組織
 
-## 元件結構模式
-為保持一致性，請遵循此結構：
+元件按功能分類：
+- `/admin` - 管理後台元件
+- `/auth` - 驗證相關元件
+- `/project` - 專案展示元件
+- `/ui` - 通用 UI 元件
+- `/layout` - 版面配置元件
+
+### 元件命名
+
+- 使用 PascalCase：`ProjectCard.tsx`
+- 檔案名與元件名一致：`export function ProjectCard()`
+- 介面型別：`ProjectCardProps`
+
+## 客戶端元件
+
+所有需要互動的元件必須標記 `'use client'`：
+
 ```typescript
-'use client'; // 僅在需要時使用
+'use client';
 
 import { useState } from 'react';
-import { SomeIcon } from '@heroicons/react/24/outline';
+
+export function ComponentName() {
+  // 元件邏輯
+}
+```
+
+## Props 型別定義
+
+```typescript
 import { Project } from '@/types';
 
 interface ComponentProps {
-  // Props 定義
+  project: Project;
+  isAdmin?: boolean;
+  onUpdate?: (project: Project) => void;
 }
 
-export function ComponentName({ prop1, prop2 }: ComponentProps) {
-  // 1. Hooks (useState, useEffect, etc.)
-  const [state, setState] = useState(initialValue);
-  
-  // 2. 事件處理器
-  const handleClick = () => {
-    // ...
-  };
-  
-  // 3. 工具函數
-  const formatData = (data: any) => {
-    // ...
-  };
-  
-  // 4. JSX 回傳
-  return (
-    <div className="...">
-      {/* 元件內容 */}
-    </div>
-  );
+export function Component({ project, isAdmin = false, onUpdate }: ComponentProps) {
+  // 元件邏輯
 }
 ```
 
 ## 狀態管理
-- 使用本地狀態 (useState) 管理元件特定狀態
-- 當多個元件需要時，將狀態提升
-- Context 用於主題和驗證 (參見 [AuthProvider.tsx](mdc:app/components/auth/AuthProvider.tsx))
-- 將關鍵狀態與 API/Supabase 同步
 
-## 管理員 vs 訪客邏輯
-許多元件同時處理管理員和訪客模式：
-- 當相關時，總是接受 `isAdmin: boolean` prop（或從 `useAuth()` 讀取）
-- 根據 `isAdmin` 顯示/隱藏功能
-- 對於專案，尊重訪客的 `visibility` 設定（`developerNote` 僅管理員）
-- 管理員總是能看到所有欄位（若對訪客隱藏則以弱化樣式顯示）
-- 參考 `app/components/auth/AuthProvider.tsx` 取得登入狀態
+### 本地狀態
 
-來自 [ProjectCard.tsx](mdc:app/components/project/ProjectCard.tsx) 的範例模式：
+使用 `useState` 管理元件內部狀態：
+
 ```typescript
-{(isAdmin || project.visibility.fieldName) && (
-  <div className={!project.visibility.fieldName && isAdmin ? 'opacity-40 line-through' : ''}>
-    {/* 欄位內容 */}
-  </div>
-)}
+const [isOpen, setIsOpen] = useState(false);
+const [data, setData] = useState<Project[]>([]);
 ```
 
-## 事件處理器
-- 非同步操作應優雅地處理錯誤
-- 在非同步操作期間顯示載入狀態
-- 採用樂觀更新並在錯誤時回滾
-- 對 API 呼叫使用 try-catch
+### 同步外部 Props
 
-## 圖示
-- 使用 `@heroicons/react/24/outline` 或 `/24/solid` 的 Heroicons
-- 保持圖示尺寸一致 (小 h-4 w-4，中 h-5 w-5，大 h-6 w-6)
-- 自訂圖示 (GitHub, Vercel) 在元件內聯定義
+使用 `useEffect` 同步外部 props 變化：
 
-## 無障礙性
-- 使用語意化 HTML
-- 在需要時添加 ARIA 標籤
-- 確保鍵盤導覽功能正常
-- 維持適當的對比度
+```typescript
+useEffect(() => {
+  setLocalState(propValue);
+}, [propValue]);
+```
+
+## 事件處理
+
+### 非同步操作
+
+```typescript
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  try {
+    const response = await fetch('/api/endpoint', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': getRememberedPassword() || '',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      throw new Error('操作失敗');
+    }
+    
+    const result = await response.json();
+    // 處理成功結果
+  } catch (error) {
+    console.error('Error:', error);
+    // 顯示錯誤訊息
+  }
+};
+```
+
+## 樣式類別
+
+使用 Tailwind CSS 和 `clsx` 動態組合類別：
+
+```typescript
+import clsx from 'clsx';
+
+<div className={clsx(
+  'base-classes',
+  condition && 'conditional-classes',
+  {
+    'object-classes': booleanCondition,
+  }
+)}>
+```
+
+## 圖標使用
+
+使用 Heroicons：
+
+```typescript
+import { 
+  StarIcon, 
+  EyeIcon 
+} from '@heroicons/react/24/outline';
+import { 
+  StarIcon as StarIconSolid 
+} from '@heroicons/react/24/solid';
+
+<StarIcon className="h-5 w-5" />
+```
+
+## 條件渲染
+
+```typescript
+{isAdmin && <AdminControls />}
+{isVisible ? <Content /> : null}
+{items.length > 0 && <List items={items} />}
+```
+
+## 表單處理
+
+```typescript
+const [formData, setFormData] = useState<FormData>(initialData);
+
+const handleChange = (field: keyof FormData, value: any) => {
+  setFormData(prev => ({ ...prev, [field]: value }));
+};
+
+<form onSubmit={handleSubmit}>
+  <input
+    value={formData.field}
+    onChange={(e) => handleChange('field', e.target.value)}
+  />
+</form>
+```
+
+## 元件組合
+
+優先使用組合而非繼承：
+
+```typescript
+<Card>
+  <CardHeader>標題</CardHeader>
+  <CardBody>內容</CardBody>
+  <CardFooter>操作</CardFooter>
+</Card>
+```
+
+## 效能優化
+
+- 使用 `useMemo` 計算衍生值
+- 使用 `useCallback` 記憶化回調函式
+- 大型列表使用虛擬滾動或分頁
+- 圖片使用 Next.js `Image` 元件
+
+## 可訪問性
+
+- 使用語義化 HTML
+- 提供 `aria-label` 和 `aria-describedby`
+- 鍵盤導航支援
+- 適當的 `role` 屬性

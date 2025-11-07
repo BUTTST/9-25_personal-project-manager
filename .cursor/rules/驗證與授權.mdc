@@ -1,170 +1,186 @@
 ---
-globs: "app/components/auth/**/*.tsx,app/lib/auth.ts,app/api/auth/**/*.ts"
+globs: app/api/**/*.ts,app/lib/auth.ts,app/components/auth/**/*.tsx
 ---
-# 驗證與授權
 
-## 驗證系統
-驗證由 [app/lib/auth.ts](mdc:app/lib/auth.ts) 透過一個簡單的密碼系統處理。
+# 驗證與授權指南
 
-## 環境變數
-- `ADMIN_PASSWORD` - 在 Vercel 環境變數中設定
-- 所有管理員操作皆需要
-- 應保持強度並保密
+## 認證機制
 
-## 客戶端驗證
+### 密碼驗證
 
-### AuthProvider
-[AuthProvider.tsx](mdc:app/components/auth/AuthProvider.tsx) 管理驗證狀態：
+管理員使用簡單密碼驗證系統：
+- 環境變數：`ADMIN_PASSWORD`
+- API 端點：`POST /api/auth/login`
+- 驗證標頭：`x-admin-password`
+
+### 工作階段管理
+
+使用 [app/lib/auth.ts](mdc:app/lib/auth.ts) 管理本地工作階段：
+
 ```typescript
-import { useAuth } from '@/components/auth/AuthProvider';
+import { 
+  createAdminSession, 
+  getCurrentSession, 
+  clearSession,
+  isAdmin 
+} from '@/lib/auth';
 
-function Component() {
-  const { isAuthenticated, isAdmin, login, logout } = useAuth();
-  
-  // 使用 isAuthenticated 或 isAdmin 來顯示/隱藏功能
+// 建立工作階段
+const session = createAdminSession();
+
+// 檢查是否為管理員
+if (isAdmin()) {
+  // 管理員操作
+}
+
+// 清除工作階段
+clearSession();
+```
+
+### 工作階段特性
+
+- **持續時間**：24 小時
+- **儲存位置**：`localStorage`（`admin_session`）
+- **過期檢查**：自動檢查並清除過期工作階段
+
+## 密碼記憶功能
+
+```typescript
+import { 
+  rememberPassword, 
+  getRememberedPassword, 
+  clearRememberedPassword 
+} from '@/lib/auth';
+
+// 記憶密碼
+rememberPassword(password);
+
+// 獲取記憶的密碼
+const password = getRememberedPassword();
+
+// 清除記憶的密碼
+clearRememberedPassword();
+```
+
+## API 路由認證
+
+### 讀取操作（GET）
+
+預設為公開，無需認證：
+```typescript
+export async function GET(request: NextRequest) {
+  // 公開查詢
+  const { data } = await supabase.from('projects').select('*');
 }
 ```
 
-### 登入流程
-1. 使用者點擊「管理員登入」按鈕
-2. [LoginModal.tsx](mdc:app/components/auth/LoginModal.tsx) 出現
-3. 使用者輸入密碼
-4. 帶著密碼 POST 到 `/api/auth/login`
-5. 成功後，會話儲存在 localStorage
-6. AuthProvider 更新狀態
-7. UI 更新以顯示管理員功能
-
-### 會話儲存
-會話儲存在 localStorage 中，格式如下：
+管理員模式（可選）：
 ```typescript
-interface AuthSession {
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-  loginTime: number;
-  expiresAt: number;
+const isAdmin = searchParams.get('admin') === 'true';
+const password = request.headers.get('x-admin-password');
+
+if (isAdmin) {
+  if (!password || password !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: '未授權訪問' }, { status: 401 });
+  }
+  // 管理員查詢（包含隱藏專案）
 }
 ```
 
-### 會話過期
-- 預設：24 小時
-- 應用程式載入時檢查
-- 可透過「記住密碼」設定延長
-- 過期的會話會自動登出
+### 寫入操作（POST/PATCH/DELETE）
 
-## 伺服器端驗證
-
-### API 路由保護
-用密碼驗證保護管理員 API 路由（直接比對環境變數）：
+必須驗證管理員權限：
 ```typescript
 export async function POST(request: NextRequest) {
   const password = request.headers.get('x-admin-password');
+  
   if (!password || password !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: '未授權' }, { status: 401 });
+    return NextResponse.json({ error: '未授權訪問' }, { status: 401 });
   }
+  
   // 管理員操作
 }
 ```
 
-### 密碼驗證
-`verifyAdminPassword()` 函數：
-- 與 `process.env.ADMIN_PASSWORD` 比較
-- 回傳布林值
-- 安全地處理遺失/無效的密碼
-- 無速率限制 (由 Vercel 處理)
+## 前端認證
 
-## 授權模式
+### AuthProvider
+
+使用 `AuthProvider` 元件管理全域認證狀態：
+
+```typescript
+import { AuthProvider } from '@/components/auth/AuthProvider';
+
+<AuthProvider>
+  {children}
+</AuthProvider>
+```
+
+### 使用認證狀態
+
+```typescript
+import { useAuth } from '@/components/auth/AuthProvider';
+
+const { isAdmin, isAuthenticated } = useAuth();
+```
+
+### 登入流程
+
+1. 使用者輸入密碼
+2. 呼叫 `POST /api/auth/login`
+3. 成功後建立本地工作階段
+4. 可選：記憶密碼到 `localStorage`
+
+## 權限控制
 
 ### 元件層級
+
 ```typescript
-function AdminFeature() {
-  const { isAdmin } = useAuth();
-  
-  if (!isAdmin) {
-    return null; // 或 <AccessDenied />
-  }
-  
-  return <AdminInterface />;
+{isAdmin && <AdminControls />}
+{isAuthenticated && <ProtectedContent />}
+```
+
+### API 層級
+
+所有寫入操作必須檢查：
+```typescript
+if (!isAdmin()) {
+  return NextResponse.json({ error: '未授權' }, { status: 403 });
 }
 ```
 
-### 條件式渲染
+## 安全最佳實踐
+
+1. **環境變數保護**：`ADMIN_PASSWORD` 僅在伺服器端使用
+2. **HTTPS 強制**：生產環境使用 HTTPS
+3. **工作階段過期**：24 小時自動過期
+4. **密碼記憶可選**：使用者可選擇是否記憶
+5. **錯誤訊息**：不洩露敏感資訊
+
+## 環境變數
+
+必需：
+- `ADMIN_PASSWORD` - 管理員密碼（伺服器端）
+
+可選：
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase Anon Key
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase Service Role Key
+
+## 錯誤處理
+
+認證失敗回應：
 ```typescript
-function Component() {
-  const { isAdmin } = useAuth();
-  
-  return (
-    <div>
-      <PublicContent />
-      {isAdmin && <AdminControls />}
-    </div>
-  );
-}
+return NextResponse.json(
+  { error: '未授權訪問' },
+  { status: 401 }
+);
 ```
 
-### API 客戶端呼叫
-從客戶端呼叫管理員 API 時：
+禁止訪問回應：
 ```typescript
-const response = await fetch('/api/projects', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-admin-password': getRememberedPassword() || '' // 從 localStorage 獲取
-  },
-  body: JSON.stringify(data)
-});
+return NextResponse.json(
+  { error: '權限不足' },
+  { status: 403 }
+);
 ```
-
-### 端點與方法要點
-- `/api/settings/ui-display`：`GET` 公開讀取；`PUT` 僅管理員更新
-- `/api/admin/*`：皆需 `x-admin-password`
-- `/api/initialize`：已停用自動初始化，只回傳提示訊息
-
-## 安全考量
-
-### 受保護的內容
-- ✅ 對專案的所有 CRUD 操作
-- ✅ 密碼管理功能
-- ✅ 設定修改
-- ✅ UI 自訂儲存
-- ✅ 開發者筆記的可見性
-
-### 公開的內容
-- ✅ 讀取公開專案
-- ✅ 檢視已篩選/可見的內容
-- ✅ 主題切換
-- ✅ 搜尋與篩選
-- ✅ 統計資料 (僅公開指標)
-
-### 最佳實踐
-1. 不要在客戶端程式碼中暴露 `ADMIN_PASSWORD`
-2. 務必在 API 路由上驗證密碼 (伺服器端)
-3. 不要信任客戶端的 `isAdmin` 旗標來確保安全
-4. 登出時清除敏感資料
-5. 在生產環境中使用 HTTPS (Vercel 預設)
-6. 設定強大的管理員密碼
-7. 若密碼遭洩漏，請更換密碼
-
-## 密碼管理功能
-應用程式包含一個用於儲存憑證的密碼管理器：
-- 儲存在 Supabase `passwords` 資料表中
-- **僅供已驗證的管理員存取**
-- RLS 政策完全禁止前端訪問
-- 不會在公開 API 回應中暴露
-- 透過管理員儀表板編輯
-- 傳輸中加密 (HTTPS)
-
-⚠️ **重要**：這些密碼在 Supabase 資料庫中以純文字形式儲存。這適用於個人用途，但不適用於處理敏感資料的生產應用程式。如需儲存真正敏感的密碼，建議使用專門的密碼管理服務或加密方案。
-
-## 登出
-登出會清除：
-- localStorage 會話
-- 記憶體中的驗證狀態
-- 快取的管理員資料
-- 重新導向至公開視圖
-
-## 記住密碼
-啟用時：
-- 在 localStorage 中儲存密碼
-- 應用程式載入時自動登入
-- 可在設定中停用
-- 明確登出時清除

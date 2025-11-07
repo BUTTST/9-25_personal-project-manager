@@ -1,310 +1,271 @@
 ---
-description: "關於此專案的一般最佳實踐與慣例"
+alwaysApply: true
 ---
+
 # 最佳實踐與慣例
 
-## 程式碼品質
+## 程式碼風格
 
 ### 命名慣例
-- **元件**: PascalCase (例如：`ProjectCard`, `LoginModal`)
-- **函數**: camelCase (例如：`handleClick`, `formatDate`)
-- **常數**: UPPER_SNAKE_CASE (例如：`BLOB_FILENAME`, `DEFAULT_SETTINGS`)
-- **類型/介面**: PascalCase (例如：`Project`, `AuthSession`)
-- **檔案**: 工具函數使用 kebab-case，元件使用 PascalCase
 
-### 檔案組織
-- 每個檔案一個元件
-- 將相關元件放在一起 (例如：Modal + useModal hook)
-- 匯入分組：React → 第三方 → 內部 → 類型 → 樣式
-- 適當時從索引檔案匯出
+- **檔案名**：kebab-case（`project-card.tsx`）或 PascalCase（`ProjectCard.tsx`）
+- **變數/函式**：camelCase（`getProjectList`）
+- **常數**：UPPER_SNAKE_CASE（`ADMIN_PASSWORD`）
+- **型別/介面**：PascalCase（`ProjectCardProps`）
+- **元件**：PascalCase（`ProjectCard`）
 
-### 註解
-- 對公開 API 和複雜函數使用 JSDoc
-- 解釋「為什麼」而非「做什麼」
-- 記錄不明顯的行為
-- 隨程式碼更新註解
-- 使用者介面內容使用中文，程式碼註解使用英文
+### 註解規範
 
-## 元件最佳實踐
-
-### Props
-- 保持 props 介面明確並加以記錄
-- 適當時使用帶有預設值的可選 props
-- 避免 props 鑽取 - 對深度巢狀的狀態使用 context
-- 在函數簽名中解構 props
-
-### 狀態管理
-- 盡可能保持狀態的局部性
-- 僅在必要時提升狀態
-- 避免不必要的重新渲染
-- 在 useEffect 中使用正確的依賴項
-
-### 效能
-- 使用 useMemo 記憶昂貴的計算
-- 傳遞給子元件時使用 useCallback 記憶回呼函數
-- 延遲載入重量級元件
-- 優化圖片 (適當時使用 Next.js Image)
-- 盡可能避免在 JSX 中使用內聯函數定義
-
-### 無障礙性
-- 使用語意化 HTML 元素
-- 添加適當的 ARIA 標籤
-- 確保鍵盤導覽
-- 維持顏色對比度
-- 可能的話使用螢幕閱讀器進行測試
-
-## API 與資料
-
-> ⚠️ **重要**：涉及資料寫入的操作必須遵循 [資料安全與防護規則](mdc:.cursor/rules/資料安全與防護.mdc)
-
-### 錯誤處理
-務必包裝非同步操作：
 ```typescript
-try {
-  const result = await operation();
-  return success(result);
-} catch (error) {
-  console.error('操作失敗:', error);
-  return failure(error);
+/**
+ * 函式說明
+ * @param param 參數說明
+ * @returns 回傳值說明
+ */
+export function functionName(param: Type): ReturnType {
+  // 實作
 }
 ```
 
-### 資料驗證
-- 在 API 邊界進行驗證
-- 處理前檢查資料類型
-- 處理遺失/未定義的值
-- 清理使用者輸入
-- **關鍵**：Supabase 使用 PostgreSQL Constraints 自動驗證資料完整性
-  - NOT NULL 約束（必填欄位）
-  - CHECK 約束（值範圍驗證）
-  - UNIQUE 約束（防止重複）
-  - 參考工具函數：[data-safety.ts](mdc:app/lib/data-safety.ts)（歷史參考用）
+### 匯入順序
 
-### 主控台記錄
-使用一致的表情符號前綴以提高可見性：
-- 🔍 - 讀取/搜尋資料
-- 💾 - 寫入/儲存資料
-- ✅ - 成功操作
-- ❌ - 錯誤
-- ⚠️ - 警告
-- 🎉 - 完成/慶祝
-- 📁 - 檔案操作
-- 🔒 - 驗證
+1. React 相關
+2. 第三方套件
+3. 內部模組（`@/` 別名）
+4. 型別匯入（`import type`）
+5. 相對路徑匯入
 
-### 快速參考（常用管理任務）
-- 更新 UI 設定：`PUT /api/settings/ui-display`（需 x-admin-password）
-- 讀取 UI 設定：`GET /api/settings/ui-display`（公開）
-- 重置 UI 設定：`POST /api/settings/reset-ui`（需 x-admin-password）
-- 系統診斷：`GET /api/admin/diagnose`（需 x-admin-password）
-- 初始化範例資料：`POST /api/admin/init-data`（需 x-admin-password）
-- 強制初始化：`POST /api/admin/force-init`（需 x-admin-password，謹慎）
+```typescript
+import { useState, useEffect } from 'react';
+import { NextRequest, NextResponse } from 'next/server';
+import clsx from 'clsx';
 
-### 環境變數
-Vercel 中需要的變數：
-- `ADMIN_PASSWORD` - 管理員驗證
-- `NEXT_PUBLIC_SUPABASE_URL` - Supabase 專案 URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase 匿名金鑰（前端用）
-- `SUPABASE_SERVICE_ROLE_KEY` - Supabase 服務金鑰（後端專用，繞過 RLS）
+import { Project } from '@/types';
+import { supabase } from '@/lib/supabase';
 
-### 圖片管理
-圖片使用 Supabase Storage 上傳：
+import type { ProjectCardProps } from './types';
+```
 
-**新增圖片的步驟：**
-1. 登入管理後台
-2. 進入「圖片管理」頁籤
-3. 點擊上傳或拖拽圖片
-4. 圖片立即可用於專案
+## 錯誤處理
 
-**圖片命名建議：**
-- ✅ **完全支援中文檔名**（例如：`專案截圖(主界面).png`）
-- 使用描述性名稱（檔名會作為標題顯示）
-- 可包含日期前綴（例如：`10-15-專案名稱.png`）
-- 範例：`10-16_SME-accounting-inventory-system(設定).png`
+### API 錯誤回應
 
-**重要提醒：**
-- ✅ Web 界面上傳，無需 Git 操作
-- ✅ 自動檢測重複（智能 hash 識別）
-- ✅ 重命名時自動更新專案引用
-- ✅ 刪除前自動檢查引用
+標準格式：
+```typescript
+return NextResponse.json(
+  { 
+    error: '使用者友善的錯誤訊息',
+    details: error instanceof Error ? error.message : 'Unknown error'
+  },
+  { status: 500 }
+);
+```
 
-**技術細節：**
-- 後端：存儲為 ASCII 安全格式（帶 hash）
-- 前端：顯示完整中文檔名
-- 詳見：`app/lib/storage.ts`
+### 前端錯誤處理
 
-## UI/UX 模式
+```typescript
+try {
+  const response = await fetch('/api/endpoint');
+  if (!response.ok) {
+    throw new Error('操作失敗');
+  }
+  const data = await response.json();
+} catch (error) {
+  console.error('Error:', error);
+  // 顯示錯誤訊息給使用者
+}
+```
 
-### 載入狀態
-- 為非同步操作顯示載入指示器
-- 使用骨架屏以提升感知效能
-- 提交期間禁用按鈕
-- 完成時提供回饋
+## 非同步操作
 
-### 錯誤訊息
-- 具體說明出了什麼問題
-- 可能的話提供解決方案
-- 對非關鍵錯誤使用 toast 通知
-- 對關鍵錯誤使用模態框
+### API 路由
 
-### 表單處理
-- 在失焦和提交時進行驗證
-- 清楚顯示驗證錯誤
-- 處理期間禁用提交按鈕
-- 成功提交後重設表單
-- 提供明確的成功回饋
+```typescript
+export async function GET(request: NextRequest) {
+  try {
+    // 非同步操作
+    const data = await someAsyncOperation();
+    return NextResponse.json({ data });
+  } catch (error) {
+    console.error('Error:', error);
+    return NextResponse.json(
+      { error: '操作失敗' },
+      { status: 500 }
+    );
+  }
+}
+```
 
-### 響應式設計
-- 行動優先方法
-- 在多種螢幕尺寸上測試
-- 使用適當的斷點
-- 確保觸控目標至少為 44x44px
+### 前端元件
 
-## 測試考量
+```typescript
+const handleSubmit = async () => {
+  setIsLoading(true);
+  try {
+    const response = await fetch('/api/endpoint');
+    if (!response.ok) throw new Error('失敗');
+    const data = await response.json();
+    // 處理成功
+  } catch (error) {
+    console.error('Error:', error);
+    // 顯示錯誤
+  } finally {
+    setIsLoading(false);
+  }
+};
+```
 
-### 手動測試清單
-- ✅ 訪客模式功能
-- ✅ 管理員模式功能
-- ✅ 登入/登出流程
-- ✅ CRUD 操作
-- ✅ 搜尋與篩選
-- ✅ 深色模式
-- ✅ 行動裝置響應性
-- ✅ 錯誤狀態
-- ✅ 載入狀態
+## 狀態管理
 
-### 需測試的邊緣案例
-- 空資料狀態
-- 非常長的專案名稱/描述
-- 輸入中的特殊字元
-- 網路故障
-- 會話過期
-- 瀏覽器上一頁/下一頁
-- 同時的管理員會話
+### 本地狀態
 
-## 部署
+優先使用 `useState`：
+```typescript
+const [state, setState] = useState<Type>(initialValue);
+```
 
-### 預部署
-- 使用生產建置 (`npm run build`) 在本地測試
-- 驗證環境變數
-- 檢查主控台錯誤
-- 在行動裝置上測試
-- 驗證所有功能正常
+### 衍生狀態
 
-### 後部署
-- 監控 Vercel 日誌
-- 檢查 Supabase 資料庫和 Storage
-- 測試生產 URL
-- 驗證環境變數已載入
-- 檢查管理員密碼是否有效
+使用 `useMemo`：
+```typescript
+const filteredItems = useMemo(() => {
+  return items.filter(item => item.visible);
+}, [items]);
+```
 
-## Git 工作流程
+### 回調函式
 
-### 提交訊息
-使用傳統提交：
-- `feat:` - 新功能
-- `fix:` - 錯誤修復
-- `docs:` - 文件
-- `style:` - 格式化、樣式
-- `refactor:` - 程式碼重構
-- `perf:` - 效能改進
-- `test:` - 新增測試
-- `chore:` - 維護任務
-
-範例：
-- `feat: 為專案新增拖放重新排序功能`
-- `fix: 解決深色模式切換閃爍問題`
-- `docs: 更新 API 路由文件`
-
-### 分支策略
-- `main` - 生產就緒的程式碼
-- 為新工作建立功能分支
-- 測試後合併到 main
-
-## 疑難排解
-
-### 常見問題
-
-**資料未載入**
-1. 在 Supabase 控制台檢查資料庫連接
-2. 驗證 Supabase 環境變數是否正確
-3. 使用 `/api/admin/diagnose` 端點
-4. 檢查瀏覽器主控台錯誤
-
-**管理員登入失敗**
-1. 驗證 `ADMIN_PASSWORD` 環境變數已設定
-2. 檢查瀏覽器主控台是否有 401 錯誤
-3. 嘗試清除 localStorage
-4. 檢查網路標籤以獲取請求詳情
-
-**UI 未更新**
-1. 檢查資料是否實際儲存 (網路標籤)
-2. 驗證本地狀態管理
-3. 檢查 React key 警告
-4. 確保有正確的重新渲染觸發器
-
-**樣式問題**
-1. 驗證 Tailwind 類別是否有效
-2. 檢查 CSS 衝突
-3. 在開發者工具中檢查元素
-4. 檢查深色模式類別
+使用 `useCallback`：
+```typescript
+const handleClick = useCallback(() => {
+  // 處理邏輯
+}, [dependencies]);
+```
 
 ## 效能優化
 
-### 目前的優化
-- CSS 動畫使用 GPU 加速 (transform, opacity)
-- 圖片延遲載入
-- 元件按路由分割
-- 最小化的 JavaScript 包
-- 高效的重新渲染
+### 圖片優化
 
-### 未來考量
-- 為昂貴的元件新增 `React.memo`
-- 為長列表實現虛擬滾動
-- 新增 service worker 以支援離線
-- 使用動態匯入優化包大小
-- 新增圖片優化
+- 使用 Next.js `Image` 元件
+- 提供適當的 `width` 和 `height`
+- 使用 `loading="lazy"` 延遲載入
 
-## 安全檢查清單
-- ✅ 所有變動操作都需要管理員密碼
-- ✅ 伺服器端進行密碼驗證
-- ✅ 公開 API 不暴露敏感資料
-- ✅ 強制使用 HTTPS (Vercel 預設)
-- ✅ 無 XSS 漏洞 (React 預設轉義)
-- ✅ 客戶端程式碼中無敏感資料
-- ⚠️ 密碼以純文字儲存 (僅適用於個人用途)
+### 列表渲染
 
-### 資料安全（關鍵）
-- 🔒 **絕不**自動覆寫生產資料
-- 🔒 讀取失敗時必須拋出錯誤，不返回預設值
-- 🔒 寫入前必須執行三層驗證（完整性、空資料、安全鎖）
-- 🔒 `forceWrite` 僅在管理員明確授權時使用
-- 🔒 所有初始化端點必須是 POST 且需要驗證
-- 📖 詳見完整規則：[資料安全與防護](mdc:.cursor/rules/資料安全與防護.mdc)
+- 大型列表使用分頁或虛擬滾動
+- 使用 `key` prop 優化重新渲染
 
-## 維護
+### 快取策略
 
-### 定期任務
-- 審查並更新依賴項
-- 檢查安全漏洞
-- 監控 Supabase 用量（資料庫 + Storage）
-- 審查錯誤日誌
-- 定期測試所有功能
+API 路由：
+```typescript
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+```
 
-### 新增功能時
-1. 首先更新 TypeScript 類型
-2. 實現 API 端點
-3. 建立/更新元件
-4. 在開發環境中測試
-5. 更新文件
-6. 部署到生產環境
-7. 在生產環境中驗證
+## 可訪問性
 
-### 程式碼審查清單
-- 維持類型安全
-- 具備錯誤處理
-- 包含載入狀態
-- 驗證響應式設計
-- 考量無障礙性
-- 為複雜邏輯加上註解
-- 生產環境中無 `console.log`
-- 效能影響最小
+### 語義化 HTML
+
+```typescript
+<nav aria-label="主要導航">
+  <button aria-label="開啟選單">...</button>
+</nav>
+```
+
+### 鍵盤導航
+
+```typescript
+<button
+  onClick={handleClick}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      handleClick();
+    }
+  }}
+>
+```
+
+### ARIA 屬性
+
+```typescript
+<div
+  role="dialog"
+  aria-labelledby="dialog-title"
+  aria-describedby="dialog-description"
+>
+```
+
+## 測試
+
+### 單元測試
+
+```typescript
+describe('functionName', () => {
+  it('should handle normal case', () => {
+    expect(functionName(input)).toBe(expected);
+  });
+});
+```
+
+### 整合測試
+
+測試 API 端點和元件整合。
+
+## Git 慣例
+
+### Commit 訊息
+
+- `feat:` - 新功能
+- `fix:` - 修復錯誤
+- `docs:` - 文件更新
+- `style:` - 程式碼風格
+- `refactor:` - 重構
+- `test:` - 測試
+- `chore:` - 雜務
+
+### 分支命名
+
+- `feature/功能名稱`
+- `fix/錯誤描述`
+- `refactor/重構內容`
+
+## 文件
+
+### README
+
+保持 [README.md](mdc:README.md) 更新，包含：
+- 專案說明
+- 安裝步驟
+- 使用指南
+- API 文件
+
+### 程式碼註解
+
+複雜邏輯應添加註解說明：
+```typescript
+// ⭐ 關鍵改進：直接從資料庫讀取顯示名稱
+// 這樣可以支援中文檔名顯示
+const { data } = await supabaseAdmin.from('image_metadata').select('*');
+```
+
+## 環境變數
+
+### 開發環境
+
+使用 `.env.local`：
+```
+ADMIN_PASSWORD=dev_password
+NEXT_PUBLIC_SUPABASE_URL=https://...
+```
+
+### 生產環境
+
+在 Vercel 設定環境變數，不提交到 Git。
+
+## 安全性
+
+1. **環境變數**：敏感資訊僅在伺服器端使用
+2. **輸入驗證**：所有輸入都應驗證
+3. **錯誤訊息**：不洩露敏感資訊
+4. **HTTPS**：生產環境強制使用 HTTPS

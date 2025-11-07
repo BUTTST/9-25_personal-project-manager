@@ -1,295 +1,137 @@
 ---
-globs: "app/api/**/*.ts"
+globs: app/api/**/*.ts
 ---
-# API 路由指南
 
-> 📅 更新日期：2025-10-28  
-> 🔄 版本：v2.0（Supabase 版本）
+# API 路由指南
 
 ## 路由結構
 
-[app/api/](mdc:app/api/) 中的 API 路由遵循 Next.js App Router 的慣例：
-- 每個路由都是一個 `route.ts` 檔案
-- 匯出命名函數：`GET`、`POST`、`PATCH`、`DELETE`
-- 使用 'next/server' 中的 `NextRequest` 和 `NextResponse`
+所有 API 路由位於 `app/api/` 目錄，使用 Next.js App Router 的 Route Handlers。
 
-## 驗證
+### 標準路由模式
 
-需要管理員權限的 API 路由必須驗證密碼：
 ```typescript
+import { NextRequest, NextResponse } from 'next/server';
+
+export const revalidate = 0; // 禁用快取
+export const dynamic = 'force-dynamic'; // 強制動態渲染
+
+export async function GET(request: NextRequest) {
+  // GET 處理邏輯
+}
+
 export async function POST(request: NextRequest) {
-  // 從標頭驗證管理員密碼
-  const password = request.headers.get('x-admin-password');
-  if (!password || password !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: '未授權' }, { status: 401 });
-  }
-  
-  // 檢查 Supabase admin client
-  if (!supabaseAdmin) {
-    return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
-  }
-  
-  // 繼續執行管理員操作
+  // POST 處理邏輯
 }
 ```
 
-## 資料存取模式
+## 認證機制
 
-### 使用 Supabase Client
+### 管理員認證
+
+所有寫入操作（POST、PATCH、DELETE）需要管理員權限：
 
 ```typescript
-import { supabase, supabaseAdmin } from '@/app/lib/supabase';
-
-// 公開資料：使用 supabase（受 RLS 限制）
-const { data, error } = await supabase
-  .from('projects')
-  .select('*')
-  .eq('hidden', false);
-
-// 管理員操作：使用 supabaseAdmin（繞過 RLS）
-const { data, error } = await supabaseAdmin
-  .from('projects')
-  .select('*');
+const password = request.headers.get('x-admin-password');
+if (!password || password !== process.env.ADMIN_PASSWORD) {
+  return NextResponse.json({ error: '未授權訪問' }, { status: 401 });
+}
 ```
 
-### CRUD 操作
+### 公開讀取
+
+GET 請求預設為公開，無需認證。如需管理員模式：
+- 查詢參數：`?admin=true`
+- 標頭：`x-admin-password`
+
+## Supabase 使用
+
+### 客戶端選擇
+
+- **公開操作**：使用 `supabase`（受 RLS 限制）
+- **管理員操作**：使用 `supabaseAdmin`（繞過 RLS）
 
 ```typescript
-// CREATE
-const { data, error } = await supabaseAdmin
-  .from('projects')
-  .insert(newProject)
-  .select()
-  .single();
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
-// READ
-const { data, error } = await supabaseAdmin
-  .from('projects')
-  .select('*')
-  .eq('id', projectId)
-  .single();
+// 公開查詢
+const { data } = await supabase.from('projects').select('*');
 
-// UPDATE
-const { data, error } = await supabaseAdmin
-  .from('projects')
-  .update(updates)
-  .eq('id', projectId)
-  .select()
-  .single();
-
-// DELETE
-const { error } = await supabaseAdmin
-  .from('projects')
-  .delete()
-  .eq('id', projectId);
+// 管理員操作
+if (!supabaseAdmin) {
+  return NextResponse.json({ error: 'Admin client not available' }, { status: 500 });
+}
+const { data } = await supabaseAdmin.from('projects').insert(...);
 ```
 
-## 欄位名稱轉換
+### 資料格式轉換
 
-### 資料庫 ↔ API 轉換
+資料庫使用 `snake_case`，API 回應使用 `camelCase`：
 
 ```typescript
-// 資料庫使用 snake_case
-// 前端 API 使用 camelCase
+// 插入：camelCase → snake_case
+const dbData = {
+  date_and_file_name: formData.dateAndFileName,
+  image_previews: formData.imagePreviews,
+};
 
-// DB → Frontend（在 GET 回應中）
-const formatForFrontend = (dbRow: any) => ({
-  dateAndFileName: dbRow.date_and_file_name,
-  statusNote: dbRow.status_note,
-  publicNote: dbRow.public_note,
-  developerNote: dbRow.developer_note,
-  imagePreviews: dbRow.image_previews,
-  imagePreviewMode: dbRow.image_preview_mode,
-  customInfoSections: dbRow.custom_info_sections,
-  documentMeta: dbRow.document_meta,
-  sortOrder: dbRow.sort_order,
-  createdAt: new Date(dbRow.created_at).getTime(),
-  updatedAt: new Date(dbRow.updated_at).getTime(),
-});
-
-// Frontend → DB（在 POST/PATCH 請求中）
-const formatForDatabase = (apiData: any) => ({
-  date_and_file_name: apiData.dateAndFileName,
-  status_note: apiData.statusNote || null,
-  public_note: apiData.publicNote || null,
-  developer_note: apiData.developerNote || null,
-  image_previews: apiData.imagePreviews || [],
-  image_preview_mode: apiData.imagePreviewMode || 'grid',
-  custom_info_sections: apiData.customInfoSections || [],
-  document_meta: apiData.documentMeta || null,
-  sort_order: apiData.sortOrder || 0,
-});
+// 查詢：snake_case → camelCase
+const responseData = {
+  dateAndFileName: dbData.date_and_file_name,
+  imagePreviews: dbData.image_previews,
+};
 ```
 
 ## 錯誤處理
 
-### 標準錯誤處理模式
+標準錯誤回應格式：
 
 ```typescript
-export async function POST(request: NextRequest) {
-  try {
-    // 1. 驗證權限
-    const password = request.headers.get('x-admin-password');
-    if (!password || password !== process.env.ADMIN_PASSWORD) {
-      return NextResponse.json({ error: '未授權訪問' }, { status: 401 });
-    }
-
-    // 2. 驗證輸入
-    const body = await request.json();
-    if (!body.requiredField) {
-      return NextResponse.json({ error: '缺少必填欄位' }, { status: 400 });
-    }
-
-    // 3. 執行操作
-    const { data, error } = await supabaseAdmin
-      .from('table_name')
-      .insert(body);
-
-    // 4. 處理資料庫錯誤
-    if (error) {
-      console.error('Database operation failed:', error);
-      return NextResponse.json(
-        { error: '操作失敗', details: error.message },
-        { status: 500 }
-      );
-    }
-
-    // 5. 成功回應
-    return NextResponse.json({ success: true, data });
-    
-  } catch (error) {
-    // 6. 捕獲意外錯誤
-    console.error('Unexpected error:', error);
-    return NextResponse.json(
-      { error: '伺服器錯誤', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
-  }
+try {
+  // 操作邏輯
+} catch (error) {
+  console.error('Operation failed:', error);
+  return NextResponse.json(
+    { 
+      error: '操作失敗', 
+      details: error instanceof Error ? error.message : 'Unknown error' 
+    },
+    { status: 500 }
+  );
 }
 ```
 
-### 狀態碼慣例
+## API 端點列表
 
-| 狀態碼 | 說明 | 使用時機 |
-|-------|------|---------|
-| 200 | OK | 成功的 GET/PATCH/DELETE |
-| 201 | Created | 成功的 POST（新增） |
-| 400 | Bad Request | 輸入驗證失敗 |
-| 401 | Unauthorized | 密碼驗證失敗 |
-| 403 | Forbidden | 權限不足 |
-| 404 | Not Found | 資源不存在 |
-| 500 | Internal Server Error | 伺服器錯誤 |
-| 503 | Service Unavailable | Supabase 連接失敗 |
+### 專案管理
+- `GET /api/projects` - 獲取專案列表
+- `POST /api/projects` - 新增專案
+- `GET /api/projects/[id]` - 獲取單一專案
+- `PATCH /api/projects/[id]` - 更新專案
+- `DELETE /api/projects/[id]` - 刪除專案
+- `POST /api/projects/reorder` - 重新排序
 
-## Storage 操作
+### 圖片管理
+- `GET /api/images` - 列出所有圖片
+- `POST /api/images` - 上傳圖片
+- `POST /api/images/rename` - 重命名圖片
+- `POST /api/images/delete` - 刪除圖片
+- `POST /api/images/check-references` - 檢查圖片引用
 
-### 圖片上傳
+### 設定管理
+- `GET /api/settings/ui-display` - 獲取 UI 設定
+- `PUT /api/settings/ui-display` - 更新 UI 設定
+- `POST /api/settings/reset-ui` - 重置 UI 設定
 
+### 身份驗證
+- `POST /api/auth/login` - 管理員登入
+
+## 快取策略
+
+所有 API 路由應設定：
 ```typescript
-import { uploadImage } from '@/app/lib/storage';
-
-export async function POST(request: NextRequest) {
-  const formData = await request.formData();
-  const file = formData.get('file') as File;
-  
-  const result = await uploadImage(file);
-  
-  if (!result.success) {
-    return NextResponse.json({ error: result.error }, { status: 400 });
-  }
-  
-  return NextResponse.json({ url: result.url });
-}
-```
-
-### 圖片刪除
-
-```typescript
-import { deleteImage, checkImageReferences } from '@/app/lib/storage';
-
-export async function POST(request: NextRequest) {
-  const { filename } = await request.json();
-  
-  // 檢查引用
-  const refResult = await checkImageReferences(filename);
-  if (refResult.references && refResult.references.length > 0) {
-    return NextResponse.json({
-      error: 'Image is in use',
-      references: refResult.references
-    }, { status: 400 });
-  }
-  
-  // 刪除
-  const result = await deleteImage(filename);
-  return NextResponse.json({ success: result.success });
-}
-```
-
-## 快取控制
-
-### 禁用快取（動態資料）
-
-```typescript
-// 在檔案頂部加入
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 ```
 
-### 啟用快取（靜態資料）
-
-```typescript
-// 快取 60 秒
-export const revalidate = 60;
-```
-
-## 完整 API 端點列表
-
-### Projects（專案管理）
-
-```
-GET    /api/projects              # 列出專案
-GET    /api/projects?admin=true   # 列出所有專案（管理員）
-POST   /api/projects              # 新增專案
-GET    /api/projects/[id]         # 獲取單一專案
-PATCH  /api/projects/[id]         # 更新專案
-DELETE /api/projects/[id]         # 刪除專案
-POST   /api/projects/reorder      # 批量排序
-```
-
-### Images（圖片管理）⭐ NEW
-
-```
-GET    /api/images                     # 列出所有圖片
-POST   /api/images                     # 上傳圖片
-POST   /api/images/rename              # 重命名圖片
-POST   /api/images/delete              # 刪除圖片
-POST   /api/images/check-references    # 檢查引用
-```
-
-### Settings（設定管理）
-
-```
-GET    /api/settings/ui-display   # 獲取 UI 設定
-PUT    /api/settings/ui-display   # 更新 UI 設定
-POST   /api/settings/reset-ui     # 重置 UI 設定
-```
-
-### Admin（管理工具）
-
-```
-GET    /api/admin/diagnose        # 系統診斷
-POST   /api/admin/import-data     # 批量匯入
-```
-
-### Auth（驗證）
-
-```
-POST   /api/auth/login            # 管理員登入
-```
-
----
-
-**相關文檔**：
-- [資料管理指南.mdc](mdc:.cursor/rules/資料管理指南.mdc)
-- [驗證與授權.mdc](mdc:.cursor/rules/驗證與授權.mdc)
-- [TypeScript指南.mdc](mdc:.cursor/rules/TypeScript指南.mdc)
+確保資料即時更新，不使用 Next.js 快取。

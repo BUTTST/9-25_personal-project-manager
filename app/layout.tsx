@@ -5,9 +5,9 @@ import { ToastProvider } from '@/components/ui/ToastProvider';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
 
 export const metadata: Metadata = {
-  title: '專案展示平台',
-  description: '個人專案管理和展示平台',
-  keywords: '專案管理, 展示平台, 個人作品集',
+  title: '個人專案管理平台 | 追蹤開發進度與作品展示',
+  description: '管理個人專案、追蹤開發進度、展示作品集。支援專案分類、狀態管理、圖片預覽、明暗主題切換等功能。',
+  keywords: '專案管理, 作品集, 開發追蹤, Next.js, Supabase, 個人工具, 專案展示, 專案追蹤',
   authors: [{ name: 'Project Showcase Platform' }],
   viewport: 'width=device-width, initial-scale=1',
   themeColor: '#3b82f6',
@@ -26,10 +26,17 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: '專案展示平台',
-    description: '個人專案管理和展示平台',
+    title: '個人專案管理平台 | 追蹤開發進度與作品展示',
+    description: '管理個人專案、追蹤開發進度、展示作品集。支援專案分類、狀態管理、圖片預覽等功能。',
+    url: 'https://9-25-personal-project-manager.vercel.app',
+    siteName: '專案展示平台',
     type: 'website',
     locale: 'zh_TW',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '個人專案管理平台',
+    description: '管理個人專案、追蹤開發進度、展示作品集',
   },
 };
 
