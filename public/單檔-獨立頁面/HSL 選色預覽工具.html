@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【藍色主題 01】天空藍系 - 互動式調色盤</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            /* 預設值 - 天空藍系 */
+            --bg-h: 200;
+            --bg-s: 45%;
+            --bg-l: 96%;
+            --fg-h: 205;
+            --fg-s: 40%;
+            --fg-l: 15%;
+            --border-h: 200;
+            --border-s: 35%;
+            --border-l: 88%;
+            --primary-h: 201;
+            --primary-s: 96%;
+            --primary-l: 32%;
+            
+            --background: var(--bg-h) var(--bg-s) var(--bg-l);
+            --foreground: var(--fg-h) var(--fg-s) var(--fg-l);
+            --surface: 200 40% 97%;
+            --card: 0 0% 100%;
+            --border: var(--border-h) var(--border-s) var(--border-l);
+            --muted: 200 30% 91%;
+            --muted-foreground: 205 25% 50%;
+            --ring: 200 100% 50%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .theme-info {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 40px;
+            box-shadow: 0 2px 8px rgba(3, 105, 161, 0.06);
+        }
+
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .color-item {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .color-swatch {
+            width: 100%;
+            height: 80px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid hsl(var(--border));
+        }
+
+        .color-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: hsl(var(--foreground));
+        }
+
+        .color-value {
+            font-family: monospace;
+            font-size: 10px;
+            color: hsl(var(--muted-foreground));
+            line-height: 1.3;
+        }
+
+        .card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(3, 105, 161, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 16px rgba(3, 105, 161, 0.12);
+            border-color: var(--primary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+
+        .badge-important { background-color: #fee2e2; color: #991b1b; }
+        .badge-secondary { background-color: #dbeafe; color: #1e40af; }
+        .badge-practice { background-color: #fef3c7; color: #92400e; }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.85;
+            box-shadow: 0 4px 12px rgba(3, 105, 161, 0.3);
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .section { margin-bottom: 40px; }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-bottom: 2px solid hsl(var(--border));
+            padding-bottom: 12px;
+        }
+
+        .form-section {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: hsl(var(--foreground));
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* 調色盤控制面板 */
+        .color-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 380px;
+            background: white;
+            border: 2px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .color-controls h3 {
+            margin-bottom: 16px;
+            color: hsl(var(--foreground));
+            font-size: 18px;
+            border-bottom: 2px solid hsl(var(--border));
+            padding-bottom: 8px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+            padding: 12px;
+            background: hsl(var(--surface));
+            border-radius: 8px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: hsl(var(--foreground));
+            font-size: 13px;
+        }
+
+        .slider-container {
+            margin-bottom: 8px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 4px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .value-display {
+            display: inline-block;
+            font-family: monospace;
+            font-weight: 700;
+            color: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+        }
+
+        .diff-display {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            font-weight: 600;
+        }
+
+        .diff-positive {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .diff-negative {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .diff-zero {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 10px;
+            background: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+        }
+
+        .reset-btn:hover {
+            opacity: 0.85;
+        }
+
+        .reset-single-btn {
+            width: 100%;
+            padding: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+            font-size: 12px;
+            position: relative;
+            user-select: none;
+        }
+
+        .reset-single-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .reset-single-btn:active {
+            transform: scale(0.98);
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .reset-single-btn.previewing {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.3);
+        }
+
+        .border-width-control {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid hsl(var(--border));
+        }
+
+        .export-btn {
+            width: 100%;
+            padding: 10px;
+            background: hsl(var(--muted));
+            color: hsl(var(--foreground));
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+
+        .hsl-info {
+            background: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #1e40af;
+        }
+
+        .hsl-info strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .preview-swatch {
+            width: 100%;
+            height: 60px;
+            border-radius: 8px;
+            border: 2px solid hsl(var(--border));
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 配色方案選擇器 */
+        .scheme-selector {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .scheme-selector h4 {
+            color: white;
+            font-size: 14px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .scheme-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .scheme-btn {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .scheme-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .scheme-btn.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 快速配色按鈕 */
+        .quick-colors {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed hsl(var(--border));
+        }
+
+        .quick-colors-label {
+            font-size: 11px;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .quick-color-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .quick-color-btn {
+            padding: 6px;
+            border-radius: 6px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 10px;
+            font-weight: 600;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .quick-color-btn:hover {
+            transform: scale(1.05);
+            border-color: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+        }
+
+        .quick-color-preview {
+            width: 100%;
+            height: 24px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .quick-color-name {
+            font-size: 9px;
+            color: hsl(var(--muted-foreground));
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 互動式調色盤控制面板 -->
+        <div class="color-controls">
+            <h3>🎨 互動式調色盤</h3>
+            
+            <!-- 配色方案選擇器 -->
+            <div class="scheme-selector">
+                <h4>⚡ 快速切換配色方案</h4>
+                <div class="scheme-buttons">
+                    <button class="scheme-btn active" onclick="applyScheme('sky')">☁️ 天空藍 [主要]</button>
+                    <button class="scheme-btn" onclick="applyScheme('ocean')">🌊 深海藍</button>
+                    <button class="scheme-btn" onclick="applyScheme('ice')">❄️ 冰晶藍</button>
+                    <button class="scheme-btn" onclick="applyScheme('dusk')">🌆 暮光藍</button>
+                    <button class="scheme-btn" onclick="applyScheme('teal')">💎 青藍</button>
+                    <button class="scheme-btn" onclick="applyScheme('steel')">⚙️ 鋼鐵藍</button>
+                </div>
+            </div>
+            
+            <div class="hsl-info">
+                <strong>HSL 色彩模式說明：</strong>
+                <strong>H (Hue 色相)</strong> 0-360° 色輪角度<br>
+                <strong>S (Saturation 飽和度)</strong> 0-100% 顏色純度<br>
+                <strong>L (Lightness 亮度)</strong> 0-100% 明暗程度
+            </div>
+
+            <!-- 背景色調整 -->
+            <div class="control-group">
+                <label>🎨 背景色 (Background)</label>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>H 色相</span>
+                        <span>
+                            <span class="value-display" id="bg-h-value">200</span>°
+                            <span class="diff-display diff-zero" id="bg-h-diff">±0</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="360" value="200" class="slider" id="bg-h" 
+                           style="background: linear-gradient(to right, 
+                           hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), 
+                           hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%));">
+                </div>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>S 飽和度</span>
+                        <span>
+                            <span class="value-display" id="bg-s-value">45</span>%
+                            <span class="diff-display diff-zero" id="bg-s-diff">±0</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="100" value="45" class="slider" id="bg-s"
+                           style="background: linear-gradient(to right, hsl(200, 0%, 96%), hsl(200, 100%, 96%));">
+                </div>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>L 亮度</span>
+                        <span>
+                            <span class="value-display" id="bg-l-value">96</span>%
+                            <span class="diff-display diff-zero" id="bg-l-diff">±0</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="100" value="96" class="slider" id="bg-l"
+                           style="background: linear-gradient(to right, hsl(200, 45%, 0%), hsl(200, 45%, 100%));">
+                </div>
+                <div class="preview-swatch" id="bg-preview" style="background: hsl(200, 45%, 96%); color: hsl(205, 40%, 15%);">
+                    hsl(200, 45%, 96%)
+                </div>
+                
+                <!-- 背景快速配色 -->
+                <div class="quick-colors">
+                    <div class="quick-colors-label">⚡ 快速配色：</div>
+                    <div class="quick-color-grid">
+                        <button class="quick-color-btn" onclick="quickSetColor('bg', 200, 45, 96)">
+                            <div class="quick-color-preview" style="background: hsl(200, 45%, 96%);"></div>
+                            <div class="quick-color-name">天空白</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('bg', 210, 30, 97)">
+                            <div class="quick-color-preview" style="background: hsl(210, 30%, 97%);"></div>
+                            <div class="quick-color-name">雲霧白</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('bg', 195, 50, 95)">
+                            <div class="quick-color-preview" style="background: hsl(195, 50%, 95%);"></div>
+                            <div class="quick-color-name">冰晶白</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('bg', 200, 25, 98)">
+                            <div class="quick-color-preview" style="background: hsl(200, 25%, 98%);"></div>
+                            <div class="quick-color-name">極淺藍</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('bg', 220, 35, 94)">
+                            <div class="quick-color-preview" style="background: hsl(220, 35%, 94%);"></div>
+                            <div class="quick-color-name">暮光白</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('bg', 180, 40, 96)">
+                            <div class="quick-color-preview" style="background: hsl(180, 40%, 96%);"></div>
+                            <div class="quick-color-name">青瓷白</div>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="reset-single-btn" id="reset-bg-btn" data-type="bg">
+                    🔄 還原背景色（按住預覽原樣）
+                </button>
+            </div>
+
+            <!-- 主色調整 -->
+            <div class="control-group">
+                <label>💎 主色 (Primary)</label>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>H 色相</span>
+                        <span>
+                            <span class="value-display" id="primary-h-value">201</span>°
+                            <span class="diff-display diff-zero" id="primary-h-diff">±0</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="360" value="201" class="slider" id="primary-h"
+                           style="background: linear-gradient(to right, 
+                           hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), 
+                           hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%));">
+                </div>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>S 飽和度</span>
+                        <span>
+                            <span class="value-display" id="primary-s-value">96</span>%
+                            <span class="diff-display diff-zero" id="primary-s-diff">±0</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="100" value="96" class="slider" id="primary-s"
+                           style="background: linear-gradient(to right, hsl(201, 0%, 32%), hsl(201, 100%, 32%));">
+                </div>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>L 亮度</span>
+                        <span>
+                            <span class="value-display" id="primary-l-value">32</span>%
+                            <span class="diff-display diff-zero" id="primary-l-diff">±0</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="100" value="32" class="slider" id="primary-l"
+                           style="background: linear-gradient(to right, hsl(201, 96%, 0%), hsl(201, 96%, 100%));">
+                </div>
+                <div class="preview-swatch" id="primary-preview" style="background: hsl(201, 96%, 32%);">
+                    hsl(201, 96%, 32%) = #0369a1
+                </div>
+                
+                <!-- 主色快速配色 -->
+                <div class="quick-colors">
+                    <div class="quick-colors-label">⚡ 快速配色：</div>
+                    <div class="quick-color-grid">
+                        <button class="quick-color-btn" onclick="quickSetColor('primary', 201, 96, 32)">
+                            <div class="quick-color-preview" style="background: hsl(201, 96%, 32%);"></div>
+                            <div class="quick-color-name">天空藍</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('primary', 210, 85, 28)">
+                            <div class="quick-color-preview" style="background: hsl(210, 85%, 28%);"></div>
+                            <div class="quick-color-name">深海藍</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('primary', 195, 90, 35)">
+                            <div class="quick-color-preview" style="background: hsl(195, 90%, 35%);"></div>
+                            <div class="quick-color-name">冰晶藍</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('primary', 220, 75, 30)">
+                            <div class="quick-color-preview" style="background: hsl(220, 75%, 30%);"></div>
+                            <div class="quick-color-name">暮光藍</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('primary', 180, 80, 33)">
+                            <div class="quick-color-preview" style="background: hsl(180, 80%, 33%);"></div>
+                            <div class="quick-color-name">青藍</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('primary', 205, 70, 35)">
+                            <div class="quick-color-preview" style="background: hsl(205, 70%, 35%);"></div>
+                            <div class="quick-color-name">鋼鐵藍</div>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="reset-single-btn" id="reset-primary-btn" data-type="primary">
+                    🔄 還原主色（按住預覽原樣）
+                </button>
+            </div>
+
+            <!-- 邊框色調整 -->
+            <div class="control-group">
+                <label>📏 邊框色 (Border)</label>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>H 色相</span>
+                        <span>
+                            <span class="value-display" id="border-h-value">200</span>°
+                            <span class="diff-display diff-zero" id="border-h-diff">±0</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="360" value="200" class="slider" id="border-h"
+                           style="background: linear-gradient(to right, 
+                           hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), 
+                           hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%));">
+                </div>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>S 飽和度</span>
+                        <span>
+                            <span class="value-display" id="border-s-value">35</span>%
+                            <span class="diff-display diff-zero" id="border-s-diff">±0</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="100" value="35" class="slider" id="border-s"
+                           style="background: linear-gradient(to right, hsl(200, 0%, 88%), hsl(200, 100%, 88%));">
+                </div>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>L 亮度</span>
+                        <span>
+                            <span class="value-display" id="border-l-value">88</span>%
+                            <span class="diff-display diff-zero" id="border-l-diff">±0</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="100" value="88" class="slider" id="border-l"
+                           style="background: linear-gradient(to right, hsl(200, 35%, 0%), hsl(200, 35%, 100%));">
+                </div>
+                
+                <!-- 邊框寬度設定 -->
+                <div class="border-width-control">
+                    <div class="slider-label">
+                        <span>📐 邊框寬度 (Width)</span>
+                        <span>
+                            <span class="value-display" id="border-width-value">1</span>px
+                            <span class="diff-display diff-zero" id="border-width-diff">±0</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="5" value="1" step="0.5" class="slider" id="border-width"
+                           style="background: linear-gradient(to right, #e5e7eb, #3b82f6);">
+                </div>
+
+                <div class="preview-swatch" id="border-preview" style="background: hsl(200, 35%, 88%); color: hsl(205, 40%, 15%); border: 1px solid hsl(200, 35%, 70%);">
+                    hsl(200, 35%, 88%)
+                </div>
+                
+                <!-- 邊框快速配色 -->
+                <div class="quick-colors">
+                    <div class="quick-colors-label">⚡ 快速配色：</div>
+                    <div class="quick-color-grid">
+                        <button class="quick-color-btn" onclick="quickSetColor('border', 200, 35, 88)">
+                            <div class="quick-color-preview" style="background: hsl(200, 35%, 88%);"></div>
+                            <div class="quick-color-name">天空灰</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('border', 210, 25, 90)">
+                            <div class="quick-color-preview" style="background: hsl(210, 25%, 90%);"></div>
+                            <div class="quick-color-name">霧藍灰</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('border', 195, 40, 86)">
+                            <div class="quick-color-preview" style="background: hsl(195, 40%, 86%);"></div>
+                            <div class="quick-color-name">冰晶灰</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('border', 220, 30, 85)">
+                            <div class="quick-color-preview" style="background: hsl(220, 30%, 85%);"></div>
+                            <div class="quick-color-name">暮光灰</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('border', 180, 35, 87)">
+                            <div class="quick-color-preview" style="background: hsl(180, 35%, 87%);"></div>
+                            <div class="quick-color-name">青瓷灰</div>
+                        </button>
+                        <button class="quick-color-btn" onclick="quickSetColor('border', 205, 28, 89)">
+                            <div class="quick-color-preview" style="background: hsl(205, 28%, 89%);"></div>
+                            <div class="quick-color-name">鋼鐵灰</div>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="reset-single-btn" id="reset-border-btn" data-type="border">
+                    🔄 還原邊框（按住預覽原樣）
+                </button>
+            </div>
+
+            <button class="reset-btn" onclick="resetToDefaults()">🔄 全部還原預設值</button>
+            <button class="export-btn" onclick="exportCSS()">📋 複製 CSS 代碼</button>
+            
+            <div class="hsl-info" style="margin-top: 12px; background: #fef3c7; border-color: #fde68a; color: #92400e;">
+                <strong>💡 調整提示：</strong>
+                • 背景亮度建議 94-98%<br>
+                • 主色亮度建議 30-50%<br>
+                • 色相保持 ±20° 內統一
+            </div>
+        </div>
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="theme-info">
+            <h1>☁️ 藍色主題 01：天空藍系（互動式調色盤）</h1>
+            <p><strong>設計理念：</strong> 明亮清爽的天空藍，Hue 200°，帶來開闊舒適的視覺體驗</p>
+            <p style="margin-top: 8px; padding: 12px; background: #dbeafe; border-radius: 6px; color: #1e40af; font-size: 13px;">
+                ➡️ 使用右側的<strong>互動式調色盤</strong>即時調整色彩，查看效果並匯出 CSS 代碼
+            </p>
+            
+            <div class="color-palette">
+                <div class="color-item">
+                    <div class="color-swatch" id="display-bg-swatch" style="background-color: hsl(var(--background));"></div>
+                    <div class="color-name">背景</div>
+                    <div class="color-value" id="display-bg-value">hsl(200,45%,96%)<br>#f0f7fb</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-swatch" style="background-color: hsl(205, 40%, 15%);"></div>
+                    <div class="color-name">文字</div>
+                    <div class="color-value">hsl(205,40%,15%)<br>#182f3e</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-swatch" id="display-border-swatch" style="background-color: hsl(var(--border));"></div>
+                    <div class="color-name">邊框</div>
+                    <div class="color-value" id="display-border-value">hsl(200,35%,88%)<br>#d1e2eb</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-swatch" id="display-primary-swatch" style="background-color: hsl(var(--primary-h), var(--primary-s), var(--primary-l));"></div>
+                    <div class="color-name">主色</div>
+                    <div class="color-value" id="display-primary-value">hsl(201,96%,32%)<br>#0369a1</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-swatch" style="background-color: #0284c7;"></div>
+                    <div class="color-name">強調色</div>
+                    <div class="color-value">#0284c7<br>亮藍(固定)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">📦 專案列表展示</h2>
+            <div class="preview-grid">
+                <div class="card">
+                    <h3>7-30 V6_確認vercel授權</h3>
+                    <div style="margin-bottom: 12px;">
+                        <span class="badge badge-important">重要</span>
+                        <span class="badge badge-secondary">進行中</span>
+                    </div>
+                    <p>核心whisper專案，使用Vercel和RunPod進行語音轉譯服務。這是最重要的專案之一，整合AI技術。</p>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary">查看詳情</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>9-12_Idea-Collector</h3>
+                    <div style="margin-bottom: 12px;">
+                        <span class="badge badge-secondary">次要</span>
+                        <span class="badge badge-practice">實踐</span>
+                    </div>
+                    <p>想法收集和管理工具，簡化工作流程，提高生產力。支持標籤分類和模糊搜尋功能。</p>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary">查看詳情</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>8-23 應用圖標（icon）</h3>
+                    <div style="margin-bottom: 12px;">
+                        <span class="badge badge-practice">實踐</span>
+                    </div>
+                    <p>PWA圖標的實作和研究，學習製作符合規範的應用圖標，包括不同尺寸和maskable icon。</p>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary">查看詳情</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>7-24 金流系統</h3>
+                    <div style="margin-bottom: 12px;">
+                        <span class="badge badge-important">重要</span>
+                    </div>
+                    <p>Paddle金流系統建置，KV資料庫整合，進行支付流程測試和交易記錄管理。</p>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary">查看詳情</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>9-10 UI組件庫</h3>
+                    <div style="margin-bottom: 12px;">
+                        <span class="badge badge-secondary">次要</span>
+                    </div>
+                    <p>預覽樣式合集，收錄按鈕、表單、卡片等常用組件的不同狀態和變體。</p>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary">查看詳情</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>10-11 UI-UX改善報告</h3>
+                    <div style="margin-bottom: 12px;">
+                        <span class="badge badge-secondary">單檔</span>
+                    </div>
+                    <p>完整的UI/UX改善報告，描述改版背景與成效，包含用戶反饋分析和A/B測試結果。</p>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary">查看詳情</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>9-21 Facebook排版工具</h3>
+                    <div style="margin-bottom: 12px;">
+                        <span class="badge badge-practice">實踐</span>
+                    </div>
+                    <p>臉書貼文排版格式化工具，幫助內容創作者快速生成符合平台規範的排版。</p>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary">查看詳情</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>9-24 圖標自動生成器</h3>
+                    <div style="margin-bottom: 12px;">
+                        <span class="badge badge-practice">實踐</span>
+                    </div>
+                    <p>使用AI技術根據描述自動生成符合要求的圖標，支持多種風格和尺寸調整。</p>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary">查看詳情</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>10-15 YouTube資訊提取工具</h3>
+                    <div style="margin-bottom: 12px;">
+                        <span class="badge badge-secondary">次要</span>
+                    </div>
+                    <p>YouTube影片資訊提取和分析工具，支持批量處理和數據導出功能。</p>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary">查看詳情</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">➕ 新增專案表單</h2>
+            <div class="form-section">
+                <h3 style="margin-bottom: 20px;">建立新專案</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>專案名稱 *</label>
+                        <input type="text" placeholder="如：2025-01_新功能開發" />
+                    </div>
+                    <div class="form-group">
+                        <label>專案分類 *</label>
+                        <select>
+                            <option>重要</option>
+                            <option>次要</option>
+                            <option>實踐</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>專案說明 *</label>
+                    <textarea placeholder="詳細描述專案內容..." style="min-height: 100px;"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>GitHub 連結</label>
+                        <input type="url" placeholder="https://github.com/..." />
+                    </div>
+                    <div class="form-group">
+                        <label>Vercel 連結</label>
+                        <input type="url" placeholder="https://vercel.com/..." />
+                    </div>
+                </div>
+
+                <div style="margin-top: 24px;">
+                    <button class="btn btn-primary">建立專案</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 預設值存儲
+        const defaults = {
+            bg: { h: 200, s: 45, l: 96 },
+            primary: { h: 201, s: 96, l: 32 },
+            border: { h: 200, s: 35, l: 88, width: 1 }
+        };
+
+        // 當前修改後的值（用於按住預覽時恢復）
+        let currentValues = {
+            bg: { h: 200, s: 45, l: 96 },
+            primary: { h: 201, s: 96, l: 32 },
+            border: { h: 200, s: 35, l: 88, width: 1 }
+        };
+
+        // 配色方案庫
+        const colorSchemes = {
+            sky: {
+                name: '☁️ 天空藍 [主要]',
+                bg: { h: 200, s: 45, l: 96 },
+                primary: { h: 201, s: 96, l: 32 },
+                border: { h: 200, s: 35, l: 88, width: 1 }
+            },
+            ocean: {
+                name: '🌊 深海藍',
+                bg: { h: 210, s: 30, l: 97 },
+                primary: { h: 210, s: 85, l: 28 },
+                border: { h: 210, s: 25, l: 90, width: 1 }
+            },
+            ice: {
+                name: '❄️ 冰晶藍',
+                bg: { h: 195, s: 50, l: 95 },
+                primary: { h: 195, s: 90, l: 35 },
+                border: { h: 195, s: 40, l: 86, width: 1 }
+            },
+            dusk: {
+                name: '🌆 暮光藍',
+                bg: { h: 220, s: 35, l: 94 },
+                primary: { h: 220, s: 75, l: 30 },
+                border: { h: 220, s: 30, l: 85, width: 1 }
+            },
+            teal: {
+                name: '💎 青藍',
+                bg: { h: 180, s: 40, l: 96 },
+                primary: { h: 180, s: 80, l: 33 },
+                border: { h: 180, s: 35, l: 87, width: 1 }
+            },
+            steel: {
+                name: '⚙️ 鋼鐵藍',
+                bg: { h: 205, s: 28, l: 98 },
+                primary: { h: 205, s: 70, l: 35 },
+                border: { h: 205, s: 28, l: 89, width: 1 }
+            }
+        };
+
+        // 應用配色方案
+        function applyScheme(schemeName) {
+            const scheme = colorSchemes[schemeName];
+            if (!scheme) return;
+
+            // 更新所有按鈕狀態
+            document.querySelectorAll('.scheme-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 應用背景色
+            document.getElementById('bg-h').value = scheme.bg.h;
+            document.getElementById('bg-s').value = scheme.bg.s;
+            document.getElementById('bg-l').value = scheme.bg.l;
+            updateColors('bg', 'h', scheme.bg.h);
+            updateColors('bg', 's', scheme.bg.s);
+            updateColors('bg', 'l', scheme.bg.l);
+
+            // 應用主色
+            document.getElementById('primary-h').value = scheme.primary.h;
+            document.getElementById('primary-s').value = scheme.primary.s;
+            document.getElementById('primary-l').value = scheme.primary.l;
+            updateColors('primary', 'h', scheme.primary.h);
+            updateColors('primary', 's', scheme.primary.s);
+            updateColors('primary', 'l', scheme.primary.l);
+
+            // 應用邊框色
+            document.getElementById('border-h').value = scheme.border.h;
+            document.getElementById('border-s').value = scheme.border.s;
+            document.getElementById('border-l').value = scheme.border.l;
+            document.getElementById('border-width').value = scheme.border.width;
+            updateColors('border', 'h', scheme.border.h);
+            updateColors('border', 's', scheme.border.s);
+            updateColors('border', 'l', scheme.border.l);
+            updateColors('border', 'width', scheme.border.width);
+        }
+
+        // 快速設定個別顏色
+        function quickSetColor(type, h, s, l) {
+            document.getElementById(`${type}-h`).value = h;
+            document.getElementById(`${type}-s`).value = s;
+            document.getElementById(`${type}-l`).value = l;
+            
+            updateColors(type, 'h', h);
+            updateColors(type, 's', s);
+            updateColors(type, 'l', l);
+        }
+
+        // HSL 轉 HEX
+        function hslToHex(h, s, l) {
+            s /= 100;
+            l /= 100;
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const m = l - c / 2;
+            let r = 0, g = 0, b = 0;
+
+            if (0 <= h && h < 60) {
+                r = c; g = x; b = 0;
+            } else if (60 <= h && h < 120) {
+                r = x; g = c; b = 0;
+            } else if (120 <= h && h < 180) {
+                r = 0; g = c; b = x;
+            } else if (180 <= h && h < 240) {
+                r = 0; g = x; b = c;
+            } else if (240 <= h && h < 300) {
+                r = x; g = 0; b = c;
+            } else if (300 <= h && h < 360) {
+                r = c; g = 0; b = x;
+            }
+
+            r = Math.round((r + m) * 255);
+            g = Math.round((g + m) * 255);
+            b = Math.round((b + m) * 255);
+
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        // 更新 CSS 變數
+        function updateColors(type, component, value) {
+            const root = document.documentElement;
+            const valueNum = component === 'width' ? parseFloat(value) : parseInt(value);
+            
+            if (type === 'bg') {
+                root.style.setProperty(`--bg-${component}`, component === 'h' ? valueNum : `${valueNum}%`);
+                currentValues.bg[component] = valueNum;
+                updateDisplay('bg', component, valueNum);
+                updatePreview('bg');
+            } else if (type === 'primary') {
+                root.style.setProperty(`--primary-${component}`, component === 'h' ? valueNum : `${valueNum}%`);
+                currentValues.primary[component] = valueNum;
+                updateDisplay('primary', component, valueNum);
+                updatePreview('primary');
+            } else if (type === 'border') {
+                if (component === 'width') {
+                    currentValues.border.width = valueNum;
+                    updateBorderWidth(valueNum);
+                    updateDisplay('border', 'width', valueNum);
+                } else {
+                    root.style.setProperty(`--border-${component}`, component === 'h' ? valueNum : `${valueNum}%`);
+                    currentValues.border[component] = valueNum;
+                    updateDisplay('border', component, valueNum);
+                    updatePreview('border');
+                }
+            }
+        }
+
+        // 更新邊框寬度
+        function updateBorderWidth(width) {
+            const allElements = document.querySelectorAll('.card, .theme-info, .form-section, .color-item');
+            allElements.forEach(el => {
+                el.style.borderWidth = `${width}px`;
+            });
+            const preview = document.getElementById('border-preview');
+            preview.style.borderWidth = `${width}px`;
+        }
+
+        // 更新顯示值和差距
+        function updateDisplay(type, component, value) {
+            const defaultValue = defaults[type][component];
+            const diff = component === 'width' ? (value - defaultValue).toFixed(1) : (value - defaultValue);
+            
+            // 更新數值顯示
+            const valueElement = document.getElementById(`${type}-${component}-value`);
+            if (valueElement) {
+                valueElement.textContent = component === 'width' ? value.toFixed(1) : value;
+            }
+            
+            // 更新差距顯示
+            const diffElement = document.getElementById(`${type}-${component}-diff`);
+            if (diffElement) {
+                if (diff == 0) {
+                    diffElement.textContent = '±0';
+                    diffElement.className = 'diff-display diff-zero';
+                } else if (diff > 0) {
+                    diffElement.textContent = `+${diff}`;
+                    diffElement.className = 'diff-display diff-positive';
+                } else {
+                    diffElement.textContent = `${diff}`;
+                    diffElement.className = 'diff-display diff-negative';
+                }
+            }
+        }
+
+        // 更新預覽色塊
+        function updatePreview(type) {
+            const h = parseInt(document.getElementById(`${type}-h`).value);
+            const s = parseInt(document.getElementById(`${type}-s`).value);
+            const l = parseInt(document.getElementById(`${type}-l`).value);
+            
+            const hslString = `hsl(${h}, ${s}%, ${l}%)`;
+            const hexString = hslToHex(h, s, l);
+            const previewElement = document.getElementById(`${type}-preview`);
+            
+            previewElement.style.background = hslString;
+            previewElement.textContent = `${hslString} = ${hexString}`;
+            
+            // 調整文字顏色以確保可讀性
+            if (l > 60) {
+                previewElement.style.color = 'hsl(0, 0%, 20%)';
+            } else {
+                previewElement.style.color = 'white';
+            }
+
+            // 同步更新頂部色彩配置表
+            const displaySwatch = document.getElementById(`display-${type}-swatch`);
+            const displayValue = document.getElementById(`display-${type}-value`);
+            if (displaySwatch && displayValue) {
+                displaySwatch.style.backgroundColor = hslString;
+                displayValue.innerHTML = `hsl(${h},${s}%,${l}%)<br>${hexString}`;
+            }
+        }
+
+        // 單獨還原某個顏色組
+        function resetSingleColor(type) {
+            if (type === 'bg') {
+                document.getElementById('bg-h').value = defaults.bg.h;
+                document.getElementById('bg-s').value = defaults.bg.s;
+                document.getElementById('bg-l').value = defaults.bg.l;
+                updateColors('bg', 'h', defaults.bg.h);
+                updateColors('bg', 's', defaults.bg.s);
+                updateColors('bg', 'l', defaults.bg.l);
+            } else if (type === 'primary') {
+                document.getElementById('primary-h').value = defaults.primary.h;
+                document.getElementById('primary-s').value = defaults.primary.s;
+                document.getElementById('primary-l').value = defaults.primary.l;
+                updateColors('primary', 'h', defaults.primary.h);
+                updateColors('primary', 's', defaults.primary.s);
+                updateColors('primary', 'l', defaults.primary.l);
+            } else if (type === 'border') {
+                document.getElementById('border-h').value = defaults.border.h;
+                document.getElementById('border-s').value = defaults.border.s;
+                document.getElementById('border-l').value = defaults.border.l;
+                document.getElementById('border-width').value = defaults.border.width;
+                updateColors('border', 'h', defaults.border.h);
+                updateColors('border', 's', defaults.border.s);
+                updateColors('border', 'l', defaults.border.l);
+                updateColors('border', 'width', defaults.border.width);
+            }
+        }
+
+        // 預覽預設值（按住時）
+        function previewDefaults(type) {
+            if (type === 'bg') {
+                document.getElementById('bg-h').value = defaults.bg.h;
+                document.getElementById('bg-s').value = defaults.bg.s;
+                document.getElementById('bg-l').value = defaults.bg.l;
+                document.documentElement.style.setProperty('--bg-h', defaults.bg.h);
+                document.documentElement.style.setProperty('--bg-s', `${defaults.bg.s}%`);
+                document.documentElement.style.setProperty('--bg-l', `${defaults.bg.l}%`);
+                updateDisplay('bg', 'h', defaults.bg.h);
+                updateDisplay('bg', 's', defaults.bg.s);
+                updateDisplay('bg', 'l', defaults.bg.l);
+                updatePreview('bg');
+            } else if (type === 'primary') {
+                document.getElementById('primary-h').value = defaults.primary.h;
+                document.getElementById('primary-s').value = defaults.primary.s;
+                document.getElementById('primary-l').value = defaults.primary.l;
+                document.documentElement.style.setProperty('--primary-h', defaults.primary.h);
+                document.documentElement.style.setProperty('--primary-s', `${defaults.primary.s}%`);
+                document.documentElement.style.setProperty('--primary-l', `${defaults.primary.l}%`);
+                updateDisplay('primary', 'h', defaults.primary.h);
+                updateDisplay('primary', 's', defaults.primary.s);
+                updateDisplay('primary', 'l', defaults.primary.l);
+                updatePreview('primary');
+            } else if (type === 'border') {
+                document.getElementById('border-h').value = defaults.border.h;
+                document.getElementById('border-s').value = defaults.border.s;
+                document.getElementById('border-l').value = defaults.border.l;
+                document.getElementById('border-width').value = defaults.border.width;
+                document.documentElement.style.setProperty('--border-h', defaults.border.h);
+                document.documentElement.style.setProperty('--border-s', `${defaults.border.s}%`);
+                document.documentElement.style.setProperty('--border-l', `${defaults.border.l}%`);
+                updateBorderWidth(defaults.border.width);
+                updateDisplay('border', 'h', defaults.border.h);
+                updateDisplay('border', 's', defaults.border.s);
+                updateDisplay('border', 'l', defaults.border.l);
+                updateDisplay('border', 'width', defaults.border.width);
+                updatePreview('border');
+            }
+        }
+
+        // 恢復修改後的值（放開按鈕時）
+        function restoreCurrentValues(type) {
+            if (type === 'bg') {
+                document.getElementById('bg-h').value = currentValues.bg.h;
+                document.getElementById('bg-s').value = currentValues.bg.s;
+                document.getElementById('bg-l').value = currentValues.bg.l;
+                document.documentElement.style.setProperty('--bg-h', currentValues.bg.h);
+                document.documentElement.style.setProperty('--bg-s', `${currentValues.bg.s}%`);
+                document.documentElement.style.setProperty('--bg-l', `${currentValues.bg.l}%`);
+                updateDisplay('bg', 'h', currentValues.bg.h);
+                updateDisplay('bg', 's', currentValues.bg.s);
+                updateDisplay('bg', 'l', currentValues.bg.l);
+                updatePreview('bg');
+            } else if (type === 'primary') {
+                document.getElementById('primary-h').value = currentValues.primary.h;
+                document.getElementById('primary-s').value = currentValues.primary.s;
+                document.getElementById('primary-l').value = currentValues.primary.l;
+                document.documentElement.style.setProperty('--primary-h', currentValues.primary.h);
+                document.documentElement.style.setProperty('--primary-s', `${currentValues.primary.s}%`);
+                document.documentElement.style.setProperty('--primary-l', `${currentValues.primary.l}%`);
+                updateDisplay('primary', 'h', currentValues.primary.h);
+                updateDisplay('primary', 's', currentValues.primary.s);
+                updateDisplay('primary', 'l', currentValues.primary.l);
+                updatePreview('primary');
+            } else if (type === 'border') {
+                document.getElementById('border-h').value = currentValues.border.h;
+                document.getElementById('border-s').value = currentValues.border.s;
+                document.getElementById('border-l').value = currentValues.border.l;
+                document.getElementById('border-width').value = currentValues.border.width;
+                document.documentElement.style.setProperty('--border-h', currentValues.border.h);
+                document.documentElement.style.setProperty('--border-s', `${currentValues.border.s}%`);
+                document.documentElement.style.setProperty('--border-l', `${currentValues.border.l}%`);
+                updateBorderWidth(currentValues.border.width);
+                updateDisplay('border', 'h', currentValues.border.h);
+                updateDisplay('border', 's', currentValues.border.s);
+                updateDisplay('border', 'l', currentValues.border.l);
+                updateDisplay('border', 'width', currentValues.border.width);
+                updatePreview('border');
+            }
+        }
+
+        // 全部還原預設值
+        function resetToDefaults() {
+            resetSingleColor('bg');
+            resetSingleColor('primary');
+            resetSingleColor('border');
+            alert('✅ 已全部還原為預設值！');
+        }
+
+        // 匯出 CSS 代碼
+        function exportCSS() {
+            const bgH = document.getElementById('bg-h').value;
+            const bgS = document.getElementById('bg-s').value;
+            const bgL = document.getElementById('bg-l').value;
+            const primaryH = document.getElementById('primary-h').value;
+            const primaryS = document.getElementById('primary-s').value;
+            const primaryL = document.getElementById('primary-l').value;
+            const borderH = document.getElementById('border-h').value;
+            const borderS = document.getElementById('border-s').value;
+            const borderL = document.getElementById('border-l').value;
+            const borderWidth = document.getElementById('border-width').value;
+
+            const primaryHex = hslToHex(primaryH, primaryS, primaryL);
+
+            const cssCode = `:root {
+  /* 背景色 */
+  --background: ${bgH} ${bgS}% ${bgL}%;
+  
+  /* 邊框色 */
+  --border: ${borderH} ${borderS}% ${borderL}%;
+  
+  /* 主色 HSL */
+  --primary-h: ${primaryH};
+  --primary-s: ${primaryS}%;
+  --primary-l: ${primaryL}%;
+}
+
+/* 邊框樣式 */
+.card, .theme-info, .form-section, .color-item {
+  border-width: ${borderWidth}px;
+  border-color: hsl(${borderH}, ${borderS}%, ${borderL}%);
+}
+
+/* Tailwind config.js 中的 primary 色 */
+primary: {
+  500: '${primaryHex}',
+}
+
+/* 或直接使用 */
+.btn-primary {
+  background-color: hsl(${primaryH}, ${primaryS}%, ${primaryL}%);
+}`;
+
+            // 複製到剪貼簿
+            navigator.clipboard.writeText(cssCode).then(() => {
+                alert('✅ CSS 代碼已複製到剪貼簿！\n\n可以直接貼到 globals.css 或 tailwind.config.js');
+            }).catch(() => {
+                // 備用方案：顯示在彈窗
+                prompt('📋 複製以下 CSS 代碼：', cssCode);
+            });
+        }
+
+        // 初始化事件監聽
+        document.addEventListener('DOMContentLoaded', function() {
+            // 背景色
+            document.getElementById('bg-h').addEventListener('input', (e) => updateColors('bg', 'h', e.target.value));
+            document.getElementById('bg-s').addEventListener('input', (e) => updateColors('bg', 's', e.target.value));
+            document.getElementById('bg-l').addEventListener('input', (e) => updateColors('bg', 'l', e.target.value));
+
+            // 主色
+            document.getElementById('primary-h').addEventListener('input', (e) => updateColors('primary', 'h', e.target.value));
+            document.getElementById('primary-s').addEventListener('input', (e) => updateColors('primary', 's', e.target.value));
+            document.getElementById('primary-l').addEventListener('input', (e) => updateColors('primary', 'l', e.target.value));
+
+            // 邊框色
+            document.getElementById('border-h').addEventListener('input', (e) => updateColors('border', 'h', e.target.value));
+            document.getElementById('border-s').addEventListener('input', (e) => updateColors('border', 's', e.target.value));
+            document.getElementById('border-l').addEventListener('input', (e) => updateColors('border', 'l', e.target.value));
+            
+            // 邊框寬度
+            document.getElementById('border-width').addEventListener('input', (e) => updateColors('border', 'width', e.target.value));
+
+            // 單獨還原按鈕 - 支援點擊還原與按住預覽
+            const resetButtons = [
+                { btn: document.getElementById('reset-bg-btn'), type: 'bg' },
+                { btn: document.getElementById('reset-primary-btn'), type: 'primary' },
+                { btn: document.getElementById('reset-border-btn'), type: 'border' }
+            ];
+
+            resetButtons.forEach(({ btn, type }) => {
+                let isHolding = false;
+                let holdTimer = null;
+
+                // 按下時開始計時
+                btn.addEventListener('mousedown', (e) => {
+                    // 防止點擊事件同時觸發
+                    e.preventDefault();
+                    
+                    holdTimer = setTimeout(() => {
+                        isHolding = true;
+                        btn.classList.add('previewing');
+                        previewDefaults(type);
+                    }, 200); // 按住超過 200ms 才開始預覽
+                });
+
+                // 放開時恢復或還原
+                btn.addEventListener('mouseup', (e) => {
+                    clearTimeout(holdTimer);
+                    
+                    if (isHolding) {
+                        // 如果是按住預覽，則恢復原值
+                        btn.classList.remove('previewing');
+                        restoreCurrentValues(type);
+                        isHolding = false;
+                    } else {
+                        // 如果是快速點擊，則還原為預設值
+                        resetSingleColor(type);
+                    }
+                });
+
+                // 如果滑鼠移出按鈕，也要恢復
+                btn.addEventListener('mouseleave', () => {
+                    clearTimeout(holdTimer);
+                    if (isHolding) {
+                        btn.classList.remove('previewing');
+                        restoreCurrentValues(type);
+                        isHolding = false;
+                    }
+                });
+
+                // 觸控螢幕支援
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    holdTimer = setTimeout(() => {
+                        isHolding = true;
+                        btn.classList.add('previewing');
+                        previewDefaults(type);
+                    }, 200);
+                });
+
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    clearTimeout(holdTimer);
+                    
+                    if (isHolding) {
+                        btn.classList.remove('previewing');
+                        restoreCurrentValues(type);
+                        isHolding = false;
+                    } else {
+                        resetSingleColor(type);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

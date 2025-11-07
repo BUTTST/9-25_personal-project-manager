@@ -223,6 +223,11 @@
             color: #fff;
         }
 
+        .badge-danger {
+            background: var(--danger-color);
+            color: #fff;
+        }
+
         .method-details {
             display: block;
         }
@@ -308,6 +313,14 @@
             background: var(--bg-card-hover);
         }
 
+        .summary-table tr.warning-row {
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        [data-theme="light"] .summary-table tr.warning-row {
+            background: rgba(255, 152, 0, 0.15);
+        }
+
         code {
             background: var(--bg-secondary);
             padding: 2px 6px;
@@ -315,6 +328,17 @@
             font-family: 'Consolas', 'Monaco', monospace;
             font-size: 0.9em;
             color: var(--accent-color);
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
         }
 
         footer {
@@ -417,6 +441,17 @@
                                 </div>
                             </div>
                             <div class="detail-section">
+                                <div class="detail-label">⚙️ 運作方式</div>
+                                <div class="detail-content">
+                                    GenP 屬於<strong>第三方非官方修補工具</strong>，目的在於讓 Adobe 應用程式<strong>誤判授權狀態</strong>：
+                                    <ul style="margin-top: 10px;">
+                                        <li><strong>改變授權檢查結果：</strong>令檢查永遠通過</li>
+                                        <li><strong>干擾/偽裝授權服務：</strong>讓軟體以為已獲合法授權</li>
+                                        <li><strong>阻斷連線：</strong>避免程式與官方伺服器回傳偵測訊號與比對授權</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
                                 <div class="detail-label">✨ 特點</div>
                                 <div class="detail-content">
                                     可以讓 Creative Cloud 顯示「已訂閱」狀態、支援應用程式內更新（部分功能）、相容性較好。
@@ -426,6 +461,44 @@
                                 <div class="detail-label">⚠️ 注意事項</div>
                                 <div class="detail-content">
                                     更新軟體後可能需要重新 Patch、某些雲端功能仍無法使用（如 Adobe Fonts、Cloud Libraries）。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 淘宝破解安装包警告 -->
+                    <div class="method-card full-width">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>⚠️ 淘寶上「幾塊錢」的已破解安裝包</span>
+                                <span class="badge badge-danger">高風險</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 常見形式</div>
+                                <div class="detail-content">
+                                    多半是<strong>被改造的離線安裝包</strong>或<strong>捆綁啟動器/注入器</strong>：安裝或啟動時由外掛程式「動手腳」讓程式跳過授權檢查。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🚨 安全風險</div>
+                                <div class="detail-content">
+                                    <div class="info-box danger">
+                                        <strong>這類安裝包無法保證安全性：</strong>
+                                        <ul style="margin-top: 10px;">
+                                            <li><strong>惡意軟體：</strong>密碼/瀏覽器資料竊取器、挖礦程式、後門程式</li>
+                                            <li><strong>無法更新/無法穩定使用：</strong>甚至某次啟動後就失效</li>
+                                            <li><strong>不可預期的系統修改：</strong>關閉安全機制、變更系統設定</li>
+                                            <li><strong>來源不明：</strong>無法確認是否被植入惡意代碼</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">💡 建議</div>
+                                <div class="detail-content">
+                                    強烈建議從官方管道下載安裝程式，即使要使用破解工具，也應從可信的開源專案或知名論壇下載，並使用防毒軟體掃描。
                                 </div>
                             </div>
                         </div>
@@ -520,25 +593,34 @@
                 </div>
             </div>
 
-            <!-- Windows Section -->
+            <!-- Windows & Gray Market Section -->
             <div class="section">
-                <div class="section-header" onclick="toggleSection('windows')">
+                <div class="section-header" onclick="toggleSection('graymarket')">
                     <div class="section-title">
                         <span class="icon">🪟</span>
-                        <span>Windows 系統</span>
+                        <span>Windows 破解方案、灰產金鑰</span>
                     </div>
                     <span class="arrow">▼</span>
                 </div>
-                <div class="section-content" id="windows-content">
-                    <!-- KMS Emulator -->
-                    <div class="method-card">
+                <div class="section-content" id="graymarket-content">
+                    <!-- Windows 破解方法 -->
+                    <div class="method-card full-width">
                         <div class="method-header">
                             <div class="method-title">
-                                <span>KMS（Key Management Service）模擬器</span>
-                                <span class="badge badge-primary">⭐ 主流方案</span>
+                                <span>Windows 系統破解方法</span>
                             </div>
                         </div>
                         <div class="method-details">
+                            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                                <!-- KMS Emulator -->
+                                <div class="method-card" style="flex: 1; min-width: 300px;">
+                                    <div class="method-header">
+                                        <div class="method-title">
+                                            <span>KMS（Key Management Service）模擬器</span>
+                                            <span class="badge badge-primary">⭐ 主流方案</span>
+                                        </div>
+                                    </div>
+                                    <div class="method-details">
                             <div class="detail-section">
                                 <div class="detail-label">📌 原理</div>
                                 <div class="detail-content">
@@ -584,156 +666,316 @@
                                     需要定期重新啟動（雖然工具會自動處理）；部分防毒軟體會誤報為惡意程式。
                                 </div>
                             </div>
+                                    </div>
+                                </div>
+
+                                <!-- Digital License Injection -->
+                                <div class="method-card" style="flex: 1; min-width: 300px;">
+                                    <div class="method-header">
+                                        <div class="method-title">
+                                            <span>數位授權注入（Digital License Injection）</span>
+                                            <span class="badge badge-success">永久啟動</span>
+                                        </div>
+                                    </div>
+                                    <div class="method-details">
+                                        <div class="detail-section">
+                                            <div class="detail-label">📌 原理</div>
+                                            <div class="detail-content">
+                                                將數位授權憑證（Digital License）直接注入到系統中。Windows 10/11 支援「數位授權」機制，授權會綁定到硬體 ID（HWID）。
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">🔧 機制</div>
+                                            <div class="detail-content">
+                                                <ul>
+                                                    <li>利用 Windows 的硬體 ID（HWID）綁定機制</li>
+                                                    <li>注入合法格式的數位授權票證（Ticket）</li>
+                                                    <li>系統將授權資訊儲存到微軟伺服器</li>
+                                                    <li>與硬體 ID 綁定，重灌系統後仍然保持啟動</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">⚙️ 技術細節</div>
+                                            <div class="detail-content">
+                                                修改或利用 Windows 的 <code>ClipSVC</code>（客戶端授權服務），將授權票證上傳到微軟伺服器，使系統認為這是合法的數位授權。
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">✨ 特點</div>
+                                            <div class="detail-content">
+                                                <ul>
+                                                    <li><strong>永久啟動：</strong>不需要定期重新驗證</li>
+                                                    <li><strong>硬體綁定：</strong>重灌系統後自動啟動（只要硬體沒換）</li>
+                                                    <li><strong>顯示為數位授權：</strong>在設定中顯示「Windows 已使用數位授權啟動」</li>
+                                                    <li><strong>完全功能：</strong>所有 Windows 功能都可正常使用</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">📊 狀態</div>
+                                            <div class="detail-content">
+                                                目前非常流行的方式，適用於 Windows 10/11，效果最接近正版授權。
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- MAK Keys -->
+                                <div class="method-card" style="flex: 1; min-width: 300px;">
+                                    <div class="method-header">
+                                        <div class="method-title">
+                                            <span>MAK 金鑰（多次啟動金鑰）</span>
+                                        </div>
+                                    </div>
+                                    <div class="method-details">
+                                        <div class="detail-section">
+                                            <div class="detail-label">📌 原理</div>
+                                            <div class="detail-content">
+                                                使用「真實」但非法取得的 MAK（Multiple Activation Key）金鑰。MAK 是微軟提供給企業的批量授權金鑰，每個金鑰有啟動次數限制。
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">🔧 來源</div>
+                                            <div class="detail-content">
+                                                <ul>
+                                                    <li><strong>外洩的企業授權：</strong>從企業內部流出的批量授權金鑰</li>
+                                                    <li><strong>MSDN 訂閱金鑰：</strong>開發者訂閱帳號的金鑰被盜用</li>
+                                                    <li><strong>暗網交易：</strong>在黑市購買的企業授權</li>
+                                                    <li><strong>盜刷信用卡：</strong>用盜刷的信用卡購買後轉賣</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">⚙️ 運作方式</div>
+                                            <div class="detail-content">
+                                                直接輸入金鑰到 Windows 啟動介面，系統連接到微軟伺服器驗證，如果金鑰有效且未達啟動次數上限，則啟動成功。
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">✨ 特點</div>
+                                            <div class="detail-content">
+                                                這些是「真實」的金鑰，但被非法使用；啟動過程與正版相同；可以正常接收更新。
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">⚠️ 風險</div>
+                                            <div class="detail-content">
+                                                <div class="info-box danger">
+                                                    <strong>高風險方案：</strong>
+                                                    <ul style="margin-top: 10px;">
+                                                        <li>微軟可能會封鎖被大量濫用的金鑰</li>
+                                                        <li>啟動後可能突然失效，系統變成未啟動狀態</li>
+                                                        <li>購買盜版金鑰可能遭詐騙</li>
+                                                        <li>涉及刑事犯罪（盜用、詐欺）</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- OEM Activation -->
+                                <div class="method-card" style="flex: 1; min-width: 300px;">
+                                    <div class="method-header">
+                                        <div class="method-title">
+                                            <span>OEM 啟動（SLP - System Locked Pre-activation）</span>
+                                            <span class="badge badge-warning">舊時代方案</span>
+                                        </div>
+                                    </div>
+                                    <div class="method-details">
+                                        <div class="detail-section">
+                                            <div class="detail-label">📌 原理</div>
+                                            <div class="detail-content">
+                                                模擬電腦製造商（如 Dell、HP、Lenovo）的預裝授權機制。OEM 版本的 Windows 會讀取 BIOS 中的特定標記來確認是否為「原廠預裝」。
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">🔧 機制</div>
+                                            <div class="detail-content">
+                                                <ul>
+                                                    <li><strong>修改 BIOS：</strong>在 BIOS 中注入 SLIC 表（Software Licensing Description Table）</li>
+                                                    <li><strong>注入憑證：</strong>安裝對應品牌的 OEM 憑證</li>
+                                                    <li><strong>使用 OEM 金鑰：</strong>輸入通用的 OEM 金鑰</li>
+                                                    <li><strong>系統驗證：</strong>Windows 讀取 BIOS 的 SLIC 表，確認為 OEM 預裝，自動啟動</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">📊 適用版本</div>
+                                            <div class="detail-content">
+                                                主要適用於 Windows 7 時代，Windows 8 以後的版本改用新的授權機制，OEM 啟動逐漸式微。
+                                            </div>
+                                        </div>
+                                        <div class="detail-section">
+                                            <div class="detail-label">⚠️ 現況</div>
+                                            <div class="detail-content">
+                                                <div class="info-box warning">
+                                                    <strong>已較少使用：</strong> Windows 10/11 改用 UEFI 和數位授權，傳統的 SLIC 注入方式已不適用。修改 BIOS 有風險，可能導致系統無法開機。
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Digital License Injection -->
-                    <div class="method-card">
+                    <!-- 灰產金鑰市場分析 -->
+                    <div class="method-card full-width" style="margin-top: 20px;">
                         <div class="method-header">
                             <div class="method-title">
-                                <span>數位授權注入（Digital License Injection）</span>
-                                <span class="badge badge-success">永久啟動</span>
+                                <span>Windows 11 灰產金鑰（類型、話術、特徵與風險）</span>
+                                <span class="badge badge-danger">高風險</span>
                             </div>
                         </div>
                         <div class="method-details">
                             <div class="detail-section">
-                                <div class="detail-label">📌 原理</div>
+                                <div class="detail-label">📊 灰產金鑰類型對照表</div>
                                 <div class="detail-content">
-                                    將數位授權憑證（Digital License）直接注入到系統中。Windows 10/11 支援「數位授權」機制，授權會綁定到硬體 ID（HWID）。
+                                    <table class="summary-table" style="margin-top: 10px;">
+                                        <thead>
+                                            <tr>
+                                                <th>類型</th>
+                                                <th>常見叫法／賣場話術</th>
+                                                <th>表面特徵</th>
+                                                <th>典型價格（RMB）</th>
+                                                <th>風險與合規性</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>批量授權 MAK（Volume）</strong></td>
+                                                <td>批發授權碼、企業金鑰、<strong>秒發序號</strong></td>
+                                                <td>直接給一串 Key，能立刻啟用；不需綁微軟帳號</td>
+                                                <td>20–50</td>
+                                                <td>供企業內部使用；大量外流會被微軟封鎖，日後可能被解除啟用</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>KMS／GVLK + 第三方伺服器</strong></td>
+                                                <td>KMS 激活、渠道激活、永久激活（實際為週期續期）</td>
+                                                <td>會附伺服器位址或腳本；啟用顯示「由組織啟用」</td>
+                                                <td>5–20</td>
+                                                <td>倚賴非官方伺服器；存在惡意或失效風險；不符個人授權條款</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>OEM 拆機 Key（OA3）</strong></td>
+                                                <td>OEM 序號、主機板綁定 Key</td>
+                                                <td>可啟用但<strong>綁硬體</strong>；更換主機板易失效</td>
+                                                <td>30–80</td>
+                                                <td>多為拆機外流，轉移與售後不受保障；合規性存疑</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>MSDN / 訂閱外流</strong></td>
+                                                <td>開發者金鑰、內測序號</td>
+                                                <td>可啟用；有時標榜「零售」但價異常低</td>
+                                                <td>20–100</td>
+                                                <td>嚴格限使用範圍，外流屬違規；被查到會吊銷</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>教育授權外流</strong></td>
+                                                <td>學生/校園授權、Edu</td>
+                                                <td>能啟用；可能要求登入特定帳戶</td>
+                                                <td>10–50</td>
+                                                <td>僅限合資格身分；外流使用違反條款，易封鎖</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>假冒"零售"</strong></td>
+                                                <td>零售/官方授權但超低價</td>
+                                                <td>聲稱可轉移、綁帳號，但流程含糊</td>
+                                                <td>幾十～百餘</td>
+                                                <td>多為轉售或重複使用的 Key；風險高、售後弱</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                             <div class="detail-section">
-                                <div class="detail-label">🔧 機制</div>
-                                <div class="detail-content">
-                                    <ul>
-                                        <li>利用 Windows 的硬體 ID（HWID）綁定機制</li>
-                                        <li>注入合法格式的數位授權票證（Ticket）</li>
-                                        <li>系統將授權資訊儲存到微軟伺服器</li>
-                                        <li>與硬體 ID 綁定，重灌系統後仍然保持啟動</li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="detail-section">
-                                <div class="detail-label">⚙️ 技術細節</div>
-                                <div class="detail-content">
-                                    修改或利用 Windows 的 <code>ClipSVC</code>（客戶端授權服務），將授權票證上傳到微軟伺服器，使系統認為這是合法的數位授權。
-                                </div>
-                            </div>
-                            <div class="detail-section">
-                                <div class="detail-label">✨ 特點</div>
-                                <div class="detail-content">
-                                    <ul>
-                                        <li><strong>永久啟動：</strong>不需要定期重新驗證</li>
-                                        <li><strong>硬體綁定：</strong>重灌系統後自動啟動（只要硬體沒換）</li>
-                                        <li><strong>顯示為數位授權：</strong>在設定中顯示「Windows 已使用數位授權啟動」</li>
-                                        <li><strong>完全功能：</strong>所有 Windows 功能都可正常使用</li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="detail-section">
-                                <div class="detail-label">📊 狀態</div>
-                                <div class="detail-content">
-                                    目前非常流行的方式，適用於 Windows 10/11，效果最接近正版授權。
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- MAK Keys -->
-                    <div class="method-card">
-                        <div class="method-header">
-                            <div class="method-title">
-                                <span>MAK 金鑰（多次啟動金鑰）</span>
-                            </div>
-                        </div>
-                        <div class="method-details">
-                            <div class="detail-section">
-                                <div class="detail-label">📌 原理</div>
-                                <div class="detail-content">
-                                    使用「真實」但非法取得的 MAK（Multiple Activation Key）金鑰。MAK 是微軟提供給企業的批量授權金鑰，每個金鑰有啟動次數限制。
-                                </div>
-                            </div>
-                            <div class="detail-section">
-                                <div class="detail-label">🔧 來源</div>
-                                <div class="detail-content">
-                                    <ul>
-                                        <li><strong>外洩的企業授權：</strong>從企業內部流出的批量授權金鑰</li>
-                                        <li><strong>MSDN 訂閱金鑰：</strong>開發者訂閱帳號的金鑰被盜用</li>
-                                        <li><strong>暗網交易：</strong>在黑市購買的企業授權</li>
-                                        <li><strong>盜刷信用卡：</strong>用盜刷的信用卡購買後轉賣</li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="detail-section">
-                                <div class="detail-label">⚙️ 運作方式</div>
-                                <div class="detail-content">
-                                    直接輸入金鑰到 Windows 啟動介面，系統連接到微軟伺服器驗證，如果金鑰有效且未達啟動次數上限，則啟動成功。
-                                </div>
-                            </div>
-                            <div class="detail-section">
-                                <div class="detail-label">✨ 特點</div>
-                                <div class="detail-content">
-                                    這些是「真實」的金鑰，但被非法使用；啟動過程與正版相同；可以正常接收更新。
-                                </div>
-                            </div>
-                            <div class="detail-section">
-                                <div class="detail-label">⚠️ 風險</div>
+                                <div class="detail-label">🎯 快速結論</div>
                                 <div class="detail-content">
                                     <div class="info-box danger">
-                                        <strong>高風險方案：</strong>
+                                        <strong>在淘寶上（幾十元人民幣）的，幾乎必定是灰產。</strong>
                                         <ul style="margin-top: 10px;">
-                                            <li>微軟可能會封鎖被大量濫用的金鑰</li>
-                                            <li>啟動後可能突然失效，系統變成未啟動狀態</li>
-                                            <li>購買盜版金鑰可能遭詐騙</li>
-                                            <li>涉及刑事犯罪（盜用、詐欺）</li>
+                                            <li><strong>「付款即秒發一串序號」</strong>的高機率是<strong>MAK（批量授權）</strong>或<strong>KMS（第三方伺服器激活）</strong></li>
+                                            <li>這些金鑰可能隨時被微軟封鎖，導致系統變成未啟動狀態</li>
+                                            <li>購買盜版金鑰可能遭詐騙，收到已失效的金鑰</li>
+                                            <li>涉及信用卡詐欺等刑事犯罪風險</li>
                                         </ul>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- OEM Activation -->
-                    <div class="method-card">
-                        <div class="method-header">
-                            <div class="method-title">
-                                <span>OEM 啟動（SLP - System Locked Pre-activation）</span>
-                                <span class="badge badge-warning">舊時代方案</span>
-                            </div>
-                        </div>
-                        <div class="method-details">
                             <div class="detail-section">
-                                <div class="detail-label">📌 原理</div>
-                                <div class="detail-content">
-                                    模擬電腦製造商（如 Dell、HP、Lenovo）的預裝授權機制。OEM 版本的 Windows 會讀取 BIOS 中的特定標記來確認是否為「原廠預裝」。
-                                </div>
-                            </div>
-                            <div class="detail-section">
-                                <div class="detail-label">🔧 機制</div>
+                                <div class="detail-label">💡 識別特徵</div>
                                 <div class="detail-content">
                                     <ul>
-                                        <li><strong>修改 BIOS：</strong>在 BIOS 中注入 SLIC 表（Software Licensing Description Table）</li>
-                                        <li><strong>注入憑證：</strong>安裝對應品牌的 OEM 憑證</li>
-                                        <li><strong>使用 OEM 金鑰：</strong>輸入通用的 OEM 金鑰</li>
-                                        <li><strong>系統驗證：</strong>Windows 讀取 BIOS 的 SLIC 表，確認為 OEM 預裝，自動啟動</li>
+                                        <li><strong>價格異常低：</strong>正版 Windows 11 零售價通常在數百至上千元，幾十元的必定有問題</li>
+                                        <li><strong>秒發序號：</strong>正版授權通常需要驗證流程，秒發的多為批量授權或盜用金鑰</li>
+                                        <li><strong>話術誘導：</strong>「永久激活」、「企業授權」、「開發者金鑰」等話術常見於灰產</li>
+                                        <li><strong>無法提供發票：</strong>正版授權應能提供合法發票和購買證明</li>
                                     </ul>
                                 </div>
                             </div>
-                            <div class="detail-section">
-                                <div class="detail-label">📊 適用版本</div>
-                                <div class="detail-content">
-                                    主要適用於 Windows 7 時代，Windows 8 以後的版本改用新的授權機制，OEM 啟動逐漸式微。
-                                </div>
-                            </div>
-                            <div class="detail-section">
-                                <div class="detail-label">⚠️ 現況</div>
-                                <div class="detail-content">
-                                    <div class="info-box warning">
-                                        <strong>已較少使用：</strong> Windows 10/11 改用 UEFI 和數位授權，傳統的 SLIC 注入方式已不適用。修改 BIOS 有風險，可能導致系統無法開機。
-                                    </div>
-                                </div>
-                            </div>
                         </div>
+                    </div>
+
+                    <!-- 底層技術機制總結 -->
+                    <div class="info-box full-width" style="margin-top: 20px;">
+                        <h2 style="margin-bottom: 15px; color: var(--accent-color);">🎯 底層技術機制總結</h2>
+                        <table class="summary-table">
+                            <thead>
+                                <tr>
+                                    <th>技術類型</th>
+                                    <th>原理</th>
+                                    <th>修改檔案</th>
+                                    <th>持久性</th>
+                                    <th>代表方案</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>DLL 替換/注入</strong></td>
+                                    <td>替換授權驗證模組</td>
+                                    <td>✅ 是</td>
+                                    <td>永久</td>
+                                    <td>AMT Emulator</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>記憶體 Patch</strong></td>
+                                    <td>運行時修改記憶體驗證邏輯</td>
+                                    <td>❌ 否</td>
+                                    <td>臨時</td>
+                                    <td>部分 Patcher</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>伺服器模擬</strong></td>
+                                    <td>架設假的授權伺服器</td>
+                                    <td>❌ 否</td>
+                                    <td>需定期重啟</td>
+                                    <td>KMS 模擬器</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>金鑰盜用</strong></td>
+                                    <td>使用外洩的企業授權</td>
+                                    <td>❌ 否</td>
+                                    <td>直到金鑰被封</td>
+                                    <td>MAK 金鑰</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>授權注入</strong></td>
+                                    <td>直接寫入系統授權資料庫</td>
+                                    <td>✅ 是</td>
+                                    <td>永久</td>
+                                    <td>數位授權注入</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Hosts 阻擋</strong></td>
+                                    <td>阻止連線到驗證伺服器</td>
+                                    <td>✅ 是（hosts）</td>
+                                    <td>永久</td>
+                                    <td>Hosts 檔案修改</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -912,6 +1154,54 @@
                         </div>
                     </div>
 
+                    <!-- Office Tool Plus -->
+                    <div class="method-card full-width">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>Office Tool Plus（第三方部署工具）</span>
+                                <span class="badge badge-primary">工具說明</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 性質</div>
+                                <div class="detail-content">
+                                    第三方的 Office 部署與管理工具，等於把微軟官方 Office Deployment Tool（ODT）做成圖形化介面，方便選版本/語言/通道、安裝與移除元件。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔗 官方資源</div>
+                                <div class="detail-content">
+                                    <ul>
+                                        <li><strong>官方網站：</strong><a href="https://otp.landian.vip/zh-tw/" target="_blank">https://otp.landian.vip/zh-tw/</a></li>
+                                        <li><strong>教學影片：</strong><a href="https://www.youtube.com/watch?v=SMgsMcadRGs" target="_blank">YouTube 教學</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚙️ 重點說明</div>
+                                <div class="detail-content">
+                                    <div class="info-box warning">
+                                        <strong>工具本身不等於授權</strong>。安全使用前提是：
+                                        <ul style="margin-top: 10px;">
+                                            <li>從可信來源下載（官方站/原作者釋出頁）</li>
+                                            <li>僅用微軟官方 CDN 安裝來源</li>
+                                            <li>使用<strong>正版金鑰或有效 M365 訂閱</strong></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚠️ 風險警告</div>
+                                <div class="detail-content">
+                                    <div class="info-box danger">
+                                        市面上有些教學/整合包會搭配 <strong>KMS</strong> 或來路不明的金鑰，那就屬於<strong>灰色/違規</strong>使用，存在風險。請務必從官方管道下載工具，並使用合法授權。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Summary Table -->
                     <div class="info-box full-width">
                         <h3 style="margin-bottom: 15px; color: var(--accent-color);">📋 Office 破解方式比較</h3>
@@ -953,65 +1243,85 @@
                 </div>
             </div>
 
-            <!-- Summary Section -->
-            <div class="info-box full-width" style="margin-top: 40px;">
-                <h2 style="margin-bottom: 15px; color: var(--accent-color);">🎯 底層技術機制總結</h2>
-                <table class="summary-table">
-                    <thead>
-                        <tr>
-                            <th>技術類型</th>
-                            <th>原理</th>
-                            <th>修改檔案</th>
-                            <th>持久性</th>
-                            <th>代表方案</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>DLL 替換/注入</strong></td>
-                            <td>替換授權驗證模組</td>
-                            <td>✅ 是</td>
-                            <td>永久</td>
-                            <td>AMT Emulator</td>
-                        </tr>
-                        <tr>
-                            <td><strong>記憶體 Patch</strong></td>
-                            <td>運行時修改記憶體驗證邏輯</td>
-                            <td>❌ 否</td>
-                            <td>臨時</td>
-                            <td>部分 Patcher</td>
-                        </tr>
-                        <tr>
-                            <td><strong>伺服器模擬</strong></td>
-                            <td>架設假的授權伺服器</td>
-                            <td>❌ 否</td>
-                            <td>需定期重啟</td>
-                            <td>KMS 模擬器</td>
-                        </tr>
-                        <tr>
-                            <td><strong>金鑰盜用</strong></td>
-                            <td>使用外洩的企業授權</td>
-                            <td>❌ 否</td>
-                            <td>直到金鑰被封</td>
-                            <td>MAK 金鑰</td>
-                        </tr>
-                        <tr>
-                            <td><strong>授權注入</strong></td>
-                            <td>直接寫入系統授權資料庫</td>
-                            <td>✅ 是</td>
-                            <td>永久</td>
-                            <td>數位授權注入</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Hosts 阻擋</strong></td>
-                            <td>阻止連線到驗證伺服器</td>
-                            <td>✅ 是（hosts）</td>
-                            <td>永久</td>
-                            <td>Hosts 檔案修改</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- Third-Party Tools & Open Source Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('thirdparty')">
+                    <div class="section-title">
+                        <span class="icon">🔧</span>
+                        <span>YouTube ReVanced </span>
+                    </div>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="section-content" id="thirdparty-content">
+                    <!-- YouTube ReVanced -->
+                    <div class="method-card full-width">
+                        <div class="method-header">
+                            <div class="method-title">
+                                <span>YouTube ReVanced</span>
+                                <span class="badge badge-success">開源專案</span>
+                            </div>
+                        </div>
+                        <div class="method-details">
+                            <div class="detail-section">
+                                <div class="detail-label">📌 性質</div>
+                                <div class="detail-content">
+                                    ReVanced 是一個開源的 YouTube 客戶端修改專案，提供無廣告、背景播放等功能。屬於合法的開源軟體修改。
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">🔗 官方資源</div>
+                                <div class="detail-content">
+                                    <table class="summary-table" style="margin-top: 10px;">
+                                        <thead>
+                                            <tr>
+                                                <th>類型</th>
+                                                <th>網址</th>
+                                                <th>備註</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>官方網站</strong></td>
+                                                <td><a href="https://revanced.app/" target="_blank">https://revanced.app/</a></td>
+                                                <td>ReVanced 正式對外的主頁</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>GitHub（官方授權/原始碼庫）</strong></td>
+                                                <td><a href="https://github.com/revanced" target="_blank">https://github.com/revanced</a></td>
+                                                <td>ReVanced 的主要原始碼庫與專案集合</td>
+                                            </tr>
+                                            <tr class="warning-row">
+                                                <td><strong>⚠️ 非官方分發站（第三方）</strong></td>
+                                                <td><a href="https://vanced.to/" target="_blank">https://vanced.to/</a></td>
+                                                <td><strong>非官方網站</strong>，雖然名稱類似但與 ReVanced 官方團隊<strong>無關</strong>，屬於第三方分流，存在更高安全風險、疑慮</td>
+                                            </tr>
+                                            <tr class="warning-row">
+                                                <td><strong>⚠️ 非官方分發站（第三方）</strong></td>
+                                                <td><a href="https://revanced.net/" target="_blank">https://revanced.net/</a></td>
+                                                <td><strong>早期第三方站點</strong>，同樣提供 ReVanced APK，後來甚至被重導向至 vanced.to，<strong>並非官方域名</strong>，下載內容來源不明，存在更高安全風險、疑慮</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="detail-section">
+                                <div class="detail-label">⚠️ 安全建議</div>
+                                <div class="detail-content">
+                                    <div class="info-box warning">
+                                        <strong>請務必從官方管道下載：</strong>
+                                        <ul style="margin-top: 10px;">
+                                            <li>優先使用官方網站或 GitHub 發布的版本</li>
+                                            <li>避免從第三方分發站下載，可能包含惡意軟體</li>
+                                            <li>檢查下載檔案的數位簽章和雜湊值</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
 
             <!-- Warning Box -->
             <div class="info-box danger full-width" style="margin-top: 30px;">
