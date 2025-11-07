@@ -301,12 +301,26 @@ export function ProjectCard({ project, isAdmin, showToggleControls, onUpdate, im
 
   return (
     <>
-      <div className="card-hover group relative overflow-hidden transition-all duration-300 hover:scale-[1.02]">
+      <div className={`card-hover group relative overflow-hidden transition-all duration-300 hover:scale-[1.02] ${
+        localProject.hidden ? 'opacity-50 grayscale-[50%] hover:grayscale-0 hover:opacity-100' : ''
+      }`}>
         {/* 頂部漸變條 */}
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-500 via-primary-400 to-primary-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
+        {/* 隱藏標記（在管理員模式下顯示） */}
+        {isAdmin && localProject.hidden && (
+          <div className="absolute top-4 right-4 z-10">
+            <div className="relative">
+              <div className="bg-gray-500/90 dark:bg-gray-600/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                <EyeSlashIcon className="h-4 w-4 text-white" />
+                <span className="text-xs font-medium text-white">已隱藏</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 精選標記 */}
-        {localProject.featured && (
+        {localProject.featured && !localProject.hidden && (
           <div className="absolute top-4 right-4 z-10">
             <div className="relative">
               <StarIconSolid className="h-6 w-6 text-yellow-400 drop-shadow-lg animate-pulse-slow" />

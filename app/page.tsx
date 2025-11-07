@@ -46,7 +46,7 @@ const defaultUIDisplaySettings: UIDisplaySettings = {
 function getPublicProjects(projects: Project[]): Project[] {
   return projects
     .filter(project =>
-      !project.hidden &&
+      !project.hidden &&  // 訪客模式：完全過濾隱藏項目
       project.visibility.description &&
       project.status !== 'discarded'
     )

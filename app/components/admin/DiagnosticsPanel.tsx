@@ -15,33 +15,38 @@ import {
 
 type DiagnosticData = {
   timestamp: string;
-  blobDetails: {
-    pathname: string;
-    url: string;
-    size: number;
-    uploadedAt: string | null;
-    contentType: string;
-    contentHash: string;
-  };
-  contentSummary: {
-    isValidJson: boolean;
+  database: {
+    status: string;
+    tables: Array<{
+      name: string;
+      status: string;
+      count?: number;
+      error?: string;
+    }>;
     projectCount: number;
-    passwordCount: number;
-    contentSize: number;
+    imageMetadataCount: number;
+    error?: string;
+  };
+  storage: {
+    status: string;
+    buckets: Array<{
+      name: string;
+      status: string;
+      fileCount?: number;
+      error?: string;
+    }>;
+    imageCount: number;
+    totalSize: number;
+    error?: string;
   };
   environment: {
     nodeEnv: string;
-    vercelEnv: string;
-    vercelUrl: string;
-    vercelGitCommitSha: string;
+    hasSupabaseUrl: boolean;
+    hasAnonKey: boolean;
+    hasServiceKey: boolean;
     hasAdminPassword: boolean;
-    hasBlobToken: boolean;
+    supabaseUrl: string;
   };
-  allBlobs: {
-    pathname: string;
-    size: number;
-    uploadedAt: string;
-  }[];
 };
 
 const DiagnosticCard = ({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) => (
@@ -131,47 +136,86 @@ export function DiagnosticsPanel() {
     <div className="p-6 bg-background space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         
-        <DiagnosticCard title="Vercel Blob 核心狀態" icon={<CloudIcon className="h-6 w-6 text-primary-600" />}>
-          <InfoRow label="檔案路徑" value={data.blobDetails.pathname} />
-          <InfoRow label="檔案大小 (Bytes)" value={data.blobDetails.size.toLocaleString()} />
-          <InfoRow label="內容大小 (Bytes)" value={data.contentSummary.contentSize.toLocaleString()} />
-          <InfoRow label="最後上傳時間" value={data.blobDetails.uploadedAt ? new Date(data.blobDetails.uploadedAt).toLocaleString() : 'N/A'} />
-          <InfoRow label="內容類型" value={data.blobDetails.contentType} />
+        <DiagnosticCard title="Supabase 資料庫狀態" icon={<ServerIcon className="h-6 w-6 text-primary-600" />}>
+          <InfoRow label="連線狀態" value={<StatusIndicator value={data.database.status === 'connected'} />} isStatus />
+          <InfoRow label="專案數量" value={data.database.projectCount} />
+          <InfoRow label="圖片元數據數量" value={data.database.imageMetadataCount} />
+          {data.database.error && (
+            <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs text-red-600 dark:text-red-400">
+              錯誤: {data.database.error}
+            </div>
+          )}
         </DiagnosticCard>
 
-        <DiagnosticCard title="資料完整性" icon={<DocumentTextIcon className="h-6 w-6 text-primary-600" />}>
-          <InfoRow label="內容指紋 (SHA-256)" value={<span className="text-xs">{data.blobDetails.contentHash}</span>} />
-          <InfoRow label="是有效的JSON" value={<StatusIndicator value={data.contentSummary.isValidJson} />} isStatus />
-          <InfoRow label="專案數量" value={data.contentSummary.projectCount} />
-          <InfoRow label="密碼數量" value={data.contentSummary.passwordCount} />
+        <DiagnosticCard title="Supabase Storage 狀態" icon={<CloudIcon className="h-6 w-6 text-primary-600" />}>
+          <InfoRow label="連線狀態" value={<StatusIndicator value={data.storage.status === 'connected'} />} isStatus />
+          <InfoRow label="圖片數量" value={data.storage.imageCount} />
+          <InfoRow label="總大小 (Bytes)" value={data.storage.totalSize.toLocaleString()} />
+          {data.storage.error && (
+            <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs text-red-600 dark:text-red-400">
+              錯誤: {data.storage.error}
+            </div>
+          )}
         </DiagnosticCard>
 
-        <DiagnosticCard title="環境與部署" icon={<ServerIcon className="h-6 w-6 text-primary-600" />}>
-          <InfoRow label="部署環境" value={data.environment.vercelEnv} />
-          <InfoRow label="部署版本 (Commit SHA)" value={<span className="text-xs">{data.environment.vercelGitCommitSha}</span>} />
+        <DiagnosticCard title="環境配置" icon={<DocumentTextIcon className="h-6 w-6 text-primary-600" />}>
+          <InfoRow label="Node 環境" value={data.environment.nodeEnv} />
+          <InfoRow label="Supabase URL 已設定" value={<StatusIndicator value={data.environment.hasSupabaseUrl} />} isStatus />
+          <InfoRow label="Anon Key 已設定" value={<StatusIndicator value={data.environment.hasAnonKey} />} isStatus />
+          <InfoRow label="Service Key 已設定" value={<StatusIndicator value={data.environment.hasServiceKey} />} isStatus />
           <InfoRow label="管理密碼已設定" value={<StatusIndicator value={data.environment.hasAdminPassword} />} isStatus />
-          <InfoRow label="Blob Token 已設定" value={<StatusIndicator value={data.environment.hasBlobToken} />} isStatus />
           <InfoRow label="診斷時間" value={new Date(data.timestamp).toLocaleString()} />
         </DiagnosticCard>
 
       </div>
       
-      <DiagnosticCard title="所有 Blob 項目" icon={<HashtagIcon className="h-6 w-6 text-primary-600" />}>
+      <DiagnosticCard title="資料表詳情" icon={<HashtagIcon className="h-6 w-6 text-primary-600" />}>
         <div className="max-h-60 overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-muted-foreground">
               <tr>
-                <th className="p-2">路徑</th>
-                <th className="p-2 text-right">大小 (Bytes)</th>
-                <th className="p-2">上傳時間</th>
+                <th className="p-2">表名稱</th>
+                <th className="p-2">狀態</th>
+                <th className="p-2 text-right">記錄數</th>
+                <th className="p-2">錯誤訊息</th>
               </tr>
             </thead>
             <tbody>
-              {data.allBlobs.map(blob => (
-                <tr key={blob.pathname} className="border-t border-border">
-                  <td className="p-2 font-mono break-all">{blob.pathname}</td>
-                  <td className="p-2 font-mono text-right">{blob.size.toLocaleString()}</td>
-                  <td className="p-2 font-mono">{new Date(blob.uploadedAt).toLocaleString()}</td>
+              {data.database.tables.map(table => (
+                <tr key={table.name} className="border-t border-border">
+                  <td className="p-2 font-mono">{table.name}</td>
+                  <td className="p-2">
+                    <StatusIndicator value={table.status === 'ok'} />
+                  </td>
+                  <td className="p-2 font-mono text-right">{table.count || 0}</td>
+                  <td className="p-2 text-xs text-red-600 dark:text-red-400">{table.error || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DiagnosticCard>
+
+      <DiagnosticCard title="Storage Buckets" icon={<CloudIcon className="h-6 w-6 text-primary-600" />}>
+        <div className="max-h-60 overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="text-left text-muted-foreground">
+              <tr>
+                <th className="p-2">Bucket 名稱</th>
+                <th className="p-2">狀態</th>
+                <th className="p-2 text-right">檔案數</th>
+                <th className="p-2">錯誤訊息</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.storage.buckets.map(bucket => (
+                <tr key={bucket.name} className="border-t border-border">
+                  <td className="p-2 font-mono">{bucket.name}</td>
+                  <td className="p-2">
+                    <StatusIndicator value={bucket.status === 'ok'} />
+                  </td>
+                  <td className="p-2 font-mono text-right">{bucket.fileCount || 0}</td>
+                  <td className="p-2 text-xs text-red-600 dark:text-red-400">{bucket.error || '-'}</td>
                 </tr>
               ))}
             </tbody>

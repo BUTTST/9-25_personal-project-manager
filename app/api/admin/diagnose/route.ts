@@ -31,34 +31,49 @@ export async function GET(request: NextRequest) {
       database: {
         status: 'unknown',
         tables: [],
-        migrations: [],
+        projectCount: 0,
+        imageMetadataCount: 0,
       },
       storage: {
         status: 'unknown',
         buckets: [],
+        imageCount: 0,
+        totalSize: 0,
       },
       environment: {
+        nodeEnv: process.env.NODE_ENV || 'unknown',
         hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
         hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
         hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
         hasAdminPassword: !!process.env.ADMIN_PASSWORD,
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || 'Not configured',
       },
     };
 
     // 檢查資料表
     try {
-      const { data: projects, error: projectsError } = await supabaseAdmin
+      // 檢查 projects 表
+      const { count: projectCount, error: projectsError } = await supabaseAdmin
         .from('projects')
         .select('id', { count: 'exact', head: true });
 
-      const { data: settings, error: settingsError } = await supabaseAdmin
+      // 檢查 settings 表
+      const { count: settingsCount, error: settingsError } = await supabaseAdmin
         .from('settings')
         .select('key', { count: 'exact', head: true });
 
+      // 檢查 image_metadata 表
+      const { count: imageMetadataCount, error: imageMetadataError } = await supabaseAdmin
+        .from('image_metadata')
+        .select('id', { count: 'exact', head: true });
+
       diagnostics.database.status = 'connected';
+      diagnostics.database.projectCount = projectCount || 0;
+      diagnostics.database.imageMetadataCount = imageMetadataCount || 0;
       diagnostics.database.tables = [
-        { name: 'projects', status: projectsError ? 'error' : 'ok', error: projectsError?.message },
-        { name: 'settings', status: settingsError ? 'error' : 'ok', error: settingsError?.message },
+        { name: 'projects', status: projectsError ? 'error' : 'ok', count: projectCount || 0, error: projectsError?.message },
+        { name: 'settings', status: settingsError ? 'error' : 'ok', count: settingsCount || 0, error: settingsError?.message },
+        { name: 'image_metadata', status: imageMetadataError ? 'error' : 'ok', count: imageMetadataCount || 0, error: imageMetadataError?.message },
       ];
     } catch (error: any) {
       diagnostics.database.status = 'error';
@@ -68,12 +83,20 @@ export async function GET(request: NextRequest) {
     // 檢查 Storage
     try {
       const { data: files, error } = await supabaseAdmin.storage
-        .from('screenshots')
-        .list('', { limit: 1 });
+        .from('project-images')
+        .list('', { limit: 1000 });
 
-      diagnostics.storage.status = error ? 'error' : 'connected';
+      if (error) {
+        diagnostics.storage.status = 'error';
+        diagnostics.storage.error = error.message;
+      } else {
+        diagnostics.storage.status = 'connected';
+        diagnostics.storage.imageCount = files?.length || 0;
+        diagnostics.storage.totalSize = files?.reduce((sum, f) => sum + (f.metadata?.size || 0), 0) || 0;
+      }
+      
       diagnostics.storage.buckets = [
-        { name: 'screenshots', status: error ? 'error' : 'ok', error: error?.message },
+        { name: 'project-images', status: error ? 'error' : 'ok', fileCount: files?.length || 0, error: error?.message },
       ];
     } catch (error: any) {
       diagnostics.storage.status = 'error';
