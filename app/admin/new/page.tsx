@@ -890,23 +890,43 @@ export default function NewProjectPage() {
                 <input
                   type="text"
                   value={formData.documentMeta?.filePath || ''}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    documentMeta: {
-                      ...prev.documentMeta,
-                      filePath: e.target.value,
-                      title: prev.documentMeta?.title || '',
-                      description: prev.documentMeta?.description || '',
-                      openBehavior: prev.documentMeta?.openBehavior || 'new-tab',
-                      tags: prev.documentMeta?.tags || []
+                  onChange={(e) => {
+                    // 路径清洗机制 (2025-11-07)
+                    // 问题背景：从 VS Code 右键复制的相对路径格式为 "public\單檔-獨立頁面\檔名.html"
+                    // Next.js public 文件夹的正确访问路径应为 "/單檔-獨立頁面/檔名.html"
+                    // 此清洗逻辑自动转换路径格式，提升用户体验
+                    let cleanPath = e.target.value;
+                    
+                    // 1. 将所有反斜杠转换为正斜杠
+                    cleanPath = cleanPath.replace(/\\/g, '/');
+                    
+                    // 2. 移除开头的 public 前缀（如果存在）
+                    cleanPath = cleanPath.replace(/^public\/?/, '');
+                    
+                    // 3. 确保路径以 / 开头
+                    if (cleanPath && !cleanPath.startsWith('/')) {
+                      cleanPath = '/' + cleanPath;
                     }
-                  }))}
+                    
+                    setFormData(prev => ({
+                      ...prev,
+                      documentMeta: {
+                        ...prev.documentMeta,
+                        filePath: cleanPath,
+                        title: prev.documentMeta?.title || '',
+                        description: prev.documentMeta?.description || '',
+                        openBehavior: prev.documentMeta?.openBehavior || 'new-tab',
+                        tags: prev.documentMeta?.tags || []
+                      }
+                    }));
+                  }}
                   className="input"
                   placeholder="/單檔-獨立頁面/檔名.html"
                   required={formData.category === 'single-doc'}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  範例：/單檔-獨立頁面/React學習筆記.html
+                  範例：/單檔-獨立頁面/React學習筆記.html<br />
+                  <span className="text-purple-600 dark:text-purple-400">💡 可直接貼上 VS Code 複製的相對路徑，系統會自動轉換格式</span>
                 </p>
               </div>
 
