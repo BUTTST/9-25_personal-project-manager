@@ -198,13 +198,24 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
 
   const handleImageToggle = (imageId: string) => {
     setFormData((prev) => {
-      const exists = prev.imagePreviews.some((img) => img.id === imageId);
+      // 智能匹配：支持 ID、src 路径或文件名匹配
+      const exists = prev.imagePreviews.some((img) => 
+        img.id === imageId || 
+        img.src === imageId || 
+        img.src.includes(imageId)
+      );
+      
       if (exists) {
         return {
           ...prev,
-          imagePreviews: prev.imagePreviews.filter((img) => img.id !== imageId),
+          imagePreviews: prev.imagePreviews.filter((img) => 
+            img.id !== imageId && 
+            img.src !== imageId && 
+            !img.src.includes(imageId)
+          ),
         };
       }
+      
       const galleryImage = imageGallery.find((img) => img.id === imageId);
       if (!galleryImage) return prev;
       return {
@@ -224,7 +235,19 @@ export function EditProjectModal({ project, isOpen, onClose, onSave }: EditProje
 
   const getFilteredImages = () => {
     return imageGallery.filter((image) => {
-      const selected = formData.imagePreviews.some((img) => img.id === image.id);
+      // 智能匹配：同时检查 ID、src 路径和文件名
+      const selected = formData.imagePreviews.some((img) => {
+        // 精确匹配 ID
+        if (img.id === image.id) return true;
+        // 匹配完整 URL
+        if (img.src === image.src) return true;
+        // 检查 src 是否包含 image.id（文件名）
+        if (img.src.includes(image.id)) return true;
+        // 检查 image.src 是否包含 img.id（反向匹配）
+        if (image.src.includes(img.id)) return true;
+        return false;
+      });
+      
       if (imageFilter === 'selected') return selected;
       if (imageFilter === 'unselected') return !selected;
       return true;
