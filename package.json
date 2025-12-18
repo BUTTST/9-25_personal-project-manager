@@ -11,7 +11,7 @@
     "migrate-images": "node scripts/migrate-image-metadata.js"
   },
   "dependencies": {
-    "next": "14.0.3",
+    "next": "14.2.35",
     "@supabase/supabase-js": "^2.39.0",
     "react": "^18",
     "react-dom": "^18",
